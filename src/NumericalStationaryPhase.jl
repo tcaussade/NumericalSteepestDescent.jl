@@ -4,8 +4,10 @@ using FastGaussQuadrature
 using Polynomials
 using Roots
 using LinearAlgebra
-using Graphs
+
 using CairoMakie
+using CairoMakie.Colors
+using Graphs
 using GraphMakie
 
 

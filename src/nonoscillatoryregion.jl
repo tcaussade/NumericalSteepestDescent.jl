@@ -184,9 +184,16 @@ function tracecontour(G::AbstractPhaseFunction, η, Ω; δODE = 1e-1, δcoarse =
         if isinΩ(Ω, h1)
             return (h1, :entrance)
             @info "Reached Ω from η1=$η to η2=$h1 in $n steps."
+            
         elseif isinValley(G,h1) # define some threshold for valley
-            @info "Reached valley region from η1=$η in $n steps."
-            return (h1, :valley)
+            if doublecheck_valley(G,h1)
+                @info "Reached valley region from η=$η in $n steps."
+                v = goes_to_valley(G, angle(h1))
+                # @show angle(h1)/π, v/π
+                hvalley = rstar * cis(v)
+                # @show v, angle(h1)
+                return (hvalley, :valley)
+            end
         end
     end
 end
@@ -204,9 +211,24 @@ end
 function isinValley(G::AbstractPhaseFunction, z)
     # determine if z is in a valley region
     if abs(z) > rstar
+
         return true
     end
     return false
+end
+
+function goes_to_valley(G::AbstractPhaseFunction, θ) 
+    # identifies the valley where θ is
+    J = degree(G)
+    valleys = G.v
+    for v in valleys
+        dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
+        @show dist, θ/π, v/π
+        if dist < π/(2J)
+            @show v/π
+            return v
+        end
+    end
 end
 
 function rvalley(G::AbstractPhaseFunction)
@@ -217,6 +239,21 @@ function rvalley(G::AbstractPhaseFunction)
     poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
     return maximum(real.(roots(poly))) # solution is the only positive root
 end
+
+function doublecheck_valley(G::AbstractPhaseFunction, h)
+    r = abs(h)
+    θ = angle(h)
+    return true
+    g(r,θ) = 0.0
+
+    if g(r,θ) > 0 
+        return true
+    end
+    return false
+end
+
+
+
 
 function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall})
     entrances     = Vector{ComplexF64}()

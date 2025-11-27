@@ -1,20 +1,20 @@
 """
-    Generate QuasiSDcontour given two endpoints
+    Generate QuasiSDcontour given two finite endpoints
 """
 
-# function create_graph(Pexit, Pentrance)
-#     # create graph with exit and entrance points
-# end
 
-# function QuasiSDcontour(a,b, G::AbstractPhaseFunction, Ω)
-#     # a,b are (finite) endpoints
-
-#     Pexit     = exitpoints(G,Ω)
-#     Pentrance = entrancepoints()
+function QuasiSDcontour(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillatoryBall})
+    # a,b are (finite) endpoints
     
-#     G = create_graph(Pexit, Pentrance)
-#     return shortest_path
-# end
+    CG, dict, nodes = ContourGraph(G, a, b, Ω)
+    
+    sd = dijkstra_shortest_paths(graph, dict[a])
+
+    sd.dists
+
+    
+    return 
+end
 
 
 """

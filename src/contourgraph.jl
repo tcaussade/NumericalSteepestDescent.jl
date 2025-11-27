@@ -6,11 +6,13 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     Pstat = get_Pstat(Ω)
 
 
+
     global rstar = rvalley(G) # compute this only once
 
     SDpts = ComplexF64.([Pendp; Pexit])
     # get entrance and valley points
     Pentr, Dict_entrance, Valleys, Dict_valleys  = tracing_contours(G, SDpts, Ω) 
+    Valleys = unique(Valleys) # remove repeated valley if more than one contour goes there
 
     all_nodes = [z for z in [Pexit; Pendp; Pentr; Valleys; Pstat]] 
 
@@ -33,9 +35,16 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     connect_ball_to_valleyyorentrance!(SDpts, Dict_entrance, ContourGraph, plane_to_graph)
     connect_ball_to_valleyyorentrance!(SDpts, Dict_valleys, ContourGraph, plane_to_graph)
     
-    @warn "SD contours going into the same valley are not connected"
+    # @warn "SD contours going into the same valley are not connected"
+    
+    MetaDict = Dict{Symbol, Vector{ComplexF64}}()
+    MetaDict[:valleys]   = Valleys
+    MetaDict[:entrances] = Pentr
+    MetaDict[:exits]     = Pexit
+    MetaDict[:statpoint] = Pstat
+    MetaDict[:endpoint]  = Pendp
 
-    return ContourGraph, plane_to_graph, all_nodes
+    return ContourGraph, plane_to_graph, all_nodes, MetaDict
 end
 
 function connect_inside_Ω!(pts::Vector{ComplexF64}, Ω::Vector{NonOscillatoryBall}, CG ::SimpleGraph, dict::Dict)
@@ -88,17 +97,58 @@ function connect_ball_to_valleyyorentrance!(pts::Vector{ComplexF64}, ηdict::Dic
 end
 
 
-function plot_ContourGraph(graph::SimpleGraph, nodes :: Vector{ComplexF64}, dict :: Dict)
-    fig,ax,p = graphplot(graph)
-    function mylayout(_)
-        list = []
-        for z in nodes
-            push!(list, (real(z), imag(z)))
-        end
-        return list
+function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, nodes :: Vector{ComplexF64}, z_to_G::Dict, metadict :: Dict)
+    
+    # Place graph nodes in the complex plane
+    list = Vector(undef, length(nodes))
+
+    # Add colors to nodes
+    # Create a "Vector of colors" to pass an input to graph
+    colors = Vector{Any}(undef, length(nodes))
+    for z in metadict[:statpoint]
+        i = z_to_G[z]
+        colors[i] = colorant"red"
+        list[i]   = reim(z)
+    end
+    for z in metadict[:endpoint]
+        i = z_to_G[z]
+        colors[i] = colorant"orange"
+        list[i]   = reim(z)
+    end
+    for z in metadict[:exits]
+        i = z_to_G[z]
+        colors[i] = colorant"purple"
+        list[i]   = reim(z)
+    end
+    for z in metadict[:valleys]
+        i = z_to_G[z]
+        colors[i] = colorant"blue"
+        list[i]   = reim(2 * z)
+    end
+    for z in metadict[:entrances]
+        i = z_to_G[z]
+        colors[i] = colorant"green"
+        list[i]   = reim(z)
     end
 
+
+    fig,ax,p = graphplot(graph,
+        node_color = colors, node_size = 20)
+        
+    mylayout(_) = list
     p.layout = mylayout
+
+    # add non-oscillatory balls
+    for Ball in Ω
+        c,r = centre_and_radius(Ball)
+        arc!(ax, Point2f(reim(c)), r, 0, 2π, 
+            color = :gray)
+    end
+
+    hidespines!(ax)
+    hidedecorations!(ax)
+    ax.aspect = DataAspect()
+    ax.backgroundcolor
 
     return fig
 
