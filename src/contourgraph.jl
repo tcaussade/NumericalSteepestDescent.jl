@@ -1,20 +1,19 @@
 
 function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillatoryBall})
     # a,b are (finite) endpoints
-    Pendp = ComplexF64.([isinΩ(Ω,a) ? [] : a; isinΩ(Ω,b) ? [] : b])
+    Pendp = [a,b]
+    Pendp_trace = ComplexF64.([isinΩ(Ω,a) ? [] : a; isinΩ(Ω,b) ? [] : b])
     Pexit = exitpoints(G,Ω)
     Pstat = get_Pstat(Ω)
 
-
-
     global rstar = rvalley(G) # compute this only once
 
-    SDpts = ComplexF64.([Pendp; Pexit])
+    SDpts = ComplexF64.([Pendp_trace; Pexit])
     # get entrance and valley points
     Pentr, Dict_entrance, Valleys, Dict_valleys  = tracing_contours(G, SDpts, Ω) 
     Valleys = unique(Valleys) # remove repeated valley if more than one contour goes there
 
-    all_nodes = [z for z in [Pexit; Pendp; Pentr; Valleys; Pstat]] 
+    all_nodes = [z for z in [Pexit; [a,b]; Pentr; Valleys; Pstat]] 
 
     plane_to_graph = Dict{ComplexF64, Int16}() # map complex plane points to graph vertices
     for (i, z) in enumerate(all_nodes)
@@ -134,7 +133,7 @@ function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, nodes :: Vector{Compl
 
     fig,ax,p = graphplot(graph,
         node_color = colors, node_size = 20)
-        
+
     mylayout(_) = list
     p.layout = mylayout
 

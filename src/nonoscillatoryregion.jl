@@ -31,6 +31,7 @@ end
 """
 
 function NonOscillatoryRegion(G::AbstractPhaseFunction, Cball, ω; δball = 1.0)
+    δball = 1e-3 / 2 / max(degree(G)-2,1)
     Ω = Vector{NonOscillatoryBall}()
     # Assign a NonOscillatoryBall to each stationary point
     for ξ in G.ξ
@@ -89,15 +90,20 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
         dtrig_sin = -imag.(tc) .* collect(0:J)
         
         # find the roots of the imaginary part of the derivative of trig
-        t = roots_trig_polynomial(dtrig_cos, dtrig_sin)
-        # @show t = real(t)/π
+        tall = roots_trig_polynomial(dtrig_cos, dtrig_sin)
+        t = Vector{Float64}()
+        for ti in tall # keep only real roots 
+            if abs(imag(ti)) < 1e-12 
+                push!(t, real(ti))
+            end
+        end
 
         # second-derivataive test to keep only minima
         ddtrig_cos = -imag( -tc ) .* collect(0:J).^2
         ddtrig_sin = -imag( -im * tc ) .* collect(0:J).^2
         dd(t) = sum( ddtrig_cos[k+1] * cos(k*t) + ddtrig_sin[k+1] * sin(k*t) for k = 0:J )
         
-        t = real.(t)
+        
         minima = Float64[]
         [dd(t) > 0.0 ? push!(minima, t) : nothing for t in t]
         
@@ -159,7 +165,6 @@ end
 dist(hη, Pstat :: Vector) = minimum(abs.(hη .- Pstat)) # dist(hn, P_statpoint)
 
 function tracecontour(G::AbstractPhaseFunction, η, Ω; δODE = 1e-1, δcoarse = 1e-2)
-    
     Pstat = get_Pstat(Ω)
     p1 = zero(ComplexF64)
     h1 = η # initial conditions 
@@ -182,16 +187,18 @@ function tracecontour(G::AbstractPhaseFunction, η, Ω; δODE = 1e-1, δcoarse =
         
         # determine if we have found entrance point or a valley
         if isinΩ(Ω, h1)
-            return (h1, :entrance)
-            @info "Reached Ω from η1=$η to η2=$h1 in $n steps."
             
+            @info "Reached Ω from η1=$η to η2=$h1 in $n steps."
+            return (h1, :entrance)
+
         elseif isinValley(G,h1) # define some threshold for valley
             if doublecheck_valley(G,h1)
-                @info "Reached valley region from η=$η in $n steps."
                 v = goes_to_valley(G, angle(h1))
+                if v isa Nothing continue end
                 # @show angle(h1)/π, v/π
                 hvalley = rstar * cis(v)
                 # @show v, angle(h1)
+                 @info "Reached valley region at $(v/π)π from η=$η in $n steps."
                 return (hvalley, :valley)
             end
         end
@@ -223,9 +230,9 @@ function goes_to_valley(G::AbstractPhaseFunction, θ)
     valleys = G.v
     for v in valleys
         dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
-        @show dist, θ/π, v/π
+       # @show dist, θ/π, v/π
         if dist < π/(2J)
-            @show v/π
+            #@show v/π
             return v
         end
     end
@@ -251,8 +258,6 @@ function doublecheck_valley(G::AbstractPhaseFunction, h)
     end
     return false
 end
-
-
 
 
 function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall})
