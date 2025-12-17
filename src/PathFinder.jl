@@ -1,10 +1,9 @@
-module NumericalStationaryPhase
+module PathFinder
 
 using FastGaussQuadrature
 using Polynomials
 using Roots
 using LinearAlgebra
-
 using CairoMakie
 using CairoMakie.Colors
 using Graphs

@@ -1,4 +1,4 @@
-using NumericalStationaryPhase
+using PathFinder
 # using Polynomials
 
 ω     = 40.0
@@ -15,11 +15,11 @@ Phase = PolynomialPhaseFunction([0,-3*acubic,0,1])
 a,b = (0,2) # specify (finite) endpoints
 Ω = NonOscillatoryRegion(Phase, Cball, ω)
 
-Pexit = NumericalStationaryPhase.exitpoints(Phase,Ω)
-Pstat = NumericalStationaryPhase.get_Pstat(Ω)
+Pexit = PathFinder.exitpoints(Phase,Ω)
+Pstat = PathFinder.get_Pstat(Ω)
 
-graph, dict, nodes, metadict = NumericalStationaryPhase.ContourGraph(Phase, a,b, Ω)
-NumericalStationaryPhase.plot_ContourGraph(graph,Ω, nodes, dict, metadict)
+graph, dict, nodes, metadict = PathFinder.ContourGraph(Phase, a,b, Ω)
+PathFinder.plot_ContourGraph(graph,Ω, nodes, dict, metadict)
 
 # get shortest path
 path = a_star(graph, dict[a], dict[b])
