@@ -1,23 +1,3 @@
-"""
-    Determine when we enter a valley at infinity
-"""
-
-function rvalley(G::AbstractPhaseFunction)
-    # define threshold distance for valley region
-    α = coeffs(G.p)
-    J = length(α)-1
-    β = [k*abs(α[k+1]) for k = 1:J-1]
-    poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
-    return maximum(real.(roots(poly))) # solution is the only positive root
-end
-
-function valleys(::AbstractPhaseFunction)
-    # find valleys at infinity
-    Pvalley = ComplexF64[]
-    @warn "not implemented yet"
-    return Pvalley
-end
-
 
 function roots_trig_polynomial(a,b)
 

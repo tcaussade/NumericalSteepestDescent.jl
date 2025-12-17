@@ -8,31 +8,34 @@
     If contour is :infiniteSD, location is point and valley angle.
 """
 
+# struct ComplexContour
+#     location :: Vector{ComplexF64}
+#     type :: Symbol # Finite / Infinite SD / Finite SD
+#     orientation :: Symbol # 
+#     function ComplexContour(location, type::Symbol, orientation::Symbol)
+#         @assert type in (:finite, :infiniteSD, :finiteSD)
+#         @assert orientation in (:positive, :negative)
+#         new(location, type, orientation)
+#     end
+# end
+
 struct ComplexContour
-    location :: Union{Vector{ComplexF64}, ComplexF64}
-    type :: Symbol # Finite / Infinite SD / Finite SD
-    orientation :: Symbol # 
-    function ComplexContour(location, type::Symbol, orientation::Symbol)
+    contourtype :: Symbol # Finite / Infinite SD / Finite SD
+    source :: ComplexF64
+    destination :: ComplexF64 
+    function ComplexContour(type, src, dst)
         @assert type in (:finite, :infiniteSD, :finiteSD)
-        @assert orientation in (:positive, :negative)
-        new(location, type, orientation)
+        new(type, src, dst)
     end
 end
 
-contour_type(γ::ComplexContour) = γ.type
-_check_contour_type(γ::ComplexContour, s::Symbol ) = @assert γ.type == s "Contour type mismatch: expected $s, got $(γ.type)"
-contour_orientation(γ::ComplexContour) = γ.orientation
+contour_type(γ::ComplexContour) = γ.contourtype
+_check_contour_type(γ::ComplexContour, s::Symbol ) = @assert γ.contourtype == s "Contour type mismatch: expected $s, got $(γ.contourtype)"
+# contour_orientation(γ::ComplexContour) = γ.orientation
 
-function trace_finite(a,b)
-    # parametrisation of finite straight line from a to b
-    u -> 0.5*((b+a) + (b-a)*u) # :: Function
-end
+at(γ::ComplexContour) = γ.source
+to(γ::ComplexContour) = γ.destination
 
-# function trace_infiniteSDpath(G::AbstractPhaseFunction, η)
-#     # parametrisation of infinite SD path at η
-#     g(z) = evalphase(G, z)
-#     u -> evalinverse(G, η, g(η) + im*u) # :: Function
-# end
 
 """
     Coarse tracing for SD contour at η
@@ -68,7 +71,7 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE = 1e-1, δc
             v = goes_to_valley(G, angle(h1))
             if v isa Nothing continue end
             # @show angle(h1)/π, v/π
-            hvalley = rstar * cis(v)
+            hvalley = G.rStar * cis(v)
             # @show v, angle(h1)
                 @info "Reached valley region at $(v/π)π from η=$η in $n steps."
             return (hvalley, :valley)
@@ -88,7 +91,7 @@ end
 
 function isinValley(G::AbstractPhaseFunction, z)
     # determine if z is in a valley region
-    if abs(z) > rstar
+    if abs(z) > G.rStar
 
         return true
     end
@@ -113,21 +116,30 @@ end
 """ Store traced contours in dictionary """
 
 function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall})
-    entrances     = Vector{ComplexF64}()
-    valley_points = Vector{ComplexF64}()
-    η_to_entrance = Dict{ComplexF64, ComplexF64}()
-    η_to_valley   = Dict{ComplexF64, ComplexF64}()
+    # entrances     = Vector{ComplexF64}()
+    # valley_points = Vector{ComplexF64}()
+    # η_to_entrance = Dict{ComplexF64, ComplexF64}()
+    # η_to_valley   = Dict{ComplexF64, ComplexF64}()
+
+    ve = Vector{ComplexContour}()
+    vv = Vector{ComplexContour}()
     for η in points
         h_end, status = tracecontour_coarse(G, η, Ω)
         # @show h_end, status, nmax
         if status == :entrance
-            push!(entrances, h_end) # (h_end, status))
-            η_to_entrance[η] = h_end
+            # push!(entrances, h_end) # (h_end, status))
+            γ = ComplexContour(:finiteSD, η, h_end)
+            # η_to_entrance[η] = h_end
+            push!(ve,γ)
         elseif status == :valley
-            push!(valley_points, h_end)
-            η_to_valley[η] = h_end
+            # push!(valley_points, h_end)
+            γ = ComplexContour(:infiniteSD, η, h_end)
+            # η_to_valley[η] = h_end
+            push!(vv,γ)
         end
     end
-    return entrances, η_to_entrance, valley_points, η_to_valley
+    # return entrances, η_to_entrance, valley_points, η_to_valley
+    # return η_to_entrance, η_to_valley
+    return ve, vv
 end
 

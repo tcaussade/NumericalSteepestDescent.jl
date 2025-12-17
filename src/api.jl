@@ -2,42 +2,41 @@
     Generate QuasiSDcontour given two finite endpoints
 """
 
-
-function QuasiSDcontour(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillatoryBall})
+function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω; 
+        N = 25, Cball = 2π)
     # a,b are (finite) endpoints
     
-    CG, dict, nodes = ContourGraph(G, a, b, Ω)
-    
-    sd = dijkstra_shortest_paths(graph, dict[a])
+    Ω = NonOscillatoryRegion(G, Cball, ω)
 
-    sd.dists
-
+    CG, CtoG, MetaDict, EdgesList = ContourGraph(G, a, b, Ω)
     
-    return 
+    sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
+
+    # Evaluate each contour on the shortest path
+    global xleg, wleg = gausslegendre(N)
+    global xlag, wlag = gausslaguerre(N)
+
+    S = zero(ComplexF64)
+    for e in sd_edges
+        i1,i2 = e.src, e.dst
+
+        if haskey(EdgesList, (i1, i2))
+            γ = EdgesList[(i1,i2)]
+            x,w = choose_quadrature(γ)
+            S += integrate(γ, f, G, ω, x, w)
+        else
+            γ = EdgesList[(i2,i1)] # the contour is traversed in the opposite direction
+            x,w = choose_quadrature(γ)    
+            S -= integrate(γ, f, G, ω, x, w)
+        end
+    end
+    return S
 end
 
-
-"""
-    Evaluate over a given quasi-SD contour
-"""
-
-# function integrate_nsp(f, G::AbstractPhaseFunction, γ::Vector{ComplexContour}, ω, N)
-#     # evaluate integral along quasi-SD contour deformation
-#     @info "Using N=$N quadrature points for all contour segments. \nThese are being recomputed at each call!"
-#     x1,w1 = gausslegendre(N)
-#     x2,w2 = gausslaguerre(N)
-#     x3,w3 = x1,w1 # gausslegendre(N);
-
-#     I = 0.0 + 0im
-#     for c in γ
-#         ± = i -> contour_orientation(c) == :positive ? +(i) : -(i)
-#         if contour_type(c) == :finite
-#             I += ± eval_finite(f, G, c, ω, x1, w1)
-#         elseif contour_type(c) == :infiniteSD
-#             I += ± eval_infiniteSDpath(f, G, c, ω, x2, w2)
-#         elseif contour_type(c) == :finiteSD
-#             I += ± eval_finiteSD(f, G, c, ω, x3, w3)
-#         end
-#     end
-#     return I
-# end
+function choose_quadrature(γ)
+    if contour_type(γ) == :infiniteSD # Choose quadrature nodes
+        return x,w = xlag,wlag
+    else 
+        return x,w = xleg,wleg 
+    end
+end

@@ -7,27 +7,28 @@ f(z) = 1.0
 
 example1 = [3,5,6,2,9,5,1,4,1,3]
 
-acubic = -1
+acubic = +0.2
 Phase = PolynomialPhaseFunction([0,-3*acubic,0,1])
 # Phase = PolynomialPhaseFunction(example1) 
+# Phase = PolynomialPhaseFunction([0,0.001,1])
 
 # Quasi-SD contour deformation
-a,b = (0,2) # specify (finite) endpoints
+a,b = (-1,1) # specify (finite) endpoints
 Ω = NonOscillatoryRegion(Phase, Cball, ω)
 
 Pexit = PathFinder.exitpoints(Phase,Ω)
 Pstat = PathFinder.get_Pstat(Ω)
 
-graph, dict, nodes, metadict = PathFinder.ContourGraph(Phase, a,b, Ω)
-PathFinder.plot_ContourGraph(graph,Ω, nodes, dict, metadict)
+graph, dict, metadict, edgeslist = PathFinder.ContourGraph(Phase, a,b, Ω)
+PathFinder.plot_ContourGraph(graph,Ω,dict, metadict)
+# there is a bug when endpoiints coincide with stationary points
 
 # get shortest path
 path = a_star(graph, dict[a], dict[b])
 path[1].src, path[1].dst # source and destination of edge 1
 
 # automated version
-γ = QuasiSDcontour(Phase, a,b, Ω)
-
+val = PathFinder.integrate(a,b,f,Phase,ω)
 
 # plot contour deformation
 plot_quasiSDdeformation(Monomial, γ, Ω)
