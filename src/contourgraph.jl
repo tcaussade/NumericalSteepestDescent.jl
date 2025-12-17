@@ -1,4 +1,9 @@
-
+"""
+    Create graph where 
+        Vertex are: endpoints, stationary points, entrance/exit points, valleys
+        Edges connect two vertices if these are connected by some SD contour outside
+        the non-oscillatory region, or Finite contour inside
+"""
 function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillatoryBall})
     # a,b are (finite) endpoints
     Pendp = [a,b]
@@ -95,7 +100,9 @@ function connect_ball_to_valleyyorentrance!(pts::Vector{ComplexF64}, ηdict::Dic
     return
 end
 
-
+"""
+    Plot graph
+"""
 function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, nodes :: Vector{ComplexF64}, z_to_G::Dict, metadict :: Dict)
     
     # Place graph nodes in the complex plane

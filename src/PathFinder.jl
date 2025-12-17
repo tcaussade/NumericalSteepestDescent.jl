@@ -9,12 +9,13 @@ using CairoMakie.Colors
 using Graphs
 using GraphMakie
 
+include("PhaseFunction.jl")
 
-include("Core.jl")
+include("root_finding.jl")
 
-include("nonoscillatoryregion.jl")
-
-include("contourgraph.jl")
+include("Balls.jl")
+include("Contours.jl")
+include("ContourGraph.jl")
 include("PlotGeneration.jl")
 include("quadrature.jl")
 

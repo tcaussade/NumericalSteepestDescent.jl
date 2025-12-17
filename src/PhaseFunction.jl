@@ -13,41 +13,6 @@
 
 abstract type AbstractPhaseFunction end
 
-
-""" 
-    Struct for complex contour parametrisations
-
-    Symbol can be :finite, :infiniteSD or :finiteSD
-"""
-
-struct ComplexContour
-    parametrisation :: Function
-    type :: Symbol # Finite / Infinite SD / Finite SD
-    orientation :: Symbol # 
-    function ComplexContour(parametrisation::Function, type::Symbol, orientation::Symbol)
-        @assert type in (:finite, :infiniteSD, :finiteSD)
-        @assert orientation in (:positive, :negative)
-        new(parametrisation, type, orientation)
-    end
-end
-
-contour_type(γ::ComplexContour) = γ.type
-
-_check_contour_type(γ::ComplexContour, s::Symbol ) = @assert γ.type == s "Contour type mismatch: expected $s, got $(γ.type)"
-
-contour_orientation(γ::ComplexContour) = γ.orientation
-
-function trace_finite(a,b)
-    # parametrisation of finite straight line from a to b
-    u -> 0.5*((b+a) + (b-a)*u) # :: Function
-end
-
-# function trace_infiniteSDpath(G::AbstractPhaseFunction, η)
-#     # parametrisation of infinite SD path at η
-#     g(z) = evalphase(G, z)
-#     u -> evalinverse(G, η, g(η) + im*u) # :: Function
-# end
-
 """
     Struct for polynomial phase functions
 """
@@ -70,7 +35,15 @@ struct PolynomialPhaseFunction{T} <: AbstractPhaseFunction # arbitrary polynomia
 end
 
 degree(G::PolynomialPhaseFunction) = length(G.p)-1
-
 stationary_points(G::PolynomialPhaseFunction) = G.ξ
-
 evalphase(G::PolynomialPhaseFunction, z) = G.p(z)
+
+
+""" Struct for g(z) = √(z^2+a^2)
+"""
+
+struct DistancePhaseFunction{T} <: AbstractPhaseFunction
+end
+
+evalphase(G::DistancePhaseFunction, z) = sqrt(z^2 + G.a^2)
+
