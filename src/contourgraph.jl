@@ -6,35 +6,44 @@
         the non-oscillatory region, or Finite contour inside
 """
 
-function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillatoryBall})
+function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillatoryBall};
+                        δODE, δcoarse)
     
-    # global rstar = rvalley(G) # compute this only once
+    # Flag all nodes
+    NodesDict = Dict{Symbol, Vector{ComplexF64}}()
+    
+    # add small perturbation to distinguish between nodes when they are close
+    NodesDict[:endpoint]  = [a,b]        .+ rand()*eps()
+    NodesDict[:statpoint] = get_Pstat(Ω)
+    NodesDict[:exits]     = exitpoints(G,Ω) .+ rand()*eps()
 
-    Pendp = [a,b]
-    Pexit = exitpoints(G,Ω)
-    Pstat = get_Pstat(Ω)
-   
-    SDpts = ComplexF64.([filter_endpts(a,b,Ω); Pexit])
-    # get entrance and valley points
-    # Pentr, Dict_entrance, Valleys, Dict_valleys  = tracing_contours(G, SDpts, Ω) 
-    γ_to_entrance, γ_to_valley = tracing_contours(G, SDpts, Ω) 
+    # trace all possible SD contours
+    aδ, bδ = NodesDict[:endpoint]
+    endpoints_outside_Ω = ComplexF64.([isinΩ(Ω,a) ? [] : aδ; isinΩ(Ω,b) ? [] : bδ])
+    SD_contours_from = [endpoints_outside_Ω; NodesDict[:exits]]
 
-    Valleys = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
-    Pentr = [to(γ) for γ in γ_to_entrance]
+    γ_to_entrance, γ_to_valley = tracing_contours(G, SD_contours_from, Ω; δODE, δcoarse) 
+    # @show [[at(γ), to(γ)] for γ in γ_to_valley]
 
-    all_nodes = [z for z in [Pexit; [a,b]; Pentr; Valleys; Pstat]] 
-
-    plane_to_graph = Dict{ComplexF64, Int16}() # map complex plane points to graph vertices
-    for (i, z) in enumerate(all_nodes)
-        plane_to_graph[z] = i
+    NodesDict[:valleys]   = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
+    NodesDict[:entrances] = [to(γ) for γ in γ_to_entrance] 
+    
+    plane_to_graph = Dict{ComplexF64,Int16}() # map complex plane points to graph vertices
+    i = 0
+    for key in keys(NodesDict)
+        for z in NodesDict[key]
+            i += 1
+            plane_to_graph[z] = i
+        end
     end
 
-    nvertices = length(plane_to_graph)
-    ContourGraph = SimpleGraph(nvertices)
+    ContourGraph = SimpleGraph(length(plane_to_graph))
     EdgesList = Dict{Tuple{Int,Int}, ComplexContour}()
 
     # Part 1: create edges between nodes inside the same ball.
-    pts = ComplexF64.([Pexit; Pendp; Pentr; Pstat])
+    pts = [
+        NodesDict[:exits]; NodesDict[:endpoint]; NodesDict[:entrances]; NodesDict[:statpoint]
+    ]
     connect_inside_Ω!(pts, Ω, ContourGraph, plane_to_graph, EdgesList)
 
     # Part 2: create edges between stationary points with overlapping balls
@@ -44,23 +53,10 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     connect_ball_to_valleyyorentrance!(γ_to_entrance, ContourGraph, plane_to_graph, EdgesList)
     connect_ball_to_valleyyorentrance!(γ_to_valley, ContourGraph, plane_to_graph, EdgesList)
     
-    MetaDict = Dict{Symbol, Vector{ComplexF64}}() # useful to plot the graph
-    MetaDict[:valleys]   = Valleys
-    MetaDict[:entrances] = Pentr
-    MetaDict[:exits]     = Pexit
-    MetaDict[:statpoint] = Pstat
-    MetaDict[:endpoint]  = Pendp
-
-    return ContourGraph, plane_to_graph, MetaDict, EdgesList
+    return ContourGraph, plane_to_graph, NodesDict, EdgesList
 end
 
-""" Deal with endpoints 
-"""
 
-function filter_endpts(a,b, Ω)
-    # a,b are (finite) endpoints
-    ComplexF64.([isinΩ(Ω,a) ? [] : a; isinΩ(Ω,b) ? [] : b])
-end
 
 """ create connections inside graph """
 
@@ -137,35 +133,36 @@ end
 """
     Plot graph
 """
-function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, z_to_G::Dict, metadict :: Dict)
+function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, z_to_G::Dict, NodesDict :: Dict)
     
+    n = sum([length(NodesDict[k]) for k in keys(NodesDict)] )
     # Place graph nodes in the complex plane
-    list = Vector(undef, length(z_to_G))
+    list = Vector(undef, n)
 
     # Add colors to nodes
     # Create a "Vector of colors" to pass an input to graph
-    colors = Vector{Any}(undef, length(z_to_G))
-    for z in metadict[:statpoint]
+    colors = Vector{Any}(undef, n)
+    for z in NodesDict[:statpoint]
         i = z_to_G[z]
         colors[i] = colorant"red"
         list[i]   = reim(z)
     end
-    for z in metadict[:endpoint]
+    for z in NodesDict[:endpoint]
         i = z_to_G[z]
         colors[i] = colorant"orange"
         list[i]   = reim(z)
     end
-    for z in metadict[:exits]
+    for z in NodesDict[:exits]
         i = z_to_G[z]
         colors[i] = colorant"purple"
         list[i]   = reim(z)
     end
-    for z in metadict[:valleys]
+    for z in NodesDict[:valleys]
         i = z_to_G[z]
         colors[i] = colorant"blue"
         list[i]   = reim(2 * z)
     end
-    for z in metadict[:entrances]
+    for z in NodesDict[:entrances]
         i = z_to_G[z]
         colors[i] = colorant"green"
         list[i]   = reim(z)

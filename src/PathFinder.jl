@@ -16,8 +16,8 @@ include("root_finding.jl")
 include("Balls.jl")
 include("Contours.jl")
 include("ContourGraph.jl")
-include("PlotGeneration.jl")
 include("quadrature.jl")
+include("PlotGeneration.jl")
 
 # include("special_cases.jl")
 
@@ -28,7 +28,8 @@ PolynomialPhaseFunction,
 integrate_nsp,
 plot_quasiSDdeformation,
 QuasiSDcontour,
-NonOscillatoryRegion
+NonOscillatoryRegion,
+integrate
 # specialcases
 # MonomialPhaseFunction
 

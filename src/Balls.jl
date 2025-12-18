@@ -9,10 +9,10 @@ struct NonOscillatoryBall
 end
 centre_and_radius(B::NonOscillatoryBall) = (B.c, B.r)
 
-function ballradius(G::PolynomialPhaseFunction, ξ, Cω; Nball = 16)
-    r = zeros(Nball)
-    for n = 1:Nball
-        ray(r) = ξ + r*cispi(2*n/Nball)
+function ballradius(G::PolynomialPhaseFunction, ξ, Cω; Nrays)
+    r = zeros(Nrays)
+    for n = 1:Nrays
+        ray(r) = ξ + r*cispi(2*n/Nrays)
         un(r) = abs(evalphase(G, ray(r)) - evalphase(G, ξ))^2 - Cω^2
         r[n] = minimum(find_zeros(un, 0,  10)) # shoudl we give some other value?
     end
@@ -30,12 +30,12 @@ end
     Returns a Vector of NonOscillatoryBalls representing the non-oscillatory region.
 """
 
-function NonOscillatoryRegion(G::AbstractPhaseFunction, Cball, ω; δball = 1.0)
-    δball = 1e-3 / 2 / max(degree(G)-2,1)
+function NonOscillatoryRegion(G::AbstractPhaseFunction, ω; Cball, δball, Nrays)
+    # δball = 1e-3 / 2 / max(degree(G)-2,1)
     Ω = Vector{NonOscillatoryBall}()
     # Assign a NonOscillatoryBall to each stationary point
     for ξ in G.ξ
-        r = ballradius(G, ξ, Cball/ω)
+        r = ballradius(G, ξ, Cball/ω; Nrays)
         push!(Ω, NonOscillatoryBall(ξ, r)) 
     end
 

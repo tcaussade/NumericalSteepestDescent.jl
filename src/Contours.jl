@@ -42,7 +42,7 @@ to(γ::ComplexContour) = γ.destination
     Goal is determining if the contour goes to a valley or into the non-oscillatory region.
 """
 
-function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE = 1e-1, δcoarse = 1e-2)
+function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
     Pstat = get_Pstat(Ω)
     p1 = zero(ComplexF64)
     h1 = η # initial conditions 
@@ -115,7 +115,8 @@ end
 
 """ Store traced contours in dictionary """
 
-function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall})
+function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall};
+                          δODE, δcoarse)
     # entrances     = Vector{ComplexF64}()
     # valley_points = Vector{ComplexF64}()
     # η_to_entrance = Dict{ComplexF64, ComplexF64}()
@@ -124,7 +125,7 @@ function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscill
     ve = Vector{ComplexContour}()
     vv = Vector{ComplexContour}()
     for η in points
-        h_end, status = tracecontour_coarse(G, η, Ω)
+        h_end, status = tracecontour_coarse(G, η, Ω; δODE, δcoarse)
         # @show h_end, status, nmax
         if status == :entrance
             # push!(entrances, h_end) # (h_end, status))
