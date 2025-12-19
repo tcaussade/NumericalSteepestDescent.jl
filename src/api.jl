@@ -37,12 +37,12 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
             γ = EdgesList[(i1,i2)]
             push!(γtot, γ)
             x,w = choose_quadrature(γ)
-            #S += integrate(γ, f, G, ω, x, w; δfine)
+            S += integrate(γ, f, G, ω, x, w; δfine)
         else
             γ = EdgesList[(i2,i1)] # the contour is traversed in the opposite direction
             push!(γtot, γ)
             x,w = choose_quadrature(γ)    
-            #S -= integrate(γ, f, G, ω, x, w; δfine)
+            S -= integrate(γ, f, G, ω, x, w; δfine)
         end
     end
 

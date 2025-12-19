@@ -1,7 +1,7 @@
 using PathFinder
 # using Polynomials
 
-ω     = 4.0
+ω     = 2.0
 Cball = 2π
 f(z) = 1.0
 
@@ -14,27 +14,20 @@ Phase = PolynomialPhaseFunction(example1)
 
 # automated version
 a,b = (-1,1) # specify (finite) endpoints
-val = PathFinder.integrate(a,b,f,Phase,ω)
-
+val, figs = integrate(a,b,f,Phase,ω; 
+                      plot_graph = false,
+                      plot_sd = true)
+figs[2]
 
 # Quasi-SD contour deformation
 
-Ω = NonOscillatoryRegion(Phase, Cball, ω)
+# Ω = NonOscillatoryRegion(Phase, Cball, ω)
 
-Pexit = PathFinder.exitpoints(Phase,Ω)
-Pstat = PathFinder.get_Pstat(Ω)
+# Pexit = PathFinder.exitpoints(Phase,Ω)
+# Pstat = PathFinder.get_Pstat(Ω)
 
-graph, dict, metadict, edgeslist = PathFinder.ContourGraph(Phase, a,b, Ω)
-PathFinder.plot_ContourGraph(graph,Ω,dict, metadict)
-# there is a bug when endpoiints coincide with stationary points
-
-# get shortest path
-path = a_star(graph, dict[a], dict[b])
-path[1].src, path[1].dst # source and destination of edge 1
-
-
-# plot contour deformation
-plot_quasiSDdeformation(Monomial, γ, Ω)
-
+# graph, dict, metadict, edgeslist = PathFinder.ContourGraph(Phase, a,b, Ω)
+# PathFinder.plot_ContourGraph(graph,Ω,dict, metadict)
+# # there is a bug when endpoiints coincide with stationary points
 
 
