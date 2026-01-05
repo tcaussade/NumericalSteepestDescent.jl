@@ -5,13 +5,13 @@
     We are using direct quadrature. Could be improved to adaptive quadrature
 """
 
-function integrate(γ::ComplexContour, f, G, ω, x, w; δfine)
+function integrate(γ::ComplexContour, f, G, ω, x, w; δfine, δquad)
     if contour_type(γ) == :finite   
         return integrate_finite(γ, f, G, ω, x, w)
     elseif contour_type(γ) == :infiniteSD
         return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
     elseif contour_type(γ) == :finiteSD
-        return integrate_finiteSD(γ, f, G, ω, x, w; δfine)
+        return integrate_finiteSD(γ, f, G, ω, x, w; δfine, δquad)
     end
 end
 
@@ -67,24 +67,23 @@ end
     We use (possibly truncated) Gauss-Legendre for finite SD contours
 """
 
-function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w)
+function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; 
+                            δfine, δquad)
     # evaluate integral along finite SD path at η going to Ω
     g(z)  = evalphase(G, z)
     dg(z) = evalphase_derivative(G, z)
     η = at(γ)
-    h = complexified_nodes(η, g, dg, x/ω)
-    dh = im ./ dg.(h)
-    cis(ω*g(η))/ω * dot(w, f.(h).*dh)    
-end
+    umax = im * (g(η) - g(to(γ))) # pre-image of destination point
+    @assert abs(imag(umax)) < 1e-15
 
-function eval_finiteSD(f::Function, G::AbstractPhaseFunction, γ::ComplexContour, ω, x, w)
-    # evaluate integral along finite SD path from a to b
-    _check_contour_type(γ, :finiteSD)
-    g(z) = evalphase(G, z)
-    h = γ.parametrisation
-    η = h(0)
-    @warn "Finite SD path evaluation not implemented yet"
-    return 
+    # possible truncation
+    M  = 1.0 # pending: should be M = max(cis(ω * g(η))) for all η ∈ {Pstat, Pendp, Pexit}
+    P = min(-log(δquad * M / abs(cis(ω*g(η)))), real(umax)*ω)
+
+    p = trace_finite(0,P)
+    h  = points_on_SDcontour(η, g, dg, p.(x)/ω; δfine)
+    dh = im ./ dg.(h)
+    return cis(ω*g(η))/ω * dot(w, f.(h).*dh.*exp.(-p.(x))) * 0.5*P   
 end
 
 

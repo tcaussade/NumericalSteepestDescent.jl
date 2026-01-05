@@ -4,7 +4,6 @@
 
 function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω)
 
-    @show γ
     resolution = 400
 
     xmin = -2
@@ -15,9 +14,7 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     y = range(xmin,xmax, resolution)
     θ = range(0, 2π, resolution)
 
-    u = collect(range(0,200,resolution)) # used for SD contours  
-    # t = collect(range(-1,1,2))          # used for finite contours
-
+    u = collect(range(0,100,resolution)) # used for SD contours  
 
     fig = Figure()
     ax = Axis(fig[1, 1], title = "Quasi-SD deformation", aspect = DataAspect(),
@@ -28,7 +25,7 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     X = [x for x in x for _ in y]
     Y = [y for _ in x for y in y]
     Z = [evalphase(G, x+im*y) for x in x for y in y]
-    color_lim = maximum(imag(Z)) / 10
+    color_lim = maximum(imag(Z)) / 2
     levelset = contourf!(ax,X,Y,-imag.(Z); levels = range(-color_lim, color_lim, 20), 
                          colormap = :balance, extendlow = :auto, extendhigh = :auto)
     # contour!(ax,X,Y,real.(Z); levels = 11, color = :black, linewidth = 1, linestyle = :dash)

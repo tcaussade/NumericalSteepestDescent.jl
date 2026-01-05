@@ -1,5 +1,12 @@
 module PathFinder
 
+"""
+    This package provides tools for numerical integration of highly oscillatory integrals 
+    using contour deformation based on the method of numerical stationary phase.
+
+    For a MATLAB version, see https://github.com/AndrewGibbs/PathFinder
+"""
+
 using FastGaussQuadrature
 using Polynomials
 using Roots
@@ -19,8 +26,6 @@ include("ContourGraph.jl")
 include("quadrature.jl")
 include("PlotGeneration.jl")
 
-# include("special_cases.jl")
-
 include("api.jl")
 
 export 
@@ -30,9 +35,5 @@ plot_quasiSDdeformation,
 QuasiSDcontour,
 NonOscillatoryRegion,
 integrate
-# specialcases
-# MonomialPhaseFunction
-
-
 
 end # module NumericalStationaryPhase

@@ -10,8 +10,8 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         δball = 1e-3,  # determine when overlapping balls should be amalgamated
         δODE  = 0.1,   # local step size in ODE solver for SD path tracking
         δcoarse= 0.01, # corrector tolerance in SD tracking
-        δfine = 1e-13, # tolerance to compute complexified weights and nodes
-        δquad = 1e-16, # used to determine when a contour should be dropped
+        δfine = 1e-13, # tolerance to compute weights and nodes along SD contours
+        δquad = 1e-16, # used for truncation and to determine when a contour should be dropped
 
         # produce plots 
         plot_graph = false, # if true, returns the graph plot
@@ -37,12 +37,12 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
             γ = EdgesList[(i1,i2)]
             push!(γtot, γ)
             x,w = choose_quadrature(γ)
-            S += integrate(γ, f, G, ω, x, w; δfine)
+            S += integrate(γ, f, G, ω, x, w; δfine, δquad)
         else
             γ = EdgesList[(i2,i1)] # the contour is traversed in the opposite direction
             push!(γtot, γ)
             x,w = choose_quadrature(γ)    
-            S -= integrate(γ, f, G, ω, x, w; δfine)
+            S -= integrate(γ, f, G, ω, x, w; δfine, δquad)
         end
     end
 
