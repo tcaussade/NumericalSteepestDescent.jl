@@ -28,6 +28,9 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     Ω = NonOscillatoryRegion(G, ω; Cball, δball,  Nrays)
 
     CG, CtoG, NodesDict, EdgesList = ContourGraph(G, a, b, Ω; δODE, δcoarse)
+    # CG is ContourGraph, CtoG maps complex plane points to graph vertices
+    # NodesDict contains the different types of nodes in the graph
+    # EdgesList maps graph edges to ComplexContours
     a,b = NodesDict[:endpoint]
     sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
 
@@ -52,10 +55,19 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         end
     end
 
-    # @show γtot
+    # @assert !isempty(γtot) "The graph is not connected between endpoints!"
+
+    γall = Vector{ComplexContour}() # contains all traced contours
+    for ηi in NodesDict[:exits] 
+        for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
+            i = CtoG[ηi]
+            j = CtoG[ηj]
+            if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
+        end
+    end
     
     fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
-    fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω; infcontour) : nothing
+    fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω, γall; infcontour) : nothing
     figs = [fig1, fig2]
 
     return S, figs

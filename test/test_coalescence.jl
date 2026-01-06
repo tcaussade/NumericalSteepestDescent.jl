@@ -9,7 +9,7 @@ function coalescence_test(numQuadPts, showText=false)
     maxErr = 0.0
     a,b = (-1.0, 1.0)
     freqRange = [10.0, 100.0, 1000.0]
-    rArray = 10 .^ range(-4, 0, length=4) # when r = 0 there is coalescence
+    rArray = 10 .^ range(-4, 0, length=20) # when r = 0 there is coalescence
     for freq in freqRange
         if showText
             println("freq=$freq")

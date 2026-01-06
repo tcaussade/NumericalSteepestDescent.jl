@@ -10,16 +10,16 @@ Phase = PolynomialPhaseFunction(-im*[0,-x,0,1/3])
 
 # Phase = PolynomialPhaseFunction([0,0,0,0,1])
 
-# example1 = [3,5,6,2,9,5,1,4,1,3]
-# Phase = PolynomialPhaseFunction(example1) 
+example1 = [3,5,6,2,9,5,1,4,1,3]
+Phase = PolynomialPhaseFunction(example1) 
 
 # Phase = PolynomialPhaseFunction([0,0,1])
 
 # automated version
-# a,b = (-1-im,2+2im) # specify (finite) endpoints
+a,b = (-1-im,2+2im) # specify (finite) endpoints
 a,b = (-π/3, π/3) # specify (infinite) endpoints 
 val, figs = integrate(a,b,f,Phase,ω; 
-                      infcontour = [true,true],
+                    #   infcontour = [true,true],
                       plot_graph = true,
                       plot_sd = true)
 

@@ -2,7 +2,7 @@
     Functionalities to plot the quasi-SD contour deformation
 """
 
-function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω;
+function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour)
 
     resolution = 400
@@ -16,7 +16,7 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     y = range(xmin,xmax, resolution)
     θ = range(0, 2π, resolution)
 
-    u = collect(range(0,100,resolution)) # used for SD contours  
+    u = collect(range(0,50,resolution)) # used for SD contours  
 
     fig = Figure()
     ax = Axis(fig[1, 1], title = "Quasi-SD deformation", aspect = DataAspect(),
@@ -39,18 +39,20 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
         lines!(ax,reim.(zb), color = :gray)
     end
 
-    # add contours
-    for c in γ
+    # add contours of the quasi-SD deformation
+    for c in γall
+        lw =  c in γ ? 3 : 1 # use wider line for contours on shortest path
+        
         if contour_type(c) == :infiniteSD
-            hη = points_on_SDcontour(at(c), G.p, G.dp, u; δfine = 1e-2)
-            lines!(ax, reim.(hη); color = :blue, linewidth = 2)
+            hη = points_on_SDcontour(at(c), G.p, G.dp, u; δfine = 1e-6)
+            lines!(ax, reim.(hη); color = :blue, linewidth = lw)
         elseif contour_type(c) == :finite
-            lines!(reim.([at(c), to(c)]); color = :red, linewidth = 2)
+            lines!(reim.([at(c), to(c)]); color = :red, linewidth = 3)
         elseif contour_type(c) == :finiteSD
             U = im*(G.p(at(c)) - G.p(to(c)))
             u_tmp = u * U/100
-            hη = points_on_SDcontour(at(c), G.p, G.dp, u_tmp; δfine = 1e-2)
-            lines!(ax, reim.(hη); color = :green, linewidth = 2)
+            hη = points_on_SDcontour(at(c), G.p, G.dp, u_tmp; δfine = 1e-6)
+            lines!(ax, reim.(hη); color = :green, linewidth = lw)
         end
     end
 

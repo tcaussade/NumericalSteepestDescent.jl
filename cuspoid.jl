@@ -21,9 +21,9 @@ end
 fig = Figure(size = (500,400),)
 ax = Axis(fig[1, 1], title = "Pearcey catastrophe integral", 
             xlabel = "Re", ylabel = "Im")
-            #xticks = -xmin:1:xmax, yticks = -xmin:1:)
-levelset = contourf!(ax,X,Y,Z; levels = 20, #levels = range(0.0, 2.5, 200), 
-                        colormap = :hot, extendlow = :auto, extendhigh = :auto)
+levelset = contourf!(ax,X,Y,Z; levels = 200, 
+                        colormap = :jet, # colormap = :hot
+                        extendlow = :auto, extendhigh = :auto)
 Colorbar(fig[1,2], levelset)
-hidedecorations!(ax, grid = false)
+# hidedecorations!(ax, grid = false)
 fig

@@ -11,8 +11,8 @@ using FastGaussQuadrature
 using Polynomials
 using Roots
 using LinearAlgebra
-using CairoMakie
-using CairoMakie.Colors
+using WGLMakie
+using WGLMakie.Colors
 using Graphs
 using GraphMakie
 

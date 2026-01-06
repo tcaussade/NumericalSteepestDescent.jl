@@ -13,9 +13,9 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     NodesDict = Dict{Symbol, Vector{ComplexF64}}()
     
     # add small perturbation to distinguish between nodes when they are close
-    NodesDict[:endpoint]  = [a,b]        .+ rand()*eps()
-    NodesDict[:statpoint] = get_Pstat(Ω)
-    NodesDict[:exits]     = exitpoints(G,Ω) .+ rand()*eps()
+    @show NodesDict[:endpoint]  = [a,b]        .+ rand()*eps()
+    @show NodesDict[:statpoint] = get_Pstat(Ω)
+    @show NodesDict[:exits]     = exitpoints(G,Ω) #.+ rand()*eps()
 
     # trace all possible SD contours
     aδ, bδ = NodesDict[:endpoint]
@@ -23,11 +23,11 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     SD_contours_from = [endpoints_outside_Ω; NodesDict[:exits]]
 
     γ_to_entrance, γ_to_valley = tracing_contours(G, SD_contours_from, Ω; δODE, δcoarse) 
-    # @show [[at(γ), to(γ)] for γ in γ_to_valley]
+    @show [[at(γ), to(γ)] for γ in γ_to_valley]
 
-    NodesDict[:valleys]   = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
-    NodesDict[:entrances] = [to(γ) for γ in γ_to_entrance] 
-    
+    @show NodesDict[:valleys]   = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
+    @show NodesDict[:entrances] = [to(γ) for γ in γ_to_entrance] 
+
     plane_to_graph = Dict{ComplexF64,Int16}() # map complex plane points to graph vertices
     i = 0
     for key in keys(NodesDict)

@@ -7,9 +7,9 @@
 
 function integrate(γ::ComplexContour, f, G, ω, x, w; δfine, δquad)
     # determine is contribution from contour γ is significant
-    # if abs(cis(ω*evalphase(G, at(γ)))) < δquad
-    #      return 0.0 + 0.0im
-    # end
+    if abs(cis(ω*evalphase(G, at(γ)))) < δquad
+         return 0.0 + 0.0im
+    end
 
     # choose appropriate integration method based on contour type
     if contour_type(γ) == :finite   

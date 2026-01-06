@@ -93,7 +93,7 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
         tall = roots_trig_polynomial(dtrig_cos, dtrig_sin)
         t = Vector{Float64}()
         for ti in tall # keep only real roots 
-            if abs(imag(ti)) < 1e-12 
+            if abs(imag(ti)) < 1e-1 # anything with larger imag part is dicarded
                 push!(t, real(ti))
             end
         end
@@ -107,8 +107,8 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
         
         # check if exit points are already in Ω (other non-oscillatory balls)
         exits = [c+ r*cis(t) for t in minima]
-        # [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
-        [push!(Pexit, z) for z in exits]
+        [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
+        # [push!(Pexit, z) for z in exits]
     end
     return Pexit
 end
