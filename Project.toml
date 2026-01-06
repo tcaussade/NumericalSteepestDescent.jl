@@ -4,19 +4,19 @@ authors = ["tcaussade "]
 version = "0.1.0"
 
 [deps]
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
-CairoMakie = "0.15.6"
 FastGaussQuadrature = "1.1.0"
 GraphMakie = "0.6.3"
 Graphs = "1.13.1"
 LinearAlgebra = "1.11.0"
 Polynomials = "4.1.0"
 Roots = "2.2.10"
+WGLMakie = "0.13.6"

@@ -1,34 +1,35 @@
 using PathFinder
 # using Polynomials
 
-ω     = 40.0
+ω    = 1.0
 f(z) = 1.0
 
 
-acubic = -0.2
-Phase = PolynomialPhaseFunction([0,-3*acubic,0,1])
+x = -1.1
+Phase = PolynomialPhaseFunction(-im*[0,-x,0,1/3])
 
-example1 = [3,5,6,2,9,5,1,4,1,3]
-Phase = PolynomialPhaseFunction(example1) 
+# Phase = PolynomialPhaseFunction([0,0,0,0,1])
+
+# example1 = [3,5,6,2,9,5,1,4,1,3]
+# Phase = PolynomialPhaseFunction(example1) 
 
 # Phase = PolynomialPhaseFunction([0,0,1])
 
 # automated version
-a,b = (0,1) # specify (finite) endpoints
+# a,b = (-1-im,2+2im) # specify (finite) endpoints
+a,b = (-π/3, π/3) # specify (infinite) endpoints 
 val, figs = integrate(a,b,f,Phase,ω; 
-                      plot_graph = false,
-                      plot_sd = false)
+                      infcontour = [true,true],
+                      plot_graph = true,
+                      plot_sd = true)
+
+figs[1]
 figs[2]
 
-# Quasi-SD contour deformation
-
-# Ω = NonOscillatoryRegion(Phase, Cball, ω)
-
-# Pexit = PathFinder.exitpoints(Phase,Ω)
-# Pstat = PathFinder.get_Pstat(Ω)
-
-# graph, dict, metadict, edgeslist = PathFinder.ContourGraph(Phase, a,b, Ω)
-# PathFinder.plot_ContourGraph(graph,Ω,dict, metadict)
-# # there is a bug when endpoiints coincide with stationary points
-
-
+P = 6
+r = 1.0
+coeffs = [0.0; -r^P; zeros(P-1); 1.0/(P+1)]  
+Phase = PolynomialPhaseFunction(coeffs)
+_,figs = integrate(-1,1,f,Phase,100.0; plot_graph = true, plot_sd = false)
+figs[2]
+figs[1]

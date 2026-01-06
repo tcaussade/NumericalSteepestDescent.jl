@@ -62,19 +62,18 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
 
         # determine if we have found entrance point or a valley
         if isinΩ(Ω, h1)    
-            @info "Reached Ω from η1=$η to η2=$h1 in $n steps."
+            # @info "Reached Ω from η1=$η to η2=$h1 in $n steps."
             # STORE AT THIS MOMENT WHATEVER WE NEED FOR LATER!!
             return (h1, :entrance)
 
-        elseif isinValley(G,h1) # define some threshold for valley
-            # if doublecheck_valley(G,h1)
-            v = goes_to_valley(G, angle(h1))
-            if v isa Nothing continue end
-            # @show angle(h1)/π, v/π
-            hvalley = G.rStar * cis(v)
-            # @show v, angle(h1)
-                @info "Reached valley region at $(v/π)π from η=$η in $n steps."
-            return (hvalley, :valley)
+        else
+            bool, v = isinValley(G,h1)
+            if bool
+                hvalley = (G.rStar + 10) * cis(v) 
+                # THIS IS A PATCH FIX TO PUT THE VALLEY OUTSIDE NonOscillatoryRegion!!
+                # @info "Reached valley region at $(v/π)π from η=$η in $n steps."
+                return (hvalley, :valley)
+            end
         end
     end
 end
@@ -82,7 +81,7 @@ end
 function isinΩ(Ω::Vector{NonOscillatoryBall}, z)
     for Ball in Ω
         c, r = centre_and_radius(Ball)
-        if abs(z - c) < r
+        if abs(z - c) ≤ r
             return true
         end
     end
@@ -92,10 +91,14 @@ end
 function isinValley(G::AbstractPhaseFunction, z)
     # determine if z is in a valley region
     if abs(z) > G.rStar
-
-        return true
+        v = goes_to_valley(G, angle(z))
+        if v isa Nothing # not in valley angular region - keep tracing
+            return false, nothing
+        end
+        return true, v # return valley angle
+        
     end
-    return false
+    return false, nothing
 end
 
 
@@ -106,7 +109,7 @@ function goes_to_valley(G::AbstractPhaseFunction, θ)
     for v in valleys
         dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
        # @show dist, θ/π, v/π
-        if dist < π/(2J)
+        if dist ≤ π/(2J)
             #@show v/π
             return v
         end

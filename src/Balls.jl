@@ -30,7 +30,8 @@ end
     Returns a Vector of NonOscillatoryBalls representing the non-oscillatory region.
 """
 
-function NonOscillatoryRegion(G::AbstractPhaseFunction, ω; Cball, δball, Nrays)
+function NonOscillatoryRegion(G::AbstractPhaseFunction, ω; 
+                              Cball, δball, Nrays)
     # δball = 1e-3 / 2 / max(degree(G)-2,1)
     Ω = Vector{NonOscillatoryBall}()
     # Assign a NonOscillatoryBall to each stationary point
@@ -39,8 +40,9 @@ function NonOscillatoryRegion(G::AbstractPhaseFunction, ω; Cball, δball, Nrays
         push!(Ω, NonOscillatoryBall(ξ, r)) 
     end
 
+    Ω = unique!(Ω) # remove duplicate balls (if any)
     # Remove balls with significant overlap
-    n = length(G.ξ)
+    n = length(Ω)
     idx = Int[]
     for i = 1:n
         ci,ri = centre_and_radius(Ω[i])
@@ -52,7 +54,7 @@ function NonOscillatoryRegion(G::AbstractPhaseFunction, ω; Cball, δball, Nrays
             end
         end
     end
-    deleteat!(Ω, idx)
+    deleteat!(Ω, sort(unique!(idx)))
     return Ω
 end
 
@@ -105,7 +107,8 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
         
         # check if exit points are already in Ω (other non-oscillatory balls)
         exits = [c+ r*cis(t) for t in minima]
-        [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
+        # [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
+        [push!(Pexit, z) for z in exits]
     end
     return Pexit
 end

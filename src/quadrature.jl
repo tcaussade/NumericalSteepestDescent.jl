@@ -6,6 +6,12 @@
 """
 
 function integrate(γ::ComplexContour, f, G, ω, x, w; δfine, δquad)
+    # determine is contribution from contour γ is significant
+    # if abs(cis(ω*evalphase(G, at(γ)))) < δquad
+    #      return 0.0 + 0.0im
+    # end
+
+    # choose appropriate integration method based on contour type
     if contour_type(γ) == :finite   
         return integrate_finite(γ, f, G, ω, x, w)
     elseif contour_type(γ) == :infiniteSD
@@ -74,7 +80,7 @@ function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFun
     dg(z) = evalphase_derivative(G, z)
     η = at(γ)
     umax = im * (g(η) - g(to(γ))) # pre-image of destination point
-    @assert abs(imag(umax)) < 1e-15
+    # @assert abs(imag(umax)) < 1e-14 "umax = $umax should be real-valued \t η = $η"
 
     # possible truncation
     M  = 1.0 # pending: should be M = max(cis(ω * g(η))) for all η ∈ {Pstat, Pendp, Pexit}

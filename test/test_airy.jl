@@ -1,6 +1,11 @@
 using Test
 using SpecialFunctions
 
+"""
+    Test the Airy function implementation against Julia's SpecialFunctions.airyai
+    See Section 5.2 of the PathFinder paper for details.
+"""
+
 function airy_test(nQuadPts, outputText=false)
     nxPts = 100
     xArray = range(-5, 5, length=nxPts)
@@ -13,13 +18,8 @@ function airy_test(nQuadPts, outputText=false)
             println("x=$x")
         end
         airyJulia = airyai(x)
-        coeffs = -1im * [1/3, 0, -x, 0]
-        G = PolynomialPhaseFunction(coeffs)
-        f = x -> 1.0
-        ω = 1.0
-        a = -π/3
-        b = π/3
-        integral = integrate(a, b, f, G, ω; N=nQuadPts)[1]
+        G = PolynomialPhaseFunction(-1im * [0, -x, 0, 1/3])
+        integral,_ = integrate(-π/3, π/3, x -> 1.0, G, 1.0; N=nQuadPts, infcontour=[true,true])
         airyPathFinder = (1/(2im*π)) * integral
         relErr = abs(airyJulia - airyPathFinder) / abs(airyJulia)
         if outputText

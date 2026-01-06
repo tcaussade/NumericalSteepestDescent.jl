@@ -2,14 +2,16 @@
     Functionalities to plot the quasi-SD contour deformation
 """
 
-function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω)
+function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω;
+        infcontour)
 
     resolution = 400
 
-    xmin = -2
-    xmax = +2
-    ymin = -2
-    ymax = +2
+    set = 10
+    xmin = -set
+    xmax = +set
+    ymin = -set
+    ymax = +set
     x = range(xmin,xmax, resolution)
     y = range(xmin,xmax, resolution)
     θ = range(0, 2π, resolution)
@@ -46,7 +48,7 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
             lines!(reim.([at(c), to(c)]); color = :red, linewidth = 2)
         elseif contour_type(c) == :finiteSD
             U = im*(G.p(at(c)) - G.p(to(c)))
-            u_tmp = u * U/20
+            u_tmp = u * U/100
             hη = points_on_SDcontour(at(c), G.p, G.dp, u_tmp; δfine = 1e-2)
             lines!(ax, reim.(hη); color = :green, linewidth = 2)
         end
@@ -54,7 +56,9 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
 
     # add stationary points and endpoints
     scatter!(ax, reim.(G.ξ), color = :red)
-    scatter!(ax, reim.([at(γ[1]), at(γ[end])]), color = "black")
+    !infcontour[1] ? scatter!(ax, reim.([at(γ[1])]), color = "black") : nothing
+    !infcontour[2] ? scatter!(ax, reim.([at(γ[end])]), color = "black") : nothing
+    # scatter!(ax, reim.([at(γ[1]), at(γ[end])]), color = "black")
     limits!(xmin,xmax,ymin,ymax)
     Colorbar(fig[1,2], levelset)
     return fig

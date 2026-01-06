@@ -1,17 +1,20 @@
 using Test
 using QuadGK
 
+"""
+    See Section 5.4 of the PathFinder paper for details.
+"""
+
 function coalescence_test(numQuadPts, showText=false)
     maxErr = 0.0
-    a = -1.0
-    b = 1.0
+    a,b = (-1.0, 1.0)
     freqRange = [10.0, 100.0, 1000.0]
-    rArray = 10 .^ range(-4, 0, length=20)
+    rArray = 10 .^ range(-4, 0, length=4) # when r = 0 there is coalescence
     for freq in freqRange
         if showText
             println("freq=$freq")
         end
-        for P in [2,4,6]
+        for P in [2,4,6] # order of stationary point
             if showText
                 println("\tdegree=$P")
             end
@@ -19,12 +22,11 @@ function coalescence_test(numQuadPts, showText=false)
                 if showText
                     println("\t\tr=$r")
                 end
-                poly_coeffs = [1/(P+1); zeros(P-1); -r^P; 0]
+                poly_coeffs = [0.0; -r^P; zeros(P-1); 1.0/(P+1)]  
                 G = PolynomialPhaseFunction(poly_coeffs)
-                f = x -> 1.0
-                I_PF = integrate(a, b, f, G, freq; N=numQuadPts)[1]
-                integrand(x) = exp(1im * freq * Polynomials.polyval(Polynomials.Polynomial(poly_coeffs), x))
-                I_ML = quadgk(integrand, a, b)[1]
+                I_PF,_ = integrate(a, b, z -> 1.0, G, freq; N=numQuadPts) 
+                integrand(x) = exp(1im * freq * PathFinder.evalphase(G,x))
+                I_ML,_ = quadgk(integrand, a, b)
                 Ierr = abs(I_PF - I_ML) / abs(I_ML)
                 if showText
                     println("\t\trel err=$Ierr")
@@ -41,3 +43,5 @@ end
     @test coalescence_test(75) < 1e-12
     @test coalescence_test(101) < 1e-12
 end
+
+coalescence_test(25, true)

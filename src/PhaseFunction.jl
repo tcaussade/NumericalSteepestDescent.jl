@@ -25,6 +25,7 @@ struct PolynomialPhaseFunction{T} <: AbstractPhaseFunction # arbitrary polynomia
     v   :: Vector{Float64} # angles of each valley
     rStar :: Float64
     function PolynomialPhaseFunction(coefs::Vector{T}) where T
+        @assert coefs[end] != 0 "Leading coefficient must be non-zero"
         p   = Polynomial(coefs)
         dp  = derivative(p, 1)
         ξ   = roots(dp)

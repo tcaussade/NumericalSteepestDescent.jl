@@ -160,7 +160,7 @@ function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, z_to_G::Dict, NodesDi
     for z in NodesDict[:valleys]
         i = z_to_G[z]
         colors[i] = colorant"blue"
-        list[i]   = reim(2 * z)
+        list[i]   = reim(z/5)
     end
     for z in NodesDict[:entrances]
         i = z_to_G[z]

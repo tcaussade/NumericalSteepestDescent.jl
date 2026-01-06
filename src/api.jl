@@ -13,11 +13,17 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         δfine = 1e-13, # tolerance to compute weights and nodes along SD contours
         δquad = 1e-16, # used for truncation and to determine when a contour should be dropped
 
+        infcontour = [false, false], # specify if endpoints are at infinity
+        # quad = :gaussian, # specify quadrature type [:gaussian (default), :adaptive]   
+
         # produce plots 
         plot_graph = false, # if true, returns the graph plot
         plot_sd    = false, # if true, plots the chosen quasi-SD contour for evaluation
         )
-    # a,b are (finite) endpoints
+  
+    # place endpoints at infinity if specified
+    a = infcontour[1] ? endpoint_at_valley!(G, a) : a
+    b = infcontour[2] ? endpoint_at_valley!(G, b) : b
     
     Ω = NonOscillatoryRegion(G, ω; Cball, δball,  Nrays)
 
@@ -46,11 +52,21 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         end
     end
 
+    # @show γtot
+    
     fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
-    fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω) : nothing
+    fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω; infcontour) : nothing
     figs = [fig1, fig2]
 
     return S, figs
+end
+
+function endpoint_at_valley!(G::AbstractPhaseFunction, θ)
+    # place endpoint at valley if specified as endpoint at infinity
+    v = goes_to_valley(G, θ)
+    if v isa Nothing @warn "endpoint with θ=$(θ/π)π  is not in valley region" end
+    # THIS IS A PATCH FIX TO PUT THE VALLEY OUTSIDE NonOscillatoryRegion!!
+    return (G.rStar + 5) * cis(v) # place far away in valley direction
 end
 
 function choose_quadrature(γ)
