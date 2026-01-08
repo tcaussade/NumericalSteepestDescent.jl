@@ -43,5 +43,3 @@ end
     @test coalescence_test(75) < 1e-12
     @test coalescence_test(101) < 1e-12
 end
-
-coalescence_test(25, true)

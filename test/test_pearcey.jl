@@ -63,10 +63,6 @@ function pearcey_test(numQuadPts, outputText=false)
     end
     xArray = [-8, -6, -4, -2, 0, 2, 4, 6, 8]
     yArray = [0, 2, 4, 6, 8]
-    valleys = 2π * (1/4 .+ (1:4)/4)
-    a = valleys[2]
-    b = valleys[4]
-    freq = 1.0
     err = zeros(length(xArray), length(yArray))
     xCount = 0
     for x in xArray
@@ -80,10 +76,8 @@ function pearcey_test(numQuadPts, outputText=false)
             if outputText
                 println("\ty=$y")
             end
-            polyCoeffs = [1.0, 0.0, x, y, 0.0]
-            G = PolynomialPhaseFunction(polyCoeffs)
-            f = x -> 1.0
-            I_GHH = integrate(a, b, f, G, freq; N=numQuadPts)[1]
+            G = PolynomialPhaseFunction([0.0, y, x, 0.0, 1.0])
+            I_GHH,_ = integrate(π, 0.0, z -> 1.0, G, 1.0; N=numQuadPts, infcontour = [true true])
             I_CHK = kirk_pearcey_data(x, y)
             err[xCount, yCount] = abs(I_CHK - I_GHH) / abs(I_CHK)
             if outputText

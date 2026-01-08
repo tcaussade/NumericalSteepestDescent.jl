@@ -18,7 +18,8 @@ for (i,x) in enumerate(X)
     end 
 end
 
-fig = Figure(size = (500,400),)
+using WGLMakie
+fig = Figure() # Figure(size = (500,400),)
 ax = Axis(fig[1, 1], title = "Pearcey catastrophe integral", 
             xlabel = "Re", ylabel = "Im")
 levelset = contourf!(ax,X,Y,Z; levels = 200, 

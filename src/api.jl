@@ -55,7 +55,10 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         end
     end
 
-    # @assert !isempty(γtot) "The graph is not connected between endpoints!"
+    if isempty(γtot) 
+        @warn "The graph is not connected between endpoints!"
+        return nothing, [plot_ContourGraph(CG, Ω, CtoG, NodesDict)]
+    end
 
     γall = Vector{ComplexContour}() # contains all traced contours
     for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]

@@ -35,5 +35,3 @@ end
     @test airy_test(50) < 1e-10
     @test airy_test(101) < 1e-10
 end
-
-airy_test(15, true)
