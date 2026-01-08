@@ -58,7 +58,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     # @assert !isempty(γtot) "The graph is not connected between endpoints!"
 
     γall = Vector{ComplexContour}() # contains all traced contours
-    for ηi in NodesDict[:exits] 
+    for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
         for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
             i = CtoG[ηi]
             j = CtoG[ηj]

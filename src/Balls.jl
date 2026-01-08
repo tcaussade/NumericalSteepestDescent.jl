@@ -81,13 +81,18 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
     J = length(coef)-1
     for Ball in Ω # find exit points on the boundary of each ball
         c, r = centre_and_radius(Ball)
-        trig = Polynomial(0.0) # trig = ∑ aj*(c + r exp(iθ))^j = ∑ bj * exp(ijθ) for j = 0:J
+        # g(c + r e^(iθ)) = ∑ aj*(c + r exp(iθ))^j = ∑ bj * exp(ijθ) for j = 0:J
+        trig = Polynomial(0.0) # store g(c + r e^(iθ)) as Polynomial
         for j = 0:J 
             trig += Polynomial(coef[j+1] * [binomial(j,k) * c^(j-k) * r^k for k = 0:j])
         end
-        tc = trig.coeffs # convert to -imag(trig) = ∑ cj cos(jθ) + dj sin(jθ)
-        dtrig_cos = -imag.(im * tc) .* collect(0:J)
-        dtrig_sin = -imag.(tc) .* collect(0:J)
+        tc = trig.coeffs 
+        # coefficients of first derivative of Im(g) = ∑ aj cos(jθ) + bj sin(jθ)
+        dtrig_cos = collect(0:J) .* real.(tc)
+        dtrig_sin = -collect(0:J) .* imag.(tc)
+        # coefficients of second derivative of Im(g) = ∑ aj' cos(jθ) + bj' sin(jθ)
+        ddtrig_cos = -collect(0:J).^2 .* imag.(tc)
+        ddtrig_sin = -collect(0:J).^2 .* real.(tc)
         
         # find the roots of the imaginary part of the derivative of trig
         tall = roots_trig_polynomial(dtrig_cos, dtrig_sin)
@@ -97,16 +102,13 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
                 push!(t, real(ti))
             end
         end
-        # second-derivataive test to keep only minima
-        ddtrig_cos = -imag( -tc ) .* collect(0:J).^2
-        ddtrig_sin = -imag( -im * tc ) .* collect(0:J).^2
+        # second-derivataive test to keep only maxima of Im g
         dd(t) = sum( ddtrig_cos[k+1] * cos(k*t) + ddtrig_sin[k+1] * sin(k*t) for k = 0:J )
-           
-        minima = Float64[]
-        [dd(t) > 0.0 ? push!(minima, t) : nothing for t in t]
+        maxima = Float64[]
+        [dd(t) < 0.0 ? push!(maxima, t) : nothing for t in t]
         
         # check if exit points are already in Ω (other non-oscillatory balls)
-        exits = [c+ r*cis(t) for t in minima]
+        exits = [c+ r*cis(t) for t in maxima]
         [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
         # [push!(Pexit, z) for z in exits]
     end

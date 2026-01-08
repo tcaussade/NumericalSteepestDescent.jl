@@ -5,7 +5,7 @@
 function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour)
 
-    resolution = 400
+    resolution = 200
 
     set = 10
     xmin = -set
@@ -16,7 +16,8 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     y = range(xmin,xmax, resolution)
     θ = range(0, 2π, resolution)
 
-    u = collect(range(0,50,resolution)) # used for SD contours  
+    umax = 200
+    u = collect(range(0,umax,4*resolution)) # used for SD contours  
 
     fig = Figure()
     ax = Axis(fig[1, 1], title = "Quasi-SD deformation", aspect = DataAspect(),
@@ -27,7 +28,7 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     X = [x for x in x for _ in y]
     Y = [y for _ in x for y in y]
     Z = [evalphase(G, x+im*y) for x in x for y in y]
-    color_lim = maximum(imag(Z)) / 2
+    color_lim = 200 # maximum(imag(Z)) / 2
     levelset = contourf!(ax,X,Y,-imag.(Z); levels = range(-color_lim, color_lim, 20), 
                          colormap = :balance, extendlow = :auto, extendhigh = :auto)
     # contour!(ax,X,Y,real.(Z); levels = 11, color = :black, linewidth = 1, linestyle = :dash)
@@ -41,18 +42,20 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
 
     # add contours of the quasi-SD deformation
     for c in γall
-        lw =  c in γ ? 3 : 1 # use wider line for contours on shortest path
-        
+        lw =  c in γ ? 3 : 1 # use wider line for SD contours on shortest path
         if contour_type(c) == :infiniteSD
             hη = points_on_SDcontour(at(c), G.p, G.dp, u; δfine = 1e-6)
             lines!(ax, reim.(hη); color = :blue, linewidth = lw)
-        elseif contour_type(c) == :finite
-            lines!(reim.([at(c), to(c)]); color = :red, linewidth = 3)
         elseif contour_type(c) == :finiteSD
             U = im*(G.p(at(c)) - G.p(to(c)))
-            u_tmp = u * U/100
+            u_tmp = u * U/umax
             hη = points_on_SDcontour(at(c), G.p, G.dp, u_tmp; δfine = 1e-6)
             lines!(ax, reim.(hη); color = :green, linewidth = lw)
+        end
+    end
+    for c in γ
+        if contour_type(c) == :finite
+            lines!(reim.([at(c), to(c)]); color = :red, linewidth = 3)
         end
     end
 
