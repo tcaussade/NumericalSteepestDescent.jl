@@ -1,5 +1,5 @@
 using PathFinder
-# using Polynomials
+using CairoMakie
 
 f(z) = 1.0
 ω    = 1.0
@@ -18,7 +18,7 @@ for (i,x) in enumerate(X)
     end 
 end
 
-using WGLMakie
+
 fig = Figure() # Figure(size = (500,400),)
 ax = Axis(fig[1, 1], title = "Pearcey catastrophe integral", 
             xlabel = "Re", ylabel = "Im")
