@@ -48,16 +48,19 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
     h1 = η # initial conditions 
     n = 0  # counter of iterations
     d = dist(h1, Pstat)
+    g(z)   = evalphase(G,z)
+    dg(z)  = evalphase_derivative(G, z)
+    dg2(z) = evalphase_derivative2(G, z)
     while d > 0 
         n+=1
         # predictor
-        step1 = 2 * abs(G.dp(h1)^2/G.dp2(h1))
+        step1 = 2 * abs(dg(h1)^2/dg2(h1))
         step1 = isnan(step1) ? Inf : step1  # fix NaN instability
-        p2 = p1 + δODE * min(step1, abs(G.dp(h1)) * d) # adaptative step
-        h2 = h1 + (p2-p1) * im / G.dp(h1) # ode_iteration
+        p2 = p1 + δODE * min(step1, abs(dg(h1)) * d) # adaptative step
+        h2 = h1 + (p2-p1) * im / dg(h1) # ode_iteration
         # corrector - ensure we are following the SD contour
         rtol = δcoarse * d
-        h1 = find_zero((h->G.p(h)-G.p(η)-im*p2,G.dp),h2,Roots.Newton(); rtol)
+        h1 = find_zero((h->g(h)-g(η)-im*p2,dg),h2,Roots.Newton(); rtol)
         p1 = p2
 
         # determine if we have found entrance point or a valley
@@ -67,10 +70,8 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
             return (h1, :entrance)
 
         else
-            bool, v = isinValley(G,h1)
+            bool, hvalley = isinValley(G,h1)
             if bool
-                hvalley = (G.rStar + 10) * cis(v) 
-                # THIS IS A PATCH FIX TO PUT THE VALLEY OUTSIDE NonOscillatoryRegion!!
                 # @info "Reached valley region at $(v/π)π from η=$η in $n steps."
                 return (hvalley, :valley)
             end
@@ -78,6 +79,8 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
     end
 end
 
+
+""" Check if z is inside the non-oscillatory region"""
 function isinΩ(Ω::Vector{NonOscillatoryBall}, z)
     for Ball in Ω
         c, r = centre_and_radius(Ball)
@@ -88,21 +91,28 @@ function isinΩ(Ω::Vector{NonOscillatoryBall}, z)
     return false
 end
 
-function isinValley(G::AbstractPhaseFunction, z)
+""" 
+    Check if z is in a valley (PolynomialPhase) 
+    For SqrtPhase, we know a priori this is the case 
+"""
+
+function isinValley(G::PolynomialPhaseFunction, z)
     # determine if z is in a valley region
     if abs(z) > G.rStar
         v = goes_to_valley(G, angle(z))
         if v isa Nothing # not in valley angular region - keep tracing
             return false, nothing
         end
-        return true, v # return valley angle
+        # THIS IS A PATCH FIX TO PUT THE VALLEY OUTSIDE NonOscillatoryRegion!!
+        hvalley = (G.rStar + 10) * cis(v) 
+        return true, hvalley 
         
     end
     return false, nothing
 end
 
 
-function goes_to_valley(G::AbstractPhaseFunction, θ) 
+function goes_to_valley(G::PolynomialPhaseFunction, θ) 
     # identifies the valley where θ is
     J = degree(G)
     valleys = G.v
@@ -114,6 +124,12 @@ function goes_to_valley(G::AbstractPhaseFunction, θ)
             return v
         end
     end
+end
+
+function isinValley(G::SquareRootPhaseFunction, z)
+    v = π/2 * sign(real(z) - G.ξ[1])
+    hvalley = 2 * cis(v) # this is patch fix!! re-do
+    return true, hvalley
 end
 
 """ Store traced contours in dictionary """

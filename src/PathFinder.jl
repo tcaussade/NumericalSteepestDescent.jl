@@ -11,9 +11,11 @@ using FastGaussQuadrature
 using Polynomials
 using Roots
 using LinearAlgebra
+using ForwardDiff
+using Graphs
+# Plots
 using WGLMakie
 using WGLMakie.Colors
-using Graphs
 using GraphMakie
 
 include("PhaseFunction.jl")
@@ -30,6 +32,8 @@ include("api.jl")
 
 export 
 PolynomialPhaseFunction,
+LinearPhaseFunction,
+SquareRootPhaseFunction,
 integrate_nsp,
 plot_quasiSDdeformation,
 QuasiSDcontour,

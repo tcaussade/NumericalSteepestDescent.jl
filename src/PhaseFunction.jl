@@ -2,13 +2,19 @@
     Abstract type for phase functions
 
     These must have methods:
+        - stationary_points()
         - evalphase(G,z) : evaluate phase function at z
-        - evalphase_derivative(G,z) : evaluate derivative of phase function at z
-        - evalinverse(G, η, s) : evaluate inverse of phase function at level set
+        - evalphase_derivative(G,z) : evaluate first derivative of phase function at z
+        - evalphase_derivative2(G,z) : evaluate second derivative of phase function at z
 
-    These must have attributes:
+    These should have attributes:
         - ξ : stationary points of the phase function
         - other parameters as needed
+
+    To incorporate a new phase function one should also modify the following functions
+        - isinValley() in Contours.jl
+        - find_zeros_range() in Balls.jl
+        - exitpoints() in Balls.jl
 """
 
 abstract type AbstractPhaseFunction end
@@ -26,6 +32,7 @@ struct PolynomialPhaseFunction{T} <: AbstractPhaseFunction # arbitrary polynomia
     rStar :: Float64
     function PolynomialPhaseFunction(coefs::Vector{T}) where T
         @assert coefs[end] != 0 "Leading coefficient must be non-zero"
+        @assert coefs != [0,1]  "Use LinearPhaseFunction instead"
         p   = Polynomial(coefs)
         dp  = derivative(p, 1)
         ξ   = roots(dp)
@@ -41,6 +48,7 @@ degree(G::PolynomialPhaseFunction) = length(G.p)-1
 stationary_points(G::PolynomialPhaseFunction) = G.ξ
 evalphase(G::PolynomialPhaseFunction, z) = G.p(z)
 evalphase_derivative(G::PolynomialPhaseFunction, z) = G.dp(z)
+evalphase_derivative2(G::PolynomialPhaseFunction, z) = G.dp2(z)
 
 function rStar(p::Polynomial)
     # define threshold distance for valley region
@@ -51,12 +59,36 @@ function rStar(p::Polynomial)
     return maximum(real.(roots(poly))) # solution is the only positive root
 end
 
-
-""" Struct for g(z) = √(z^2+a^2)
+"""
+    Struct for Linear phase function
 """
 
-struct DistancePhaseFunction{T} <: AbstractPhaseFunction
+struct LinearPhaseFunction <: AbstractPhaseFunction 
+    ξ :: Vector{Float64} # using Vector struct for consistency
+    function LinearPhaseFunction()
+        new([])
+    end
 end
 
-evalphase(G::DistancePhaseFunction, z) = sqrt(z^2 + G.a^2)
+""" Struct for g(z) = √(z^2+a^2) + b*z
+"""
+
+struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
+    a :: Float64
+    b :: Float64 
+    ξ :: Vector{Float64} # using Vector struct for consistency
+    function SquareRootPhaseFunction(a::T, b::T; inftol = 1e-14) where T
+        @assert a>0 "Parameter `a` should be positive"
+        @assert abs(b) ≤ 1 "Parameter `b` should be between -1 and 1"    
+        binf = (1-inftol) * sign(b) # ξ goes to ∞ as b tends to ±1
+        ξ = 1-abs(b) > inftol ? -a*b/sqrt(1-b^2) : -a*binf/sqrt(1-binf^2)
+        new{T}(a,b,[ξ])
+    end
+end
+
+stationary_points(G::SquareRootPhaseFunction) = G.ξ
+evalphase(G::SquareRootPhaseFunction, z) = sqrt(z^2 + G.a^2) + G.b * z
+evalphase_derivative(G::SquareRootPhaseFunction, z) = z/sqrt(z^2 + G.a^2) + G.b
+evalphase_derivative2(G::SquareRootPhaseFunction, z) = G.a^2 / (z^2 + G.a^2)^(3/2)
+
 

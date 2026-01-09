@@ -9,15 +9,20 @@ struct NonOscillatoryBall
 end
 centre_and_radius(B::NonOscillatoryBall) = (B.c, B.r)
 
-function ballradius(G::PolynomialPhaseFunction, ξ, Cω; Nrays)
+function ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
     r = zeros(Nrays)
+    g(z) = evalphase(G,z)
     for n = 1:Nrays
         ray(r) = ξ + r*cispi(2*n/Nrays)
-        un(r) = abs(evalphase(G, ray(r)) - evalphase(G, ξ))^2 - Cω^2
-        r[n] = minimum(find_zeros(un, 0,  10)) # shoudl we give some other value?
+        un(r) = abs(g(ray(r)) - g(ξ))^2 - Cω^2
+        r_end = find_zeros_range(G) # heuristic choice - can we do better?
+        r[n] = minimum(find_zeros(un, 0,  r_end)) 
     end
     return minimum(r)
 end
+
+find_zeros_range(G::PolynomialPhaseFunction) = 10
+find_zeros_range(G::SquareRootPhaseFunction) = 1.0 /(1-abs(G.b)) + 10
 
 """
     Construct the non-oscillatory region Ω
@@ -75,7 +80,7 @@ dist(hη, Pstat :: Vector) = minimum(abs.(hη .- Pstat)) # dist(hn, P_statpoint)
     Determine the set of exit points of the non-oscillatory region
 """
 
-function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
+function exitpoints(G::PolynomialPhaseFunction, Ω :: Vector{NonOscillatoryBall})
     Pexit = ComplexF64[]
     coef = coeffs(G.p)
     J = length(coef)-1
@@ -94,7 +99,7 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
         ddtrig_cos = -collect(0:J).^2 .* imag.(tc)
         ddtrig_sin = -collect(0:J).^2 .* real.(tc)
         
-        # find the roots of the imaginary part of the derivative of trig
+        # find the roots of dtrig
         tall = roots_trig_polynomial(dtrig_cos, dtrig_sin)
         t = Vector{Float64}()
         for ti in tall # keep only real roots 
@@ -115,3 +120,20 @@ function exitpoints(G::AbstractPhaseFunction, Ω :: Vector{NonOscillatoryBall})
     return Pexit
 end
 
+function exitpoints(G::SquareRootPhaseFunction, Ω::Vector{NonOscillatoryBall})
+    c,r = centre_and_radius(Ω[1]) 
+    g(z) = evalphase(G,z)
+    trig   = θ -> imag(g(c + r*cis(θ)))
+    dtrig  = θ -> ForwardDiff.derivative(trig,θ)  # first derivative of Im(g)
+    ddtrig = θ -> ForwardDiff.derivative(dtrig,θ) # second derivative of Im(g)
+  
+    θ = find_zeros(dtrig, 0,  2π) # find the roots of dtrig
+    if G.a > r # !isempty(θ) 
+        maxima = Float64[] # second-derivative test
+        [ddtrig(θ) < 0.0 ? push!(maxima, θ) : nothing for θ in θ] 
+        return [c+ r*cis(θ) for θ in maxima]
+    else # if branch point is inside ball, move along real axis
+        return [c-r, c+r]
+    end
+
+end

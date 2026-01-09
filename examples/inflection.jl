@@ -35,22 +35,30 @@ end
 
 # Plots
 using CairoMakie
-fig = Figure() # Figure(size = (500,600),)
+fig = Figure() #  Figure(size = (800,1000)) # Figure(size = (500,600),)
 
-ax = Axis(fig[1, 1], title = "Inflection point problem", 
+gtop = fig[1,1] = GridLayout()
+gbot = fig[2,1] = GridLayout()
+
+ax = Axis(gtop[1, 1], title = "Inflection point problem", 
             xlabel = "Re", ylabel = "Im", aspect = DataAspect())
 levelset = contourf!(ax,X,Y,abs.(Z); levels = range(0,2.5, 200), 
                         colormap = :viridis, 
                         extendlow = :auto, extendhigh = :auto)
-Colorbar(fig[1,2], levelset)
+Colorbar(gtop[1,2], levelset)
 limits!(-10,10,-10,10)
+colgap!(gtop, 10)
+# Label(gtop[1,1], tellwidth = false)
 
-ax0 = Axis(fig[2, 1], title = "Helmholtz solution", 
+ax0 = Axis(gbot[1, 1], title = "Helmholtz solution", 
             xlabel = "Re", ylabel = "Im", aspect = DataAspect())
 helmholtz = contourf!(ax0,X0,Y0,Z0; levels = range(-2, 2, 100), 
                         colormap = :jet, # colormap = :hot
                         extendlow = :auto, extendhigh = :auto)
 limits!(-5,5,-1,1)
-Colorbar(fig[2,2], helmholtz)
+Colorbar(gbot[1,2], helmholtz)
+colgap!(gbot, 10)
+# Label(gbot[1,1], tellwidth = false)
 
+# resize_to_layout!(fig)
 fig
