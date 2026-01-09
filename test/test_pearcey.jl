@@ -57,7 +57,7 @@ function kirk_pearcey_data(x, y)
     return real_vals[idx] + 1im * imag_vals[idx]
 end
 
-function pearcey_test(numQuadPts, outputText=false)
+function pearcey_test(numQuadPts, errtol, outputText=false)
     if outputText
         println("Testing against N.P. Kirk et al. approximations of Pearcey integral")
     end
@@ -79,18 +79,20 @@ function pearcey_test(numQuadPts, outputText=false)
             G = PolynomialPhaseFunction([0.0, y, x, 0.0, 1.0])
             I_GHH,_ = integrate(π, 0.0, z -> 1.0, G, 1.0; N=numQuadPts, infcontour = [true true])
             I_CHK = kirk_pearcey_data(x, y)
-            err[xCount, yCount] = abs(I_CHK - I_GHH) / abs(I_CHK)
+            # err[xCount, yCount] = abs(I_CHK - I_GHH) / abs(I_CHK)
+            @test abs(I_CHK - I_GHH) / abs(I_CHK) < errtol
             if outputText
                 println("\trel err=$(err[xCount, yCount])")
             end
         end
     end
+    return
     maxErr = maximum(err)
     return maxErr
 end
 
 @testset "Pearcey Test" begin
-    @test pearcey_test(20) < 2e-4
-    @test pearcey_test(50) < 2e-5
-    @test pearcey_test(101) < 2e-5
+    @testset pearcey_test(20, 2e-4)
+    @testset pearcey_test(50, 2e-5)
+    @testset pearcey_test(101, 2e-5)
 end

@@ -47,13 +47,15 @@ function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseF
     g(z)  = evalphase(G, z)
     dg(z) = evalphase_derivative(G, z)
     η = at(γ)
-    h = points_on_SDcontour(η, g, dg, x/ω; δfine)
+    h = points_on_SDcontour(η, G, x/ω; δfine)
     dh = im ./ dg.(h)
     cis(ω*g(η))/ω * dot(w, f.(h).*dh)    
 end
 
-function points_on_SDcontour(η, g, dg, xvec::Vector; δfine)
+function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine)
     # solve X in g(X) = g(η) + i x/ω
+    g(z)  = evalphase(G, z)
+    dg(z) = evalphase_derivative(G, z)
     h = zeros(ComplexF64, length(xvec))
     h[1] = Roots.newton(u -> g(u) - g(η) - im * xvec[1], dg, η) # x0 = η
     for j in 2:length(xvec)
@@ -61,6 +63,22 @@ function points_on_SDcontour(η, g, dg, xvec::Vector; δfine)
     end
     return h
 end
+
+function points_on_SDcontour(η, G::LinearPhaseFunction, xvec::Vector; δfine)
+    g(z)  = evalphase(G, z)
+    return η .+ im * xvec 
+end
+
+# Special case of Linear phase
+# function integrate_infiniteSD(γ::ComplexContour, f::Function, G::LinearPhaseFunction, ω, x, w;
+#                               δfine)
+#     g(z)  = evalphase(G, z)
+#     # dg(z) = evalphase_derivative(G, z)
+#     η = at(γ)
+#     h = η .+ im*x
+#     dh = im # ./ dg.(h)
+#     cis(ω*g(η))/ω * dot(w, f.(h).*dh)  
+# end
 
 # function trace_infiniteSDpath(G::AbstractPhaseFunction, η)
 #     # parametrisation of infinite SD path at η
@@ -87,7 +105,7 @@ function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFun
     P = min(-log(δquad * M / abs(cis(ω*g(η)))), real(umax)*ω)
 
     p = trace_finite(0,P)
-    h  = points_on_SDcontour(η, g, dg, p.(x)/ω; δfine)
+    h  = points_on_SDcontour(η, G, p.(x)/ω; δfine)
     dh = im ./ dg.(h)
     return cis(ω*g(η))/ω * dot(w, f.(h).*dh.*exp.(-p.(x))) * 0.5*P   
 end

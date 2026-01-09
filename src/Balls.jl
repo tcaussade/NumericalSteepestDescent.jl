@@ -21,7 +21,8 @@ function ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
     return minimum(r)
 end
 
-find_zeros_range(G::PolynomialPhaseFunction) = 10
+find_zeros_range(::PolynomialPhaseFunction) = 10
+find_zeros_range(::LinearPhaseFunction) = nothing
 find_zeros_range(G::SquareRootPhaseFunction) = 1.0 /(1-abs(G.b)) + 10
 
 """
@@ -128,12 +129,15 @@ function exitpoints(G::SquareRootPhaseFunction, Ω::Vector{NonOscillatoryBall})
     ddtrig = θ -> ForwardDiff.derivative(dtrig,θ) # second derivative of Im(g)
   
     θ = find_zeros(dtrig, 0,  2π) # find the roots of dtrig
-    if G.a > r # !isempty(θ) 
+    if abs(im*G.a - c) > 2*r # check if branch point is inside ball,
         maxima = Float64[] # second-derivative test
         [ddtrig(θ) < 0.0 ? push!(maxima, θ) : nothing for θ in θ] 
         return [c+ r*cis(θ) for θ in maxima]
-    else # if branch point is inside ball, move along real axis
+    else # move along real axis
         return [c-r, c+r]
     end
+end
 
+function exitpoints(::LinearPhaseFunction, Ω::Vector{NonOscillatoryBall})
+    return ComplexF64[]
 end

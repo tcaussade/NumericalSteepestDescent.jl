@@ -3,7 +3,7 @@
 """
 
 function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
-        infcontour)
+        infcontour, inftol)
 
     resolution = 200
 
@@ -14,7 +14,7 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     ymax = +set
     x = range(xmin,xmax, resolution)
     y = range(xmin,xmax, resolution)
-    θ = range(0, 2π, resolution)
+    θ = range(0, 2, resolution)
 
     umax = 10
     u = collect(range(0,umax,10*resolution)) # used for SD contours  
@@ -44,14 +44,18 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     g(z)  = evalphase(G,z)
     dg(z) = evalphase_derivative(G,z)
     for c in γall
+        if abs(at(c)) > inftol 
+            @show abs(at(c))
+            continue 
+        end
         lw =  c in γ ? 3 : 1 # use wider line for SD contours on shortest path
         if contour_type(c) == :infiniteSD
-            hη = points_on_SDcontour(at(c), g, dg, u; δfine = 1e-12)
+            hη = points_on_SDcontour(at(c), G, u; δfine = 1e-12)
             lines!(ax, reim.(hη); color = :blue, linewidth = lw)
         elseif contour_type(c) == :finiteSD
             U = im*(G.p(at(c)) - G.p(to(c)))
             u_tmp = u * U/umax
-            hη = points_on_SDcontour(at(c), g, dg, u_tmp; δfine = 1e-6)
+            hη = points_on_SDcontour(at(c), G, u_tmp; δfine = 1e-6)
             lines!(ax, reim.(hη); color = :green, linewidth = lw)
         end
     end
@@ -64,7 +68,8 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     # add stationary points and endpoints
     scatter!(ax, reim.(G.ξ), color = :red)
     !infcontour[1] ? scatter!(ax, reim.([at(γ[1])]), color = "black") : nothing
-    !infcontour[2] ? scatter!(ax, reim.([at(γ[end])]), color = "black") : nothing
+    display = contour_type(γ[end]) == :finite ? to(γ[end]) : at(γ[end])
+    !infcontour[2] ? scatter!(ax, reim.([display]), color = "black") : nothing
     # scatter!(ax, reim.([at(γ[1]), at(γ[end])]), color = "black")
     limits!(xmin,xmax,ymin,ymax)
     Colorbar(fig[1,2], levelset)

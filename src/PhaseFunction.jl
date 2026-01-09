@@ -44,10 +44,10 @@ struct PolynomialPhaseFunction{T} <: AbstractPhaseFunction # arbitrary polynomia
     end
 end
 
-degree(G::PolynomialPhaseFunction) = length(G.p)-1
-stationary_points(G::PolynomialPhaseFunction) = G.ξ
-evalphase(G::PolynomialPhaseFunction, z) = G.p(z)
-evalphase_derivative(G::PolynomialPhaseFunction, z) = G.dp(z)
+degree(G::PolynomialPhaseFunction)                   = length(G.p)-1
+stationary_points(G::PolynomialPhaseFunction)        = G.ξ
+evalphase(G::PolynomialPhaseFunction, z)             = G.p(z)
+evalphase_derivative(G::PolynomialPhaseFunction, z)  = G.dp(z)
 evalphase_derivative2(G::PolynomialPhaseFunction, z) = G.dp2(z)
 
 function rStar(p::Polynomial)
@@ -70,6 +70,12 @@ struct LinearPhaseFunction <: AbstractPhaseFunction
     end
 end
 
+stationary_points(G::LinearPhaseFunction)       = G.ξ
+evalphase(::LinearPhaseFunction, z)             = z
+evalphase_derivative(::LinearPhaseFunction, z)  = 1.0
+evalphase_derivative2(::LinearPhaseFunction, z) = 0.0
+
+
 """ Struct for g(z) = √(z^2+a^2) + b*z
 """
 
@@ -86,9 +92,9 @@ struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
     end
 end
 
-stationary_points(G::SquareRootPhaseFunction) = G.ξ
-evalphase(G::SquareRootPhaseFunction, z) = sqrt(z^2 + G.a^2) + G.b * z
-evalphase_derivative(G::SquareRootPhaseFunction, z) = z/sqrt(z^2 + G.a^2) + G.b
+stationary_points(G::SquareRootPhaseFunction)        = G.ξ
+evalphase(G::SquareRootPhaseFunction, z)             = sqrt(z^2 + G.a^2) + G.b * z
+evalphase_derivative(G::SquareRootPhaseFunction, z)  = z/sqrt(z^2 + G.a^2) + G.b
 evalphase_derivative2(G::SquareRootPhaseFunction, z) = G.a^2 / (z^2 + G.a^2)^(3/2)
 
 

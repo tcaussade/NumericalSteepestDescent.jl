@@ -19,6 +19,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         # produce plots 
         plot_graph = false, # if true, returns the graph plot
         plot_sd    = false, # if true, plots the chosen quasi-SD contour for evaluation
+        inftol = 1e7,  # used to discard tracing from points that are too large in plots
         )
   
     # place endpoints at infinity if specified
@@ -70,7 +71,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     end
     
     fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
-    fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω, γall; infcontour) : nothing
+    fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol) : nothing
     figs = [fig1, fig2]
 
     return S, figs

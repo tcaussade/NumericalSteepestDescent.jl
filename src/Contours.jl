@@ -93,7 +93,7 @@ end
 
 """ 
     Check if z is in a valley (PolynomialPhase) 
-    For SqrtPhase, we know a priori this is the case 
+    For SqrtPhase and LinearPhase, we know a priori this is the case 
 """
 
 function isinValley(G::PolynomialPhaseFunction, z)
@@ -110,8 +110,6 @@ function isinValley(G::PolynomialPhaseFunction, z)
     end
     return false, nothing
 end
-
-
 function goes_to_valley(G::PolynomialPhaseFunction, θ) 
     # identifies the valley where θ is
     J = degree(G)
@@ -130,6 +128,10 @@ function isinValley(G::SquareRootPhaseFunction, z)
     v = π/2 * sign(real(z) - G.ξ[1])
     hvalley = 2 * cis(v) # this is patch fix!! re-do
     return true, hvalley
+end
+
+function isinValley(::LinearPhaseFunction, z)
+    return true, cis(π/2)
 end
 
 """ Store traced contours in dictionary """
@@ -160,6 +162,18 @@ function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscill
     end
     # return entrances, η_to_entrance, valley_points, η_to_valley
     # return η_to_entrance, η_to_valley
+    return ve, vv
+end
+
+function tracing_contours(G::LinearPhaseFunction, points, ::Vector{NonOscillatoryBall};
+        δODE, δcoarse)
+    vv = Vector{ComplexContour}()
+    ve = Vector{ComplexContour}()
+    for η in points
+        h_end = isinValley(G, η)[2]
+        γ = ComplexContour(:infiniteSD, η, h_end)
+        push!(vv,γ)
+    end
     return ve, vv
 end
 
