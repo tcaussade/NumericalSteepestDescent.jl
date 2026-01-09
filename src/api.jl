@@ -1,5 +1,10 @@
 """
-    Generate QuasiSDcontour given two finite endpoints
+    Compute the oscillatory integral with
+        - finite endpoints (a,b), or infinite endpoints with angle (a,b) if specified
+        - amplitude function f
+        - phase function G
+        - frequency ω
+    Returns the value and a vector of figures
 """
 
 function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω; 
@@ -91,4 +96,41 @@ function choose_quadrature(γ)
     else 
         return x,w = xleg,wleg 
     end
+end
+
+""" 
+    Show QuasiSD contour deformation 
+    This method is useful for creating gif animations.
+"""
+function quasiSDdeformation!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction, ω; 
+                         infcontour = [false, false], 
+                         Cball = 2π,
+                         inftol = 1e6,
+                         umax = 10,
+                         color_lim = 200)
+
+    a = infcontour[1] ? endpoint_at_valley!(G, a) : a
+    b = infcontour[2] ? endpoint_at_valley!(G, b) : b
+
+    Ω = NonOscillatoryRegion(G, ω; Cball, δball=1e-3,  Nrays=16)
+    CG, CtoG, NodesDict, EdgesList = ContourGraph(G, a, b, Ω; δODE=0.1, δcoarse=0.01)
+    a,b = NodesDict[:endpoint]
+    sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
+
+    γtot = Vector{ComplexContour}()
+    for e in sd_edges i1,i2 = e.src, e.dst
+        if haskey(EdgesList, (i1, i2)) γ = EdgesList[(i1,i2)]; push!(γtot, γ)
+        else γ = EdgesList[(i2,i1)]; push!(γtot, γ)
+        end
+    end
+
+    γall = Vector{ComplexContour}() 
+    for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
+        for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
+            i,j = CtoG[ηi], CtoG[ηj]
+            if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
+        end
+    end
+
+    return plot_SDcontours!(fig, ax, G,γtot, Ω, γall; infcontour, inftol, umax, color_lim)
 end

@@ -5,6 +5,20 @@
 function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour, inftol)
 
+        fig = Figure()
+        ax = Axis(fig[1, 1], title = "Quasi-SD deformation", aspect = DataAspect(),
+              xlabel = "Re", ylabel = "Im")
+              #xticks = -xmin:1:xmax, yticks = -xmin:1:)
+        
+        plot_SDcontours!(fig, ax, G,γ,Ω, γall; infcontour, inftol)
+end
+
+function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
+        infcontour, inftol,
+        umax = 50, # control how far tracing a contour for plots
+        color_lim = 300 # control color limits of the colorbar
+        )
+
     resolution = 200
 
     set = 10
@@ -16,19 +30,14 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
     y = range(xmin,xmax, resolution)
     θ = range(0, 2, resolution)
 
-    umax = 10
+    # umax = 50
     u = collect(range(0,umax,10*resolution)) # used for SD contours  
 
-    fig = Figure()
-    ax = Axis(fig[1, 1], title = "Quasi-SD deformation", aspect = DataAspect(),
-              xlabel = "Re", ylabel = "Im")
-              #xticks = -xmin:1:xmax, yticks = -xmin:1:)
-    
     # plot levelset of phase function
     X = [x for x in x for _ in y]
     Y = [y for _ in x for y in y]
     Z = [evalphase(G, x+im*y) for x in x for y in y]
-    color_lim = maximum(imag(Z)) / 2
+    # color_lim = 300 # maximum(imag(Z)) / 2
     levelset = contourf!(ax,X,Y,-imag.(Z); levels = range(-color_lim, color_lim, 20), 
                          colormap = :balance, extendlow = :auto, extendhigh = :auto)
     # contour!(ax,X,Y,real.(Z); levels = 11, color = :black, linewidth = 1, linestyle = :dash)
