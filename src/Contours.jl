@@ -103,8 +103,7 @@ function isinValley(G::PolynomialPhaseFunction, z)
         if v isa Nothing # not in valley angular region - keep tracing
             return false, nothing
         end
-        # THIS IS A PATCH FIX TO PUT THE VALLEY OUTSIDE NonOscillatoryRegion!!
-        hvalley = (G.rStar + 10) * cis(v) 
+        hvalley = G.rStar * cis(v) 
         return true, hvalley 
         
     end
@@ -126,7 +125,7 @@ end
 
 function isinValley(G::SquareRootPhaseFunction, z)
     v = π/2 * sign(real(z) - G.ξ[1])
-    hvalley = 2 * cis(v) # this is patch fix!! re-do
+    hvalley = cis(v) # this is patch fix!! re-do
     return true, hvalley
 end
 

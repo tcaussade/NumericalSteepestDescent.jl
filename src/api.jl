@@ -107,7 +107,9 @@ function quasiSDdeformation!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction
                          Cball = 2π,
                          inftol = 1e6,
                          umax = 10,
-                         color_lim = 200)
+                         color_lim = 200,
+                         resolution = 200,
+                         set = 10)
 
     a = infcontour[1] ? endpoint_at_valley!(G, a) : a
     b = infcontour[2] ? endpoint_at_valley!(G, b) : b
@@ -132,5 +134,22 @@ function quasiSDdeformation!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction
         end
     end
 
-    return plot_SDcontours!(fig, ax, G,γtot, Ω, γall; infcontour, inftol, umax, color_lim)
+    return plot_SDcontours!(fig, ax, G,γtot, Ω, γall; infcontour, inftol, umax, color_lim, resolution, set)
+end
+
+function showContourGraph!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction, ω; 
+                         infcontour = [false, false], 
+                         Cball = 2π,
+                         inftol = 1e6,
+                         umax = 10,
+                         color_lim = 200,
+                         resolution = 200,
+                         set = 10)
+
+    a = infcontour[1] ? endpoint_at_valley!(G, a) : a
+    b = infcontour[2] ? endpoint_at_valley!(G, b) : b
+
+    Ω = NonOscillatoryRegion(G, ω; Cball, δball=1e-3,  Nrays=16)
+    CG, CtoG, NodesDict, _ = ContourGraph(G, a, b, Ω; δODE=0.1, δcoarse=0.01)
+    plot_ContourGraph(CG, Ω, CtoG, NodesDict)
 end

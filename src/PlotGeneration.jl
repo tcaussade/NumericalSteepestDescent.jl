@@ -3,25 +3,25 @@
 """
 
 function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
-        infcontour, inftol)
+        infcontour, inftol,
+        color_lim = 100)
 
         fig = Figure()
         ax = Axis(fig[1, 1], title = "Quasi-SD deformation", aspect = DataAspect(),
               xlabel = "Re", ylabel = "Im")
               #xticks = -xmin:1:xmax, yticks = -xmin:1:)
         
-        plot_SDcontours!(fig, ax, G,γ,Ω, γall; infcontour, inftol)
+        plot_SDcontours!(fig, ax, G,γ,Ω, γall; infcontour, inftol, color_lim)
 end
 
 function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour, inftol,
         umax = 50, # control how far tracing a contour for plots
-        color_lim = 300 # control color limits of the colorbar
+        color_lim  = 300, # control color limits of the colorbar
+        resolution = 200, # increasing this paramter improves image quality
+        set        = 10 # plotsize
         )
 
-    resolution = 200
-
-    set = 10
     xmin = -set
     xmax = +set
     ymin = -set

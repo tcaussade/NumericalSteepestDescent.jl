@@ -133,8 +133,57 @@ end
 """
     Plot graph
 """
+
+
+
 function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, z_to_G::Dict, NodesDict :: Dict)
     
+    list, colors = _assign_colors_graph(z_to_G, NodesDict)
+
+    fig,ax,p = graphplot(graph,
+        node_color = colors, node_size = 20)
+    mylayout(_) = list
+    p.layout = mylayout
+
+    # add non-oscillatory balls
+    for Ball in Ω
+        c,r = centre_and_radius(Ball)
+        arc!(ax, Point2f(reim(c)), r, 0, 2π, 
+            color = :gray)
+    end
+
+    hidespines!(ax)
+    # hidedecorations!(ax)
+    ax.aspect = DataAspect()
+    ax.backgroundcolor
+
+    return fig
+
+end
+
+function plot_ContourGraph!(fig, ax, graph::SimpleGraph, Ω::Vector, z_to_G::Dict, NodesDict :: Dict)
+
+    list, colors = _assign_colors_graph(z_to_G, NodesDict)
+    _,_, p = graphplot!(ax, graph, node_color = colors, node_size = 20)
+    mylayout(_) = list
+    p.layout = mylayout
+
+        # add non-oscillatory balls
+    for Ball in Ω
+        c,r = centre_and_radius(Ball)
+        arc!(ax, Point2f(reim(c)), r, 0, 2π, 
+            color = :gray)
+    end
+
+    hidespines!(ax)
+    # hidedecorations!(ax)
+    ax.aspect = DataAspect()
+    ax.backgroundcolor
+
+    return fig
+end
+
+function _assign_colors_graph(z_to_G::Dict, NodesDict::Dict)
     n = sum([length(NodesDict[k]) for k in keys(NodesDict)] )
     # Place graph nodes in the complex plane
     list = Vector(undef, n)
@@ -167,26 +216,6 @@ function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, z_to_G::Dict, NodesDi
         colors[i] = colorant"green"
         list[i]   = reim(z)
     end
-
-
-    fig,ax,p = graphplot(graph,
-        node_color = colors, node_size = 20)
-
-    mylayout(_) = list
-    p.layout = mylayout
-
-    # add non-oscillatory balls
-    for Ball in Ω
-        c,r = centre_and_radius(Ball)
-        arc!(ax, Point2f(reim(c)), r, 0, 2π, 
-            color = :gray)
-    end
-
-    hidespines!(ax)
-    # hidedecorations!(ax)
-    ax.aspect = DataAspect()
-    ax.backgroundcolor
-
-    return fig
-
+    return list, colors
 end
+
