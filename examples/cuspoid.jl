@@ -4,8 +4,8 @@ using CairoMakie
 f(z) = 1.0
 ω    = 1.0
 
-X = range(-10,10, length = 100)
-Y = range(-10,2, length = 100)
+X = range(-7,7, length = 120)
+Y = range(-7,2, length = 120)
 Z = zeros(length(X), length(Y))
 
 a,b = (9π/8, π/8)
@@ -19,7 +19,7 @@ for (i,x) in enumerate(X)
 end
 
 
-fig = Figure() # Figure(size = (500,400),)
+fig = Figure() #Figure(size = (500,400),)
 ax = Axis(fig[1, 1], title = "Pearcey catastrophe integral", 
             xlabel = "Re", ylabel = "Im")
 levelset = contourf!(ax,X,Y,Z; levels = 200, 

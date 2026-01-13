@@ -1,5 +1,4 @@
 using PathFinder
-using WGLMakie
 
 ω    = 10
 f(z) = 1.0
@@ -24,3 +23,9 @@ val, figs = integrate(0.0, z1,f,SqrtPhase,ω; plot_sd = true, plot_graph = true)
 figs[2]
 
 # do tests! especially for b = ±1
+
+x = 0.0
+y = 0.0
+G = PolynomialPhaseFunction([0.0, 0.0, 0.0, 1.0])
+I_GHH,figs = integrate(π, 0.0, z -> 1.0, G, 1.0; N=20, infcontour = [true true], plot_sd = true, plot_graph = true)
+figs[1]

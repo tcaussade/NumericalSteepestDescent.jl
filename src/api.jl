@@ -74,7 +74,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
             if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
         end
     end
-    
+
     fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
     fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol) : nothing
     figs = [fig1, fig2]
@@ -86,7 +86,7 @@ function endpoint_at_valley!(G::AbstractPhaseFunction, θ)
     # place endpoint at valley if specified as endpoint at infinity
     v = goes_to_valley(G, θ)
     if v isa Nothing @warn "endpoint with θ=$(θ/π)π  is not in valley region" end
-    # THIS IS A PATCH FIX TO PUT THE VALLEY OUTSIDE NonOscillatoryRegion!!
+    # THIS IS A PATCH FIX TO PUT THE POINT OUTSIDE NonOscillatoryRegion!!
     return (G.rStar + 5) * cis(v) # place far away in valley direction
 end
 

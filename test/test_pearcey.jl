@@ -57,7 +57,7 @@ function kirk_pearcey_data(x, y)
     return real_vals[idx] + 1im * imag_vals[idx]
 end
 
-function pearcey_test(numQuadPts, errtol, outputText=false)
+function pearcey_test(numQuadPts, outputText=false)
     if outputText
         println("Testing against N.P. Kirk et al. approximations of Pearcey integral")
     end
@@ -86,7 +86,6 @@ function pearcey_test(numQuadPts, errtol, outputText=false)
             end
         end
     end
-    return
     maxErr = maximum(err)
     return maxErr
 end
