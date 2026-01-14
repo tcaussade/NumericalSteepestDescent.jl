@@ -9,7 +9,6 @@
 
 function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω; 
         # default parameters
-        N = 25,        # number of quadrature points
         Cball = 2π,    # control maximum number of oscillations on non-oscillatory bals
         Nrays = 16,    # number of rays used to determine ball radius
         δball = 1e-3,  # determine when overlapping balls should be amalgamated
@@ -19,7 +18,12 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         δquad = 1e-16, # used for truncation and to determine when a contour should be dropped
 
         infcontour = [false, false], # specify if endpoints are at infinity
-        # quad = :gaussian, # specify quadrature type [:gaussian (default), :adaptive]   
+
+        # quadrature
+        quadtype = :gaussian, # specify quadrature type [:gaussian (default), :adaptive]   
+        N = 25,        # number of quadrature points (ignored if quadtype == :adaptive)
+        atol = 1e-10, # tolerance for absolute error in adaptive quadrature. 
+        # WARNING: setting rtol is unreliable for integrals with small values 
 
         # produce plots 
         plot_graph = false, # if true, returns the graph plot
@@ -52,12 +56,12 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
             γ = EdgesList[(i1,i2)]
             push!(γtot, γ)
             x,w = choose_quadrature(γ)
-            S += integrate(γ, f, G, ω, x, w; δfine, δquad)
+            S += integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
         else
             γ = EdgesList[(i2,i1)] # the contour is traversed in the opposite direction
             push!(γtot, γ)
             x,w = choose_quadrature(γ)    
-            S -= integrate(γ, f, G, ω, x, w; δfine, δquad)
+            S -= integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
         end
     end
 
@@ -66,21 +70,27 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         return nothing, [plot_ContourGraph(CG, Ω, CtoG, NodesDict)]
     end
 
-    γall = Vector{ComplexContour}() # contains all traced contours
-    for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
-        for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
-            i = CtoG[ηi]
-            j = CtoG[ηj]
-            if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
+    fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
+
+    fig2 = begin 
+        if plot_sd 
+            γall = Vector{ComplexContour}() # contains all traced contours
+            for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
+                for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
+                    i = CtoG[ηi]
+                    j = CtoG[ηj]
+                    if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
+                end
+            end
+            return plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol)
         end
     end
 
-    fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
-    fig2 = plot_sd ? plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol) : nothing
     figs = [fig1, fig2]
 
     return S, figs
 end
+
 
 function endpoint_at_valley!(G::AbstractPhaseFunction, θ)
     # place endpoint at valley if specified as endpoint at infinity

@@ -56,7 +56,8 @@ function rStar(p::Polynomial)
     J = length(α)-1
     β = [k*abs(α[k+1]) for k = 1:J-1]
     poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
-    return maximum(real.(roots(poly))) # solution is the only positive root
+    rstar = maximum(real.(roots(poly))) # solution is the only positive root
+    return rstar + 1e-6 # PATH FIX - rstar = 0 for monomials
 end
 
 """
