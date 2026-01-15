@@ -54,7 +54,7 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
     dg(z) = evalphase_derivative(G,z)
     for c in γall
         if abs(at(c)) > inftol 
-            @show abs(at(c))
+            # @show abs(at(c))
             continue 
         end
         lw =  c in γ ? 3 : 1 # use wider line for SD contours on shortest path

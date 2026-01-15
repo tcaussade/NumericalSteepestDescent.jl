@@ -17,7 +17,13 @@ function integrate(γ::ComplexContour, f, G, ω, x, w, quadtype :: Symbol; δfin
     if quadtype == :gaussian
         # choose appropriate integration method based on contour type
         if contour_type(γ) == :finite   
-            return integrate_finite(γ, f, G, ω, x, w)
+            @show _is_singular(G,γ)
+            if _is_singular(G,γ)
+                # println("singular quad!")
+                return integrate_finite_hp(γ, f, G, ω, x, w)
+            else
+                return integrate_finite(γ, f, G, ω, x, w)
+            end
         elseif contour_type(γ) == :infiniteSD
             return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
         elseif contour_type(γ) == :finiteSD
@@ -51,6 +57,48 @@ function integrate_finite(γ::ComplexContour, f::Function, G::AbstractPhaseFunct
     0.5*(b-a) * dot(w, f.(h.(x)).*cis.(ω*g.(h.(x))))
 end
 
+
+
+"""
+    Singular quadrature routine (if needed). Criteria should be added to specific phase functions
+"""
+
+_is_singular(::AbstractPhaseFunction, ::ComplexContour) = false #
+
+function _is_singular(G::SquareRootPhaseFunction, γ::ComplexContour)
+    L = abs.(at(γ) - to(γ))
+    tol = 0.01 # arbitrary choice
+    if G.a / L < tol 
+        return true
+    else
+        return false
+    end
+end
+
+const σ = 0.17 # Grading parameter
+
+
+function integrate_finite_hp(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w)
+    # evaluate integral along finite straight line from a to b
+    g(z) = evalphase(G, z)
+    L   = abs(to(γ)-at(γ))
+    @assert abs(at(γ)) < abs(to(γ)) 
+
+    S = zero(ComplexF64)
+    n = ceil(log(2*G.a*σ/(1-σ))/log(σ)) # number of layers
+    for i in range(1,n-1)
+        el1,el2 = at(γ) .+ L.*([σ^i, σ^(i-1)]) # mesh sub-interval
+        h = trace_finite(el1,el2)
+        S += 0.5*(el2-el1) * dot(w, f.(h.(x)).*cis.(ω*g.(h.(x))))
+    end
+    # smallest interval
+    el1, el2 = at(γ) .+ L.*[0.0, σ^(n-1)]
+    h = trace_finite(el1,el2)
+    S += 0.5*(el2-el1) * dot(w, f.(h.(x)).*cis.(ω*g.(h.(x))))
+    return S
+end
+
+
 """ 
     We use Gauss-Laguerre for infinite SD contours
 """
@@ -59,20 +107,22 @@ function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseF
     # evaluate integral along infinite SD path at η
     g(z)  = evalphase(G, z)
     dg(z) = evalphase_derivative(G, z)
-    η = at(γ)
+    @show η = at(γ)
     h = points_on_SDcontour(η, G, x/ω; δfine)
     dh = im ./ dg.(h)
     cis(ω*g(η))/ω * dot(w, f.(h).*dh)    
 end
 
-function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine)
+function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine, η0 = η)
     # solve X in g(X) = g(η) + i x/ω
     g(z)  = evalphase(G, z)
     dg(z) = evalphase_derivative(G, z)
     h = zeros(ComplexF64, length(xvec))
-    h[1] = Roots.newton(u -> g(u) - g(η) - im * xvec[1], dg, η) # x0 = η
+    # f(u) = g(u)-g(η)-im*xvec[1]
+    h[1] = Roots.newton(u -> g(u)-g(η)-im*xvec[1], dg, η0) # x0 = η
+    # h[1] = Roots.newton(f,dg, η0)
     for j in 2:length(xvec)
-        h[j] = Roots.newton(u -> g(u) - g(η) - im * xvec[j], dg, h[j-1]; rtol = δfine) # x0 = h[j-1] 
+        h[j] = Roots.newton(u -> g(u)-g(η)-im*xvec[j], dg, h[j-1]; rtol = δfine) # x0 = h[j-1] 
     end
     return h
 end
@@ -128,13 +178,16 @@ function integrate_finite_gk(γ::ComplexContour, f::Function, G::AbstractPhaseFu
     a,b  = at(γ), to(γ)
     h    = trace_finite(a,b)
     ζ(u) = f(h(u)) * cis(ω*g(h(u)))
-    return 0.5*(b-a) * quadgk(ζ,-1,1)[1] # using the QuadGK.jl here is much more efficient than handmade versions...
+    # PROBLEM: specifying atol in quadgk() for some reason crashes the method...
+    # @show int = quadgk_count(ζ,-1,1, atol = atol) 
+    # using the QuadGK.jl here is much more efficient than handmade versions...
+    return 0.5*(b-a) * quadgk(ζ,-1,1, atol = atol)[1] 
 end
 
 function integrate_SD_gk(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω; δfine, δquad, atol)
     # evaluate integral along infinite or finite SD path at η using truncated GK
     g(z)  = evalphase(G, z)
-    η = at(γ)
+    @show η = at(γ)
 
     M  = 1.0 # pending: should be M = max(cis(ω * g(η))) for all η ∈ {Pstat, Pendp, Pexit}
     umax = contour_type(γ) == :infiniteSD ? Inf : im * (g(η) - g(to(γ)))
@@ -151,8 +204,8 @@ end
 function eval_gk(a,b,f,G,ω,η; δfine)
     p = trace_finite(a,b)
     dg(z) = evalphase_derivative(G, z)
-
-    h  = points_on_SDcontour(η, G, p.(x_gk)/ω; δfine)
+    # choose starting point, should be hη(p(-1))
+    h  = points_on_SDcontour(η, G, p.(x_gk)/ω; δfine, η0 = η)
     dh = im ./ dg.(h)
     ζx =  f.(h) .* dh .* exp.(-p.(x_gk)) 
     Igk = sum(w_gk .* ζx)

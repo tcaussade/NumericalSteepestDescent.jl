@@ -1,43 +1,30 @@
 using PathFinder
 
-ω    = 50
-f(z) = 1.0
+
+# Basic usage example for arbitrary polynomial phase
+ω    = 100 # frequency parameter
+f(z) = 1.0 # Amplitude function
 z0,z1 = (-1,1) # specify (finite) endpoints 
 
-# polynomial phase
-# example1 = [3,5,6,2,9,5,1,4,1,3]
-# PolyPhase = PolynomialPhaseFunction(example1) 
-# @time val, figs = integrate(z0,z1,f,PolyPhase,ω; plot_graph = false, plot_sd = false,
-#                         quadtype = :gaussian)
-# figs[1]
-# figs[2]
-
-
-PolyPhase = PolynomialPhaseFunction([0,-3,0,1]) 
-@time val, _ = integrate(z0,z1,f,PolyPhase,ω; quadtype = :gaussian)
-@time valgk, _ = integrate(z0,z1,f,PolyPhase,ω; quadtype = :adaptive, atol = 1e-6)
-@show abs(val - valgk)
-
-# ζ(z) = f(z) * cis(ω * PathFinder.evalphase(PolyPhase,z))
-# t = range(0,1, length=100)
-# z = z0 .+ (z1-z0) * t
-# lines(t, real.(ζ.(z)))
-
-# linear phase 
-LinPhase = LinearPhaseFunction()
-val, figs = integrate(z0,z1, f, LinPhase, ω; plot_sd = true, plot_graph = true)
-figs[2]
-
-# square-root phase g(z) = √(z^2+a^2) + bz
-a,b = (1., 0.)
-SqrtPhase = SquareRootPhaseFunction(a, b)
-val, figs = integrate(0.0, z1,f,SqrtPhase,ω; plot_sd = true, plot_graph = true)
-figs[2]
-
-# do tests! especially for b = ±1
-
-x = 0.0
-y = 0.0
-G = PolynomialPhaseFunction([0.0, 0.0, 0.0, 1.0])
-I_GHH,figs = integrate(π, 0.0, z -> 1.0, G, 1.0; N=20, infcontour = [true true], plot_sd = true, plot_graph = true)
+example1 = [3,5,6,2,9,5,1,4,1,3]
+PolyPhase = PolynomialPhaseFunction(example1) 
+val, figs = integrate(z0,z1,f,PolyPhase,ω; plot_graph = true, plot_sd = true)
 figs[1]
+figs[2]
+
+# timings: MATLAB version takes around 30ms to evaluate with phase as above
+@time integrate(z0,z1,f,PolyPhase,ω; plot_graph = false, plot_sd = false) # should take ~20ms 
+
+# When the phase is linear the algorithm simplifies dramatically
+LinPhase = LinearPhaseFunction()
+val, _ = integrate(z0,z1, f, LinPhase, ω)
+
+# We also can handle a square-root phase given by g(z) = √(z^2+a^2) + bz 
+# This is a common integral to evaluate in HNA methods for high-frequency scattering problems
+a,b = (1e-6, -0.0)
+a,b = (0.35938136638046275, -0.1111111111111111)
+SqrtPhase = SquareRootPhaseFunction(a, b)
+@time val0, _ = integrate(0.0, 1.0,f,SqrtPhase,20; quadtype = :gaussian, N=20)
+
+@time val1, figs = integrate(0.0, 1.0,f,SqrtPhase,20; quadtype = :adaptive, atol = 1e-8, plot_sd = true)
+@show abs(val0 - val1)

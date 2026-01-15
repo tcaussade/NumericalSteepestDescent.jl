@@ -1,5 +1,8 @@
 using QuadGK
 
+n = 11 
+x,w,wg = kronrod(n,-1,1)
+
 function trace_finite(a,b)
     # parametrisation of finite straight line from a to b
     u -> 0.5*((b+a) + (b-a)*u) # :: Function

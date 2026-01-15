@@ -16,7 +16,7 @@ function ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
         ray(r) = ξ + r*cispi(2*n/Nrays)
         un(r) = abs(g(ray(r)) - g(ξ))^2 - Cω^2
         r_end = find_zeros_range(G) # heuristic choice - can we do better?
-        r[n] = minimum(find_zeros(un, 0,  r_end)) 
+        r[n] = minimum(find_zeros(un, 0,  r_end)) # can we speed up this?
     end
     return minimum(r)
 end

@@ -206,10 +206,11 @@ function _assign_colors_graph(z_to_G::Dict, NodesDict::Dict)
         colors[i] = colorant"purple"
         list[i]   = reim(z)
     end
+    R = _largest_point(NodesDict) + 1.0
     for z in NodesDict[:valleys]
         i = z_to_G[z]
         colors[i] = colorant"blue"
-        list[i]   = reim(z)
+        list[i]   = reim(z) .* (R/abs(z))
     end
     for z in NodesDict[:entrances]
         i = z_to_G[z]
@@ -219,3 +220,13 @@ function _assign_colors_graph(z_to_G::Dict, NodesDict::Dict)
     return list, colors
 end
 
+function _largest_point(NodesDict::Dict)
+    R = 0.0
+    for key in keys(NodesDict)
+        if key != :valleys 
+            if isempty(NodesDict[key]) continue end
+            R = max(R, maximum(abs.(NodesDict[key])))
+        end
+    end
+    return R
+end

@@ -56,12 +56,12 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
             γ = EdgesList[(i1,i2)]
             push!(γtot, γ)
             x,w = choose_quadrature(γ)
-            S += integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
+            @show S += integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
         else
             γ = EdgesList[(i2,i1)] # the contour is traversed in the opposite direction
             push!(γtot, γ)
             x,w = choose_quadrature(γ)    
-            S -= integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
+            @show S -= integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
         end
     end
 
@@ -72,20 +72,20 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
 
     fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
 
-    fig2 = begin 
-        if plot_sd 
-            γall = Vector{ComplexContour}() # contains all traced contours
-            for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
-                for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
-                    i = CtoG[ηi]
-                    j = CtoG[ηj]
-                    if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
-                end
+     
+    if plot_sd 
+        γall = Vector{ComplexContour}() # contains all traced contours
+        for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
+            for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
+                i = CtoG[ηi]
+                j = CtoG[ηj]
+                if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
             end
-            return plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol)
         end
+        fig2 =  plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol)
+    else
+        fig2 = nothing
     end
-
     figs = [fig1, fig2]
 
     return S, figs
