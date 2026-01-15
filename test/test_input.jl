@@ -56,7 +56,13 @@ end
 
 
 @testset "Input Check" begin
-    @test test_input_check_polynomials()
-    @test test_input_check_linear()
-    @test test_input_check_sqrt()
+    @testset "PolynomialPhaseFunction" begin
+        @test test_input_check_polynomials()
+    end
+    @testset "LinearPhaseFunction" begin 
+        @test test_input_check_linear()
+    end
+    @testset "SquareRootPhaseFunction" begin
+        @test test_input_check_sqrt()
+    end
 end

@@ -15,15 +15,17 @@ function ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
     for n = 1:Nrays
         ray(r) = ξ + r*cispi(2*n/Nrays)
         un(r) = abs(g(ray(r)) - g(ξ))^2 - Cω^2
-        r_end = find_zeros_range(G) # heuristic choice - can we do better?
-        r[n] = minimum(find_zeros(un, 0,  r_end)) # can we speed up this?
+        search_range = find_zeros_range(G) # heuristic choice - can we do better?
+        # @show find_zeros(un,  search_range[1], search_range[2])
+        # r[n] = minimum(find_zeros(un, search_range)) # can we speed up this?
+        r[n] = find_zero(un, search_range, Bisection())
     end
     return minimum(r)
 end
 
-find_zeros_range(::PolynomialPhaseFunction) = 10
-find_zeros_range(::LinearPhaseFunction) = nothing
-find_zeros_range(G::SquareRootPhaseFunction) = 1.0 /(1-abs(G.b)) + 10
+find_zeros_range(::PolynomialPhaseFunction) = (0.0, 10.0)
+# find_zeros_range(::LinearPhaseFunction) = nothing
+find_zeros_range(G::SquareRootPhaseFunction) = (-0.0, 1.0 /(1-abs(G.b)) + 100)
 
 """
     Construct the non-oscillatory region Ω

@@ -17,7 +17,7 @@ function integrate(γ::ComplexContour, f, G, ω, x, w, quadtype :: Symbol; δfin
     if quadtype == :gaussian
         # choose appropriate integration method based on contour type
         if contour_type(γ) == :finite   
-            @show _is_singular(G,γ)
+            # @show _is_singular(G,γ)
             if _is_singular(G,γ)
                 # println("singular quad!")
                 return integrate_finite_hp(γ, f, G, ω, x, w)
@@ -67,7 +67,7 @@ _is_singular(::AbstractPhaseFunction, ::ComplexContour) = false #
 
 function _is_singular(G::SquareRootPhaseFunction, γ::ComplexContour)
     L = abs.(at(γ) - to(γ))
-    tol = 0.01 # arbitrary choice
+    tol = 1.0 # arbitrary choice
     if G.a / L < tol 
         return true
     else
@@ -107,7 +107,7 @@ function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseF
     # evaluate integral along infinite SD path at η
     g(z)  = evalphase(G, z)
     dg(z) = evalphase_derivative(G, z)
-    @show η = at(γ)
+    η = at(γ)
     h = points_on_SDcontour(η, G, x/ω; δfine)
     dh = im ./ dg.(h)
     cis(ω*g(η))/ω * dot(w, f.(h).*dh)    
