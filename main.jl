@@ -12,9 +12,10 @@ val, figs = integrate(z0,z1,f,PolyPhase,ω; plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
-# timings: MATLAB version takes around 30ms to evaluate with phase as above
-@time integrate(z0,z1,f,PolyPhase,ω; plot_graph = false, plot_sd = false) # should take ~2ms with @benchmark 
-# MATLAB takes around 5ms per evaluation for cuspoid integral
+using BenchmarkTools
+# # timings: MATLAB version takes around 30ms to evaluate with phase as above
+# @time integrate(z0,z1,f,PolyPhase,ω; plot_graph = false, plot_sd = false) # should take ~2ms with @benchmark 
+# # MATLAB takes around 5ms per evaluation for cuspoid integral
 @benchmark integrate(π, 0.0, x -> 1.0, PolynomialPhaseFunction([0, -0.01, +0.2, 0, 1]), 1.0, infcontour=[true,true]) # should take ~0.3ms with @benchmark 
 
 # When the phase is linear the algorithm simplifies dramatically
@@ -23,10 +24,16 @@ val, _ = integrate(z0,z1, f, LinPhase, ω)
 
 # We also can handle a square-root phase given by g(z) = √(z^2+a^2) + bz 
 # This is a common integral to evaluate in HNA methods for high-frequency scattering problems
-a,b = (1e-6, -0.0)
-a = 0.0001; b = -0.8947368421052632
+a,b = (1., -0.999)
+ω = 1
+a = 1.0e-8 
+b = -1.0+1e-4
 SqrtPhase = SquareRootPhaseFunction(a, b)
-val0, _ = integrate(0.0, 1.0,f,SqrtPhase,1; quadtype = :gaussian, N=20)
-ß
+val0, figs = integrate(0.0, 1.0,f,SqrtPhase,ω; quadtype = :gaussian, N=20, 
+                plot_sd=true, plot_graph=true)
+
+figs[1]
+figs[2]
+
 # val1, figs = integrate(0.0, 1.0,f,SqrtPhase,20; quadtype = :adaptive, atol = 1e-8, plot_sd = true)
 # @show abs(val0 - val1)

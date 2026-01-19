@@ -15,15 +15,16 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     # add small perturbation to distinguish between endpoints and stationary points when they coincide
     NodesDict[:endpoint]  = [a,b]        .+ rand()*eps() * 10
     NodesDict[:statpoint] = get_Pstat(Ω)
-    NodesDict[:exits]     = exitpoints(G,Ω) #.+ rand()*eps()
-
+    NodesDict[:exits] = exitpoints(G,Ω) #.+ rand()*eps()
+    exits_outside_Ω = _filter_exits(G, Ω, NodesDict[:exits]) # used to filter manually placed exit points
     # trace all possible SD contours
     aδ, bδ = NodesDict[:endpoint]
     endpoints_outside_Ω = ComplexF64.([isinΩ(Ω,a) ? [] : aδ; isinΩ(Ω,b) ? [] : bδ])
-    SD_contours_from = [endpoints_outside_Ω; NodesDict[:exits]]
 
-    γ_to_entrance, γ_to_valley = tracing_contours(G, SD_contours_from, Ω; δODE, δcoarse) 
-    # @show [[at(γ), to(γ)] for γ in γ_to_valley]
+    endpoints_outside_Ω, exits_outside_Ω
+    trace_from = [endpoints_outside_Ω; exits_outside_Ω] 
+    γ_to_entrance, γ_to_valley = tracing_contours(G, trace_from, Ω; δODE, δcoarse) 
+
 
     NodesDict[:valleys]   = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
     NodesDict[:entrances] = [to(γ) for γ in γ_to_entrance] 
@@ -56,6 +57,33 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     return ContourGraph, plane_to_graph, NodesDict, EdgesList
 end
 
+""" decide where to trace SD contours from"""
+
+function _filter_exits(::AbstractPhaseFunction, Ω, exits)
+    return exits # do nothing
+end
+
+function _filter_exits(::SquareRootPhaseFunction, Ω, exits)
+    # this method is used avoid tracing SD contour at exit points inside Ω 
+    # endpts = [a,b]
+    if isreal.(exits) == [true,true] 
+        return exits
+        # if we moved along real line, check exits are outside non-osc region
+        tracefrom = Vector{ComplexF64}()
+        ex  = real.(exits) 
+        δ = 1e-12 # by construction exits are exactly at the boundary, so we push them slightly away from Ω
+        exδ = ex + sign.(ex .- Ω[1].c) * δ
+        # if it remains in Ω after pushing them, then they are inside Ω and one should not trace from there
+        @show !isinΩ(Ω,exδ[1]), !isinΩ(Ω,exδ[2])
+        if !isinΩ(Ω,exδ[1]) push!(tracefrom, ex[1]) end
+        if !isinΩ(Ω,exδ[2]) push!(tracefrom, ex[2]) end
+        return tracefrom
+    else
+        return exits
+    end
+end
+
+
 
 
 """ create connections inside graph """
@@ -70,7 +98,7 @@ function connect_inside_Ω!(pts::Vector{ComplexF64}, Ω::Vector{NonOscillatoryBa
 
     for Ball in Ω
         c, r = centre_and_radius(Ball)
-        inside_pts = [z for z in pts if abs(z - c) ≤ r + 1e-14] 
+        inside_pts = [z for z in pts if abs(z - c) ≤ r + 10*eps()] 
         # added small perturbation here, sometimes the points at the boundary
         # are placed slightly outside the non-oscillatory region.
 
@@ -119,7 +147,7 @@ end
 #     return
 # end
 
-function connect_ball_to_valleyyorentrance!(γvec, CG ::SimpleGraph, CtoG::Dict, GtoContour::Dict)
+function connect_ball_to_valleyyorentrance!(γvec :: Vector{ComplexContour}, CG ::SimpleGraph, CtoG::Dict, GtoContour::Dict)
     # create edges between exit points - endpoints and entrance-valleys.
     for γ in γvec
         z1, z2 = at(γ), to(γ)

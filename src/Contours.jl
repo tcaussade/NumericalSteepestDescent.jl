@@ -124,7 +124,15 @@ function goes_to_valley(G::PolynomialPhaseFunction, θ)
 end
 
 function isinValley(G::SquareRootPhaseFunction, z)
-    v = π/2 * sign(real(z) - G.ξ[1])
+    if abs(z) == Inf
+        return false, nothing
+    end
+    if abs(G.ξ[1]) == Inf 
+        ξ = 1e20 * sign(G.ξ[1])
+        v = π/2 * sign(real(z) - ξ)
+    else
+        v = π/2 * sign(real(z) - G.ξ[1])
+    end
     hvalley = cis(v) # this is patch fix!! re-do
     return true, hvalley
 end
@@ -133,7 +141,9 @@ function isinValley(::LinearPhaseFunction, z)
     return true, cis(π/2)
 end
 
-""" Store traced contours in dictionary """
+""" Store traced contours in dictionary 
+    Specialised method are provided for some phase functions.
+"""
 
 function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall};
                           δODE, δcoarse)
@@ -141,7 +151,6 @@ function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscill
     # valley_points = Vector{ComplexF64}()
     # η_to_entrance = Dict{ComplexF64, ComplexF64}()
     # η_to_valley   = Dict{ComplexF64, ComplexF64}()
-
     ve = Vector{ComplexContour}()
     vv = Vector{ComplexContour}()
     for η in points
@@ -169,9 +178,24 @@ function tracing_contours(G::LinearPhaseFunction, points, ::Vector{NonOscillator
     vv = Vector{ComplexContour}()
     ve = Vector{ComplexContour}()
     for η in points
-        h_end = isinValley(G, η)[2]
+        h_end = isinValley(G,η)[2] 
         γ = ComplexContour(:infiniteSD, η, h_end)
         push!(vv,γ)
+    end
+    return ve, vv
+end
+
+function tracing_contours(G::SquareRootPhaseFunction, points, ::Vector{NonOscillatoryBall};
+        δODE, δcoarse)
+    vv = Vector{ComplexContour}()
+    ve = Vector{ComplexContour}()
+    for η in points
+        @show bool, h_end = isinValley(G, η) 
+        # bool = true if we want to trace from there, false if ξ is too large
+        if bool
+            @show γ = ComplexContour(:infiniteSD, η, h_end)
+            push!(vv,γ)
+        end
     end
     return ve, vv
 end

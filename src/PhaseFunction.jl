@@ -57,7 +57,7 @@ function rStar(p::Polynomial)
     β = [k*abs(α[k+1]) for k = 1:J-1]
     poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
     rstar = maximum(real.(roots(poly))) # solution is the only positive root
-    return rstar + 1e-6 # PATH FIX - rstar = 0 for monomials
+    return rstar + 1e-6 # PATCH FIX - rstar = 0 for monomials
 end
 
 """
@@ -76,19 +76,55 @@ evalphase(::LinearPhaseFunction, z)             = z
 evalphase_derivative(::LinearPhaseFunction, z)  = 1.0
 evalphase_derivative2(::LinearPhaseFunction, z) = 0.0
 
+"""
+    Struct for rational phase function
+"""
 
-""" Struct for g(z) = √(z^2+a^2) + b*z
+struct RationalPhaseFunction <: AbstractPhaseFunction 
+    num :: Polynomial # numerator
+    den :: Polynomial # denominator
+    ξ   :: Vector # stationary points
+    p   :: Vector # poles
+    function RationalPhaseFunction(num_coefs ::Vector,pole_vals::Vector)
+        num = Polynomial(num_coefs)
+        den = fromroots(pole_vals) # Polynomial(den_coefs)
+        dnum = derivative(num)*den - num*derivative(den)
+        ξ = roots(dnum)  
+        p = pole_vals
+        new(num, den, ξ ,p)
+    end
+end
+
+# degree(G::PolynomialPhaseFunction)                   = length(G.p)-1
+stationary_points(G::RationalPhaseFunction)        = G.ξ
+evalphase(G::RationalPhaseFunction, z)             = (G.num // G.den)(z)
+# evalphase_derivative(G::RationalPhaseFunction, z)  = G.dp(z)
+# evalphase_derivative2(G::RationalPhaseFunction, z) = G.dp2(z)
+
+# function rStar(p::Polynomial)
+#     # define threshold distance for valley region
+#     α = coeffs(p)
+#     J = length(α)-1
+#     β = [k*abs(α[k+1]) for k = 1:J-1]
+#     poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
+#     rstar = maximum(real.(roots(poly))) # solution is the only positive root
+#     return rstar + 1e-6 # PATH FIX - rstar = 0 for monomials
+# end
+
+""" 
+    Struct for g(z) = √(z^2+a^2) + b*z
 """
 
 struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
     a :: Float64
     b :: Float64 
-    ξ :: Vector{Float64} # using Vector struct for consistency
-    function SquareRootPhaseFunction(a::T, b::T; inftol = 1e-14) where T
+    ξ :: Vector{ComplexF64} # using Vector struct for consistency
+    function SquareRootPhaseFunction(a::T, b::T) where T
         @assert a>0 "Parameter `a` should be positive"
         @assert abs(b) ≤ 1 "Parameter `b` should be between -1 and 1"    
-        binf = (1-inftol) * sign(b) # ξ goes to ∞ as b tends to ±1
-        ξ = 1-abs(b) > inftol ? -a*b/sqrt(1-b^2) : -a*binf/sqrt(1-binf^2)
+        # binf = (1-inftol) * sign(b) # ξ goes to ∞ as b tends to ±1
+        # ξ = 1-abs(b) > inftol ? -a*b/sqrt(1-b^2) : -a*binf/sqrt(1-binf^2)
+        ξ =  abs(b) == 1 ? -Inf*sign(b) : -a*b/sqrt(1-b^2)
         new{T}(a,b,[ξ])
     end
 end
@@ -97,5 +133,3 @@ stationary_points(G::SquareRootPhaseFunction)        = G.ξ
 evalphase(G::SquareRootPhaseFunction, z)             = sqrt(z^2 + G.a^2) + G.b * z
 evalphase_derivative(G::SquareRootPhaseFunction, z)  = z/sqrt(z^2 + G.a^2) + G.b
 evalphase_derivative2(G::SquareRootPhaseFunction, z) = G.a^2 / (z^2 + G.a^2)^(3/2)
-
-

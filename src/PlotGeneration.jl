@@ -4,7 +4,7 @@
 
 function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour, inftol,
-        color_lim = 100)
+        color_lim = 10)
 
         fig = Figure()
         ax = Axis(fig[1, 1], title = "Quasi-SD deformation", aspect = DataAspect(),
@@ -16,11 +16,12 @@ end
 
 function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour, inftol,
-        umax = 50, # control how far tracing a contour for plots
+        umax = 20, # control how far tracing a contour for plots
         color_lim  = 300, # control color limits of the colorbar
         resolution = 200, # increasing this paramter improves image quality
         set        = 10 # plotsize
         )
+    # WARNING: setting umax too large might result in trouble
 
     xmin = -set
     xmax = +set
@@ -62,7 +63,8 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
             hη = points_on_SDcontour(at(c), G, u; δfine = 1e-12)
             lines!(ax, reim.(hη); color = :blue, linewidth = lw)
         elseif contour_type(c) == :finiteSD
-            U = im*(G.p(at(c)) - G.p(to(c)))
+            U = im*(evalphase(G, at(c)) - evalphase(G,to(c)))
+            # U = im*(G.p(at(c)) - G.p(to(c)))
             u_tmp = u * U/umax
             hη = points_on_SDcontour(at(c), G, u_tmp; δfine = 1e-6)
             lines!(ax, reim.(hη); color = :green, linewidth = lw)

@@ -7,7 +7,7 @@ using QuadGK
 
 function hna_test(nQuadPts, atol, quadtype = :gaussian, outputText=false)
     nvals = 20
-    avals = 10 .^ range(-4, 0, length=nvals)
+    avals = 10 .^ range(-3, 0, length=nvals)
     bvals = range(-1.0,1.0, length = nvals)
     ωvals = [1,5,10,20]
     if outputText
@@ -55,4 +55,4 @@ end
 end
 
 # hna_test(0, 1e-12, :adaptive) 
-# hna_test(100, 0, :gaussian, false)
+hna_test(100, 0, :gaussian, true)

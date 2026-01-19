@@ -121,8 +121,10 @@ function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine,
     # f(u) = g(u)-g(η)-im*xvec[1]
     h[1] = Roots.newton(u -> g(u)-g(η)-im*xvec[1], dg, η0) # x0 = η
     # h[1] = Roots.newton(f,dg, η0)
+    # @show η
     for j in 2:length(xvec)
-        h[j] = Roots.newton(u -> g(u)-g(η)-im*xvec[j], dg, h[j-1]; rtol = δfine) # x0 = h[j-1] 
+        # println(h[j-1])
+        h[j] = Roots.newton(u -> g(u)-g(η)-im*xvec[j], dg, h[j-1]; rtol = δfine) # x0 = h[j-1]
     end
     return h
 end
