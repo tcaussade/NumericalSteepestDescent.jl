@@ -169,11 +169,23 @@ function exitpoints(G::PolynomialPhaseFunction, Ω :: Vector{NonOscillatoryBall}
     return Pexit
 end
 
-function exitpoints(G::RationalPhaseFunction, Ω::Vector{NonOscillatoryBall})
+function exitpoints(G::AbstractPhaseFunction, Ω::Vector{NonOscillatoryBall})
     Pexit = ComplexF64[]
+    g(z) = evalphase(G,z)
     for Ball in Ω
+        c,r = centre_and_radius(Ball) 
+        trig   = θ -> imag(g(c + r*cis(θ)))
+        dtrig  = θ -> ForwardDiff.derivative(trig,θ)  # first derivative of Im(g)
+        ddtrig = θ -> ForwardDiff.derivative(dtrig,θ) # second derivative of Im(g)
+        θ = find_zeros(dtrig, 0,  2π) # find the roots of dtrig
+
+        maxima = Float64[] # second-derivative test
+        [ddtrig(θ) < 0.0 ? push!(maxima, θ) : nothing for θ in θ] 
+
+        exits = [c+ r*cis(θ) for θ in maxima]
+        [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits] # add exit point
     end
-    return
+    return Pexit
 end
 
 function exitpoints(G::SquareRootPhaseFunction, Ω::Vector{NonOscillatoryBall})

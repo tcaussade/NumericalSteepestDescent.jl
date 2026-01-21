@@ -23,11 +23,12 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
 
     endpoints_outside_Ω, exits_outside_Ω
     trace_from = [endpoints_outside_Ω; exits_outside_Ω] 
-    γ_to_entrance, γ_to_valley = tracing_contours(G, trace_from, Ω; δODE, δcoarse) 
+    γ_to_entrance, γ_to_valley, γ_to_pole = tracing_contours(G, trace_from, Ω; δODE, δcoarse) 
 
 
     NodesDict[:valleys]   = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
     NodesDict[:entrances] = [to(γ) for γ in γ_to_entrance] 
+    NodesDict[:poles] = unique([to(γ) for γ in γ_to_pole])
 
     plane_to_graph = Dict{ComplexF64,Int16}() # map complex plane points to graph vertices
     i = 0
@@ -53,6 +54,7 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     # Part 3: create edges between exit points and entrance points / valley points
     connect_ball_to_valleyyorentrance!(γ_to_entrance, ContourGraph, plane_to_graph, EdgesList)
     connect_ball_to_valleyyorentrance!(γ_to_valley, ContourGraph, plane_to_graph, EdgesList)
+    connect_ball_to_valleyyorentrance!(γ_to_pole, ContourGraph, plane_to_graph, EdgesList)
     
     return ContourGraph, plane_to_graph, NodesDict, EdgesList
 end
@@ -196,7 +198,7 @@ function plot_ContourGraph!(fig, ax, graph::SimpleGraph, Ω::Vector, z_to_G::Dic
     mylayout(_) = list
     p.layout = mylayout
 
-        # add non-oscillatory balls
+    # add non-oscillatory balls
     for Ball in Ω
         c,r = centre_and_radius(Ball)
         arc!(ax, Point2f(reim(c)), r, 0, 2π, 
@@ -243,6 +245,11 @@ function _assign_colors_graph(z_to_G::Dict, NodesDict::Dict)
     for z in NodesDict[:entrances]
         i = z_to_G[z]
         colors[i] = colorant"green"
+        list[i]   = reim(z)
+    end
+    for z in NodesDict[:poles]
+        i = z_to_G[z]
+        colors[i] = colorant"#5AC3E3"
         list[i]   = reim(z)
     end
     return list, colors

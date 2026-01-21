@@ -8,19 +8,21 @@ quads = [10,15,30]
 # ωvals = [1,5,10,20]
 ω = 50
 
+singular = false
+
 avals = 10 .^ range(-5, 0, length=50)
-bfix  = -1.0
+bfix  = 0.0
 relErrA = zeros(length(avals), length(quads))
 
 bvals = range(-1.0,1.0, length = 50)
-afix  = 1e-6
+afix  = 1.0
 relErrB = zeros(length(bvals), length(quads))
 
 # for ω in ωvals
     
     for (j,a) in enumerate(avals)
-        fA(z) = hankelh1(0, ω*sqrt(z^2 + a^2)) * cis(-ω * sqrt(z^2 + a^2))
-        # fA(z) = 1.0
+
+        fA(z) = singular ? hankelh1(0, ω*sqrt(z^2 + a^2)) * cis(-ω * sqrt(z^2 + a^2)) : 1.0
         ζA(z) = fA(z) * cis(ω * (sqrt(z^2+a^2) + bfix*z))
         refA = quadgk(ζA, 0.0, 1.0, atol = 1e-14)[1] # brute-force
         G = SquareRootPhaseFunction(a,bfix)
@@ -32,8 +34,7 @@ relErrB = zeros(length(bvals), length(quads))
     
     
     for (j,b) in enumerate(bvals)
-        fB(z) = hankelh1(0, ω*sqrt(z^2 + afix^2)) * cis(-ω * sqrt(z^2 + afix^2))
-        # fB(z) = 1.0
+        fB(z) = singular ? hankelh1(0, ω*sqrt(z^2 + afix^2)) * cis(-ω * sqrt(z^2 + afix^2)) : 1.0
         ζB(z) = fB(z) * cis(ω * (sqrt(z^2+afix^2) + b*z))
         refB = quadgk(ζB, 0.0, 1.0, atol = 1e-14)[1] # brute-force
         G = SquareRootPhaseFunction(afix,b)

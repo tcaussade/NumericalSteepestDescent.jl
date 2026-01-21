@@ -81,35 +81,70 @@ evalphase_derivative2(::LinearPhaseFunction, z) = 0.0
 """
 
 struct RationalPhaseFunction <: AbstractPhaseFunction 
-    num :: Polynomial # numerator
-    den :: Polynomial # denominator
-    ξ   :: Vector # stationary points
-    p   :: Vector # poles
-    function RationalPhaseFunction(num_coefs ::Vector,pole_vals::Vector)
-        num = Polynomial(num_coefs)
-        den = fromroots(pole_vals) # Polynomial(den_coefs)
-        dnum = derivative(num)*den - num*derivative(den)
+    analytic  :: Polynomial # analytic part of the phase
+    principal :: RationalFunction # singular part of the phase
+    ξ :: Vector # stationary points
+    p :: Vector # poles
+    v :: Vector # valleys at infinity
+    rat   :: RationalFunction # phase in the form p(z)/q(z)
+    drat  :: RationalFunction # first derivative of phase
+    ddrat :: RationalFunction # second derivative of phase
+    rstar_valley :: Float64
+    rstar_pole :: Float64
+    function RationalPhaseFunction(analyticpart_coefs::Vector,poles::Vector)
+        analytic_part = Polynomial(analyticpart_coefs)
+        # den = fromroots(pole_vals) # Polynomial(den_coefs)
+
+        p = unique(poles)
+        poles_mult = [(zp, count(==(zp), poles)) for zp in p] # count multiplicities
+        id = Polynomial(1.0)
+        principal_part = RationalFunction(Polynomial(0.0), id)
+        for (zp,mult) in poles_mult
+            p = ones(length(mult)) * zp
+            principal_part += id // fromroots(p)
+        end
+        rat = analytic_part + principal_part
+
+        drat  = derivative(rat)
+        ddrat = derivative(drat)
+
+        dnum = derivative(rat.num)*rat.den - rat.num*derivative(rat.den)
         ξ = roots(dnum)  
-        p = pole_vals
-        new(num, den, ξ ,p)
+        J   = length(analyticpart_coefs)-1
+        v   = [((2*(m-1)+1/2)*π - angle(analyticpart_coefs[end]))/J for m=1:J]
+
+        # compute r⋆ for poles and valleys only once and store the value
+        rvalley = rStar_valley()
+        rpole   = rStar_pole()
+        new(analytic_part, principal_part, ξ ,p, v, rat, drat, ddrat, rvalley, rpole)
     end
 end
 
-# degree(G::PolynomialPhaseFunction)                   = length(G.p)-1
-stationary_points(G::RationalPhaseFunction)        = G.ξ
-evalphase(G::RationalPhaseFunction, z)             = (G.num // G.den)(z)
-# evalphase_derivative(G::RationalPhaseFunction, z)  = G.dp(z)
-# evalphase_derivative2(G::RationalPhaseFunction, z) = G.dp2(z)
+# fix: degree of rat phase should be without the singular part??
 
-# function rStar(p::Polynomial)
-#     # define threshold distance for valley region
-#     α = coeffs(p)
-#     J = length(α)-1
-#     β = [k*abs(α[k+1]) for k = 1:J-1]
-#     poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
-#     rstar = maximum(real.(roots(poly))) # solution is the only positive root
-#     return rstar + 1e-6 # PATH FIX - rstar = 0 for monomials
-# end
+# degree(G::PolynomialPhaseFunction)               = length(G.p)-1
+stationary_points(G::RationalPhaseFunction)        = G.ξ
+evalphase(G::RationalPhaseFunction, z)             = G.rat(z)
+evalphase_derivative(G::RationalPhaseFunction, z)  = G.drat(z)
+evalphase_derivative2(G::RationalPhaseFunction, z) = G.ddrat(z)
+numerator(G::RationalPhaseFunction)   = G.rat.num
+denominator(G::RationalPhaseFunction) = G.rat.den
+
+
+function rStar_valley()
+    return 2.0
+    # define threshold distance for valley region
+    # α = coeffs(p)
+    # J = length(α)-1
+    # β = [k*abs(α[k+1]) for k = 1:J-1]
+    # poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
+    # rstar = maximum(real.(roots(poly))) # solution is the only positive root
+    # return rstar + 1e-6 # PATH FIX - rstar = 0 for monomials
+end
+
+function rStar_pole()
+    return 0.1
+end
 
 """ 
     Struct for g(z) = √(z^2+a^2) + b*z

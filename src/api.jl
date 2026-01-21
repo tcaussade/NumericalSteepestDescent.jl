@@ -76,7 +76,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     if plot_sd 
         γall = Vector{ComplexContour}() # contains all traced contours
         for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
-            for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
+            for ηj in [NodesDict[:valleys]; NodesDict[:entrances]; NodesDict[:poles]]
                 i = CtoG[ηi]
                 j = CtoG[ηj]
                 if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end

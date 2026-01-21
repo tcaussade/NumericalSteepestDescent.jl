@@ -45,7 +45,7 @@ to(γ::ComplexContour) = γ.destination
 function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
     Pstat = get_Pstat(Ω)
     p1 = zero(ComplexF64)
-    h1 = η # initial conditions 
+    @show h1 = η # initial conditions 
     n = 0  # counter of iterations
     d = dist(h1, Pstat)
     g(z)   = evalphase(G,z)
@@ -70,11 +70,13 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
             return (h1, :entrance)
 
         else
-            bool, hvalley = isinValley(G,h1)
-            if bool
-                # @info "Reached valley region at $(v/π)π from η=$η in $n steps."
-                return (hvalley, :valley)
-            end
+            # check if in valley region
+            bool_valley, hvalley = isinValley(G,h1)
+            if bool_valley return (hvalley, :valley) end
+
+            # check if near a pole
+            bool_pole, hpole = isnearPole(G,h1)
+            if bool_pole return (hpole, :pole) end
         end
     end
 end
@@ -96,6 +98,7 @@ end
     For SqrtPhase and LinearPhase, we know a priori this is the case 
 """
 
+# method for Polynomial Phase function
 function isinValley(G::PolynomialPhaseFunction, z)
     # determine if z is in a valley region
     if abs(z) > G.rStar
@@ -123,12 +126,57 @@ function goes_to_valley(G::PolynomialPhaseFunction, θ)
     end
 end
 
+# method for Rational Phase function
+function isinValley(G::RationalPhaseFunction, z)
+    # check if in valley at infinity
+    if abs(z) > G.rstar_valley
+        v = goes_to_valley(G, angle(z))
+        if !(v isa Nothing) # not in valley angular region - keep tracing
+            hvalley = G.rstar_valley * cis(v) 
+            return true, hvalley 
+        end    
+    end
+    return false, nothing
+end
+function goes_to_valley(G::RationalPhaseFunction, θ) 
+    # identifies the valley where θ is
+    J = length(G.analytic)-1 # degree(G.num)
+    valleys = G.v
+    for v in valleys
+        dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
+       # @show dist, θ/π, v/π
+        if dist ≤ π/(2J)
+            #@show v/π
+            return v
+        end
+    end
+end
+function isnearPole(G::RationalPhaseFunction, z)
+    # check if in valley at a pole
+    if abs(z) < G.rstar_pole
+        zp = near_pole(G,z)
+        if !(zp isa Nothing) # not in valley at a pole - keep tracing
+            return true, zp
+        end
+    end
+    return false, nothing
+end
+function near_pole(G::RationalPhaseFunction, z)
+    # identifies nearby poles
+    for zp in G.p
+        if abs(z-zp) < G.rstar_pole
+            return zp
+        end
+    end
+end
+
+# method for sqrt phase function
 function isinValley(G::SquareRootPhaseFunction, z)
     if abs(z) == Inf
         return false, nothing
     end
     if abs(G.ξ[1]) == Inf 
-        ξ = 1e20 * sign(G.ξ[1])
+        ξ = 1e12 * sign(real(G.ξ[1]))
         v = π/2 * sign(real(z) - ξ)
     else
         v = π/2 * sign(real(z) - G.ξ[1])
@@ -140,6 +188,8 @@ end
 function isinValley(::LinearPhaseFunction, z)
     return true, cis(π/2)
 end
+
+
 
 """ Store traced contours in dictionary 
     Specialised method are provided for some phase functions.
@@ -153,24 +203,23 @@ function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscill
     # η_to_valley   = Dict{ComplexF64, ComplexF64}()
     ve = Vector{ComplexContour}()
     vv = Vector{ComplexContour}()
+    vp = Vector{ComplexContour}()
     for η in points
         h_end, status = tracecontour_coarse(G, η, Ω; δODE, δcoarse)
-        # @show h_end, status, nmax
         if status == :entrance
-            # push!(entrances, h_end) # (h_end, status))
             γ = ComplexContour(:finiteSD, η, h_end)
-            # η_to_entrance[η] = h_end
             push!(ve,γ)
-        elseif status == :valley
-            # push!(valley_points, h_end)
+        elseif status == :valley # at infinity
             γ = ComplexContour(:infiniteSD, η, h_end)
-            # η_to_valley[η] = h_end
             push!(vv,γ)
+        elseif status == :pole
+            γ = ComplexContour(:infiniteSD, η, h_end)
+            push!(vp,γ)
         end
     end
     # return entrances, η_to_entrance, valley_points, η_to_valley
     # return η_to_entrance, η_to_valley
-    return ve, vv
+    return ve, vv, vp
 end
 
 function tracing_contours(G::LinearPhaseFunction, points, ::Vector{NonOscillatoryBall};
