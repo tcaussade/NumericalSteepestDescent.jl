@@ -33,6 +33,7 @@ include("api.jl")
 
 export 
 PolynomialPhaseFunction,
+RationalPhaseFunction,
 LinearPhaseFunction,
 SquareRootPhaseFunction,
 integrate_nsp,

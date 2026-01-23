@@ -29,7 +29,7 @@ struct PolynomialPhaseFunction{T} <: AbstractPhaseFunction # arbitrary polynomia
     dp2 :: Polynomial{T} # coefficients of the second derivative of polynomial
     ξ   :: Vector{ComplexF64} # stationary points
     v   :: Vector{Float64} # angles of each valley
-    rStar :: Float64
+    rstar_valley :: Float64
     function PolynomialPhaseFunction(coefs::Vector{T}) where T
         @assert coefs[end] != 0 "Leading coefficient must be non-zero"
         @assert coefs != [0,1]  "Use LinearPhaseFunction instead"
@@ -84,39 +84,51 @@ struct RationalPhaseFunction <: AbstractPhaseFunction
     analytic  :: Polynomial # analytic part of the phase
     principal :: RationalFunction # singular part of the phase
     ξ :: Vector # stationary points
-    p :: Vector # poles
-    v :: Vector # valleys at infinity
+    p :: Vector{ComplexF64} # poles
+    vinf  :: Vector{ComplexF64} # valleys at infinity
+    vpole :: Vector # valleys at poles
     rat   :: RationalFunction # phase in the form p(z)/q(z)
     drat  :: RationalFunction # first derivative of phase
     ddrat :: RationalFunction # second derivative of phase
     rstar_valley :: Float64
-    rstar_pole :: Float64
-    function RationalPhaseFunction(analyticpart_coefs::Vector,poles::Vector)
-        analytic_part = Polynomial(analyticpart_coefs)
+    rstar_pole :: Vector{Float64}
+    function RationalPhaseFunction(analytic_coefs::Vector,poles::Vector, poles_coefs::Vector)
+        
+        @assert length(poles) == length(poles_coefs)
+        
+        analytic_part = Polynomial(analytic_coefs)
         # den = fromroots(pole_vals) # Polynomial(den_coefs)
 
-        p = unique(poles)
-        poles_mult = [(zp, count(==(zp), poles)) for zp in p] # count multiplicities
         id = Polynomial(1.0)
-        principal_part = RationalFunction(Polynomial(0.0), id)
-        for (zp,mult) in poles_mult
-            p = ones(length(mult)) * zp
-            principal_part += id // fromroots(p)
+        singular_part = Polynomial(0.0)
+        for (i,zp) in enumerate(poles)
+            for (k,coef) in enumerate(poles_coefs[i])
+                pvec = -zp * ones(k) 
+                singular_part += coef * id // fromroots(pvec) 
+            end
         end
-        rat = analytic_part + principal_part
-
+        rat = lowest_terms(analytic_part + singular_part)
         drat  = derivative(rat)
         ddrat = derivative(drat)
 
         dnum = derivative(rat.num)*rat.den - rat.num*derivative(rat.den)
-        ξ = roots(dnum)  
-        J   = length(analyticpart_coefs)-1
-        v   = [((2*(m-1)+1/2)*π - angle(analyticpart_coefs[end]))/J for m=1:J]
+        ξ = setdiff(roots(dnum), poles) # dnum may have more solutions than we need  
+        J   = length(analytic_coefs)-1
+        # valleys at infinity
+        vinf   = [((2*(m-1)+1/2)*π - angle(analytic_coefs[end]))/J for m=1:J]
+
+        # valleys at poles
+        vpole = Vector{Vector{ComplexF64}}(undef, length(poles))
+        for p = 1:length(poles)
+            Kp = length(poles_coefs[p])
+            vpole[p] = [(-(2*(m-1)+1/2)*π + angle(poles_coefs[p][end]))/Kp for m=1:Kp]
+        end
 
         # compute r⋆ for poles and valleys only once and store the value
-        rvalley = rStar_valley()
-        rpole   = rStar_pole()
-        new(analytic_part, principal_part, ξ ,p, v, rat, drat, ddrat, rvalley, rpole)
+        rvalley = rStar_valley(analytic_coefs, poles, poles_coefs)
+        rpole   = rStar_pole(analytic_coefs, poles, poles_coefs)
+        new(analytic_part, lowest_terms(singular_part), ξ ,poles, vinf, vpole,
+            rat, drat, ddrat, rvalley, rpole)
     end
 end
 
@@ -131,19 +143,76 @@ numerator(G::RationalPhaseFunction)   = G.rat.num
 denominator(G::RationalPhaseFunction) = G.rat.den
 
 
-function rStar_valley()
-    return 2.0
-    # define threshold distance for valley region
-    # α = coeffs(p)
-    # J = length(α)-1
-    # β = [k*abs(α[k+1]) for k = 1:J-1]
-    # poly = Polynomial([β; -J*abs(α[J+1])/sqrt(2)]) 
-    # rstar = maximum(real.(roots(poly))) # solution is the only positive root
-    # return rstar + 1e-6 # PATH FIX - rstar = 0 for monomials
+function rStar_valley(αj, poles, αpk)
+    J  = length(αj)-1
+    id = Polynomial(1.0)
+    # Analytic part: J*|αJ|*r^(J-1)/√2 - ∑j*|αj|*r^(j-1)
+    analytic_part = Polynomial([[-(j-1)*abs(αj[j]) for j = 2:J]; J*abs(αj[end])/sqrt(2)])
+
+    # Singular part: ∑∑ |k*α_(p,k)| * (z-zp)^(k-1)
+    singular_part = RationalFunction(Polynomial(0.0), id)
+    reg = id  # used to convert into a polynomial equation
+
+    id = Polynomial(1.0)
+    singular_part = Polynomial(0.0)
+    for (i,zp) in enumerate(poles)
+        for (k,coef) in enumerate(αpk[i])
+            pvec = abs(zp) * ones(k+1) 
+            singular_part += k * abs(coef) * id // fromroots(pvec) 
+        end
+        mult = length(αpk[i,:])
+        reg *= fromroots(ones(mult+1) * abs(zp))
+    end
+
+    singular_part_regularised = lowest_terms(reg * singular_part) # cancel out singularities
+    @assert singular_part_regularised.den(1.0) ≈ 1.0 # if this fails there is a bug
+    G = analytic_part * reg - singular_part_regularised.num
+
+    return maximum(real.(roots(G)))
 end
 
-function rStar_pole()
-    return 0.1
+function rStar_pole(αj, poles, αpk)
+    J  = length(αj)-1
+    id = Polynomial(1.0)
+
+    rp = zeros(length(poles))
+    for (i,zp) in enumerate(poles)
+        Kp = length(αpk[i])
+
+        # Analytic part: Kp*|α_(P,Kp)|*r^(-Kp-1) - ∑j*|αj|*(|zp|+r)^(j-1)
+        analytic_part = Polynomial(0.0)
+        for j = 1:J
+            vec = -abs(zp) * ones(j-1)
+            analytic_part += j * abs(αj[j+1]) * fromroots(vec)
+        end
+        # Singular part
+        singular_part = Polynomial(0.0)
+
+        singular_part += Kp * abs(αpk[i][end]) / sqrt(2) * id // fromroots(zeros(Kp+1))
+        reg = fromroots(zeros(Kp+1)) # used to convert into polynomial equation
+
+        for k=1:Kp-1
+            singular_part -= k * abs(αpk[i][k]) * id // fromroots(zeros(k+1))
+        end
+
+        for pp in setdiff(1:length(poles), i) # iterate over p' ≠ p
+            zpp = poles[pp] 
+            Kpp = length(αpk[pp])
+            # @show αpk[pp]
+            for k = 1:Kpp # from k = 1 to K_p'
+                ppvec = ones(k+1) * abs(zp - zpp)
+                singular_part -= (-1)^(-k-1) * k * abs(αpk[pp][k]) * id // fromroots(ppvec)
+            end
+            reg *= fromroots(ones(Kpp+1) * abs(zpp - zp)) * (-1)^(Kpp+1)
+        end
+
+        singular_part_regularised = lowest_terms(singular_part * reg)
+        @assert singular_part_regularised.den(1.0) ≈ 1.0 # if this fails there is a bug
+        G = singular_part_regularised.num - analytic_part * reg
+
+        rp[i] = maximum(real.(roots(G)))
+    end
+    return rp
 end
 
 """ 

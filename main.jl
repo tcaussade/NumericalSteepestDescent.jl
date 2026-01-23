@@ -7,7 +7,6 @@ z0,z1 = (-1,1) # specify (finite) endpoints
 
 example1 = [3,5,6,2,9,5,1,4,1,3]
 PolyPhase = PolynomialPhaseFunction(example1) 
-z1 = 0.5 - im
 val, figs = integrate(z0,z1,f,PolyPhase,ω; plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]

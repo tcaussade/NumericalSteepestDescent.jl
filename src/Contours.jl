@@ -45,7 +45,7 @@ to(γ::ComplexContour) = γ.destination
 function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
     Pstat = get_Pstat(Ω)
     p1 = zero(ComplexF64)
-    @show h1 = η # initial conditions 
+    h1 = η # initial conditions 
     n = 0  # counter of iterations
     d = dist(h1, Pstat)
     g(z)   = evalphase(G,z)
@@ -60,7 +60,8 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
         h2 = h1 + (p2-p1) * im / dg(h1) # ode_iteration
         # corrector - ensure we are following the SD contour
         rtol = δcoarse * d
-        h1 = find_zero((h->g(h)-g(η)-im*p2,dg),h2,Roots.Newton(); rtol)
+        # println("iterating, h1 = $(abs(h1)) * cis($(angle(h1)/π))π")
+        h1 = find_zero((h->g(h)-g(η)-im*p2,dg),h2,Roots.Newton(); rtol = rtol)
         p1 = p2
 
         # determine if we have found entrance point or a valley
@@ -141,7 +142,7 @@ end
 function goes_to_valley(G::RationalPhaseFunction, θ) 
     # identifies the valley where θ is
     J = length(G.analytic)-1 # degree(G.num)
-    valleys = G.v
+    valleys = G.vinf
     for v in valleys
         dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
        # @show dist, θ/π, v/π
@@ -153,21 +154,31 @@ function goes_to_valley(G::RationalPhaseFunction, θ)
 end
 function isnearPole(G::RationalPhaseFunction, z)
     # check if in valley at a pole
-    if abs(z) < G.rstar_pole
-        zp = near_pole(G,z)
-        if !(zp isa Nothing) # not in valley at a pole - keep tracing
-            return true, zp
-        end
+    zp = near_pole(G,z)
+    if !(zp isa Nothing) 
+        return true, zp
     end
+    # else, not in valley at a pole - keep tracing
     return false, nothing
 end
 function near_pole(G::RationalPhaseFunction, z)
     # identifies nearby poles
-    for zp in G.p
-        if abs(z-zp) < G.rstar_pole
-            return zp
+    for (i,zp) in enumerate(G.p)
+        if abs(z-zp) < G.rstar_pole[i]
+            Kp = length(G.vpole[i])
+            θ  = angle(z - zp)
+            for v in G.vpole[i] # check angle of valleys
+                # @show v/π, abs.((θ-v) .- 2π*(-2Kp:2Kp))/π
+                dist = minimum(abs.((θ-v) .- 2π*(-2Kp:2Kp)))
+                if dist ≤ π/(2*Kp) return zp + cis(-v) * 10*eps() end
+            end
         end
     end
+end
+
+function isnearPole(G::AbstractPhaseFunction, z)
+    # if the function is not RationalPhase we don't expect any poles
+    return false, nothing
 end
 
 # method for sqrt phase function

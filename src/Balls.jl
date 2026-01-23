@@ -35,17 +35,22 @@ function findradius(G::AbstractPhaseFunction, ξ, Cω, θ)
     g(z) = evalphase(G,z)
     ray(r) = ξ + r*cispi(θ)
     un(r) = abs(g(ray(r)) - g(ξ))^2 - Cω^2
-    guess = find_zeros_range(G) # heuristic choice - can we do better?
-    # guess = 1/abs(1+G.b*cis(θ))
-    # @show ray(0.0), abs(g(ray(0.0)) - g(ξ))^2, ξ
-    # @show un(0.0), un(guess)
-    return find_zero(un, guess, Bisection())
+    guess = find_zeros_range(G,ξ) # heuristic choice - can we do better?
+    # return find_zero(un, guess, Bisection())
+    rs = find_zeros(un, guess[1], guess[2], no_pts = 21)
+    if isempty(rs) return Inf else return minimum(rs) end
 end
 
-find_zeros_range(::PolynomialPhaseFunction) = (0.0, 10.0)
-find_zeros_range(::RationalPhaseFunction) = (0.0, 10.0)
+find_zeros_range(::PolynomialPhaseFunction,::Number) = (0.0, 10.0)
+""" is radius ∞ as ω tends to zero? """
+function find_zeros_range(G::RationalPhaseFunction, ξ::Number) 
+    return (0.0, 10.0) 
+    # @show maxradius =  minimum(abs.( G.p .- ξ ))
+    # return (0.0, maxradius)
+end
+
 # find_zeros_range(::LinearPhaseFunction) = nothing
-function find_zeros_range(G::SquareRootPhaseFunction) 
+function find_zeros_range(G::SquareRootPhaseFunction, ::Number) 
     rmin = max(1.0 /(1-abs(G.b)) - 100., 0.0)
     rmax = 1.0 /(1-abs(G.b)) + 100 # min(1.0 /(1-abs(G.b)) + 100., 1e20)
     sort([0.0, rmax])

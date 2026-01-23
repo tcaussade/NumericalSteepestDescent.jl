@@ -97,7 +97,8 @@ function endpoint_at_valley!(G::AbstractPhaseFunction, θ)
     v = goes_to_valley(G, θ)
     if v isa Nothing @warn "endpoint with θ=$(θ/π)π  is not in valley region" end
     # THIS IS A PATCH FIX TO PUT THE POINT OUTSIDE NonOscillatoryRegion!!
-    return (G.rStar + 5) * cis(v) # place far away in valley direction
+    @show cis(v)
+    return (G.rstar_valley + 5) * cis(v) # place far away in valley direction
 end
 
 function choose_quadrature(γ)
