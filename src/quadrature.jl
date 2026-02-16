@@ -5,40 +5,70 @@
     We are using direct quadrature. Could be improved to adaptive quadrature
 """
 
-function _does_contribute(G,ω,γ; δquad) 
+function does_not_contribute(G,ω,γ; δquad) 
     # determine is contribution from contour γ is significant
-    abs(cis(ω*evalphase(G, at(γ)))) < δquad
+    abs(cis(ω*evalphase(at(γ),G))) < δquad
 end
 
-function integrate(γ::ComplexContour, f, G, ω, x, w, quadtype :: Symbol; δfine, δquad, atol)
-    
-    if _does_contribute(G,ω,γ; δquad) return 0.0 + 0.0im end
 
-    if quadtype == :gaussian
-        # choose appropriate integration method based on contour type
-        if contour_type(γ) == :finite   
-            # @show _is_singular(G,γ)
-            if _is_singular(G,γ)
-                # println("singular quad!")
-                return integrate_finite_hp(γ, f, G, ω, x, w)
-            else
-                return integrate_finite(γ, f, G, ω, x, w)
-            end
-        elseif contour_type(γ) == :infiniteSD
-            return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
-        elseif contour_type(γ) == :finiteSD
-            return integrate_finiteSD(γ, f, G, ω, x, w; δfine, δquad)
+function integrate(γ::ComplexContour,f,G,ω,quad; δfine, δquad) 
+    # Do Gaussian quadrature
+    if does_not_contribute(G,ω,γ; δquad) return 0.0 + 0.0im end
+    
+    if contour_type(γ) == :finite   
+        if _is_singular(G,γ) # review this later
+            x,w = quad.qsingular
+            return integrate_finite_hp(γ, f, G, ω, x, w)
+        else
+            x,w = quad.qleg
+            return integrate_finite(γ, f, G, ω, x, w)
         end
-    elseif quadtype == :adaptive
-        if contour_type(γ) == :finite   
-            return integrate_finite_gk(γ, f, G, ω; atol)
-        elseif contour_type(γ) == :infiniteSD || contour_type(γ) == :finiteSD
-            return integrate_SD_gk(γ, f, G, ω; δfine, δquad, atol)
-        end
-    else 
-        @error "quadtype $quadtype is not valid.\nshould be :gaussian or :adaptive" 
+    elseif contour_type(γ) == :infiniteSD
+        x,w = quad.qlag
+        return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
+    elseif contour_type(γ) == :finiteSD
+        x,w = quad.qleg
+        return integrate_finiteSD(γ, f, G, ω, x, w; δfine, δquad)
     end
 end
+
+function integrate(γ::ComplexContour,f,G,ω; δfine, δquad, atol)
+    if contour_type(γ) == :finite   
+        return integrate_finite_gk(γ, f, G, ω; atol)
+    elseif contour_type(γ) == :infiniteSD || contour_type(γ) == :finiteSD
+        return integrate_SD_gk(γ, f, G, ω; δfine, δquad, atol)
+    end
+end
+
+# function integrate(γ::ComplexContour, f, G, ω, x, w, quadtype :: Symbol; δfine, δquad, atol)
+    
+#     if does_not_contribute(G,ω,γ; δquad) return 0.0 + 0.0im end
+
+#     if quadtype == :gaussian
+#         # choose appropriate integration method based on contour type
+#         if contour_type(γ) == :finite   
+#             # @show _is_singular(G,γ)
+#             if _is_singular(G,γ)
+#                 # println("singular quad!")
+#                 return integrate_finite_hp(γ, f, G, ω, x, w)
+#             else
+#                 return integrate_finite(γ, f, G, ω, x, w)
+#             end
+#         elseif contour_type(γ) == :infiniteSD
+#             return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
+#         elseif contour_type(γ) == :finiteSD
+#             return integrate_finiteSD(γ, f, G, ω, x, w; δfine, δquad)
+#         end
+#     elseif quadtype == :adaptive
+#         if contour_type(γ) == :finite   
+#             return integrate_finite_gk(γ, f, G, ω; atol)
+#         elseif contour_type(γ) == :infiniteSD || contour_type(γ) == :finiteSD
+#             return integrate_SD_gk(γ, f, G, ω; δfine, δquad, atol)
+#         end
+#     else 
+#         @error "quadtype $quadtype is not valid.\nshould be :gaussian or :adaptive" 
+#     end
+# end
 
 """ 
     We use Gauss-Legendre for finite contours
@@ -51,7 +81,7 @@ end
 
 function integrate_finite(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w)
     # evaluate integral along finite straight line from a to b
-    g(z) = evalphase(G, z)
+    g(z) = evalphase(z,G)
     a,b  = at(γ), to(γ)
     h    = trace_finite(a,b)
     0.5*(b-a) * dot(w, f.(h.(x)).*cis.(ω*g.(h.(x))))
@@ -80,7 +110,7 @@ const σ = 0.17 # Grading parameter
 
 function integrate_finite_hp(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w)
     # evaluate integral along finite straight line from a to b
-    g(z) = evalphase(G, z)
+    g(z) = evalphase(z,G)
     L   = abs(to(γ)-at(γ))
     @assert abs(at(γ)) < abs(to(γ)) 
 
@@ -105,8 +135,8 @@ end
 
 function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; δfine)
     # evaluate integral along infinite SD path at η
-    g(z)  = evalphase(G, z)
-    dg(z) = evalphase_derivative(G, z)
+    g(z)  = evalphase(z,G)
+    dg(z) = evalphase_derivative(z,G)
     η = at(γ)
     h = points_on_SDcontour(η, G, x/ω; δfine)
     dh = im ./ dg.(h)
@@ -115,11 +145,11 @@ end
 
 function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine, η0 = η)
     # solve X in g(X) = g(η) + i x/ω
-    g(z)  = evalphase(G, z)
-    dg(z) = evalphase_derivative(G, z)
+    g(z)  = evalphase(z,G)
+    dg(z) = evalphase_derivative(z,G)
     h = zeros(ComplexF64, length(xvec))
     # f(u) = g(u)-g(η)-im*xvec[1]
-    h[1] = Roots.newton(u -> g(u)-g(η)-im*xvec[1], dg, η0) # x0 = η
+    h[1] = Roots.newton(u -> g(u)-g(η)-im*xvec[1], dg, η0; rtol = δfine) # x0 = η
     # h[1] = Roots.newton(f,dg, η0)
     # @show η
     for j in 2:length(xvec)
@@ -130,7 +160,7 @@ function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine,
 end
 
 function points_on_SDcontour(η, G::LinearPhaseFunction, xvec::Vector; δfine)
-    g(z)  = evalphase(G, z)
+    g(z)  = evalphase(z,G)
     return η .+ im * xvec 
 end
 
@@ -142,8 +172,8 @@ end
 function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; 
                             δfine, δquad)
     # evaluate integral along finite SD path at η going to Ω
-    g(z)  = evalphase(G, z)
-    dg(z) = evalphase_derivative(G, z)
+    g(z)  = evalphase(z,G)
+    dg(z) = evalphase_derivative(z,G)
     η = at(γ)
     umax = im * (g(η) - g(to(γ))) # pre-image of destination point
     # @assert abs(imag(umax)) < 1e-14 "umax = $umax should be real-valued \t η = $η"
@@ -176,7 +206,7 @@ const wg_gk = [0.12948496616886981, 0.2797053914892767, 0.38183005050511887, 0.4
 
 function integrate_finite_gk(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω; atol)
     # evaluate integral along finite straight line from a to b
-    g(z) = evalphase(G, z)
+    g(z) = evalphase(z,G)
     a,b  = at(γ), to(γ)
     h    = trace_finite(a,b)
     ζ(u) = f(h(u)) * cis(ω*g(h(u)))
@@ -188,7 +218,7 @@ end
 
 function integrate_SD_gk(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω; δfine, δquad, atol)
     # evaluate integral along infinite or finite SD path at η using truncated GK
-    g(z)  = evalphase(G, z)
+    g(z)  = evalphase(z,G)
     @show η = at(γ)
 
     M  = 1.0 # pending: should be M = max(cis(ω * g(η))) for all η ∈ {Pstat, Pendp, Pexit}
@@ -205,7 +235,7 @@ end
 # Core evaluation for adaptive quadrature
 function eval_gk(a,b,f,G,ω,η; δfine)
     p = trace_finite(a,b)
-    dg(z) = evalphase_derivative(G, z)
+    dg(z) = evalphase_derivative(z,G)
     # choose starting point, should be hη(p(-1))
     h  = points_on_SDcontour(η, G, p.(x_gk)/ω; δfine, η0 = η)
     dh = im ./ dg.(h)

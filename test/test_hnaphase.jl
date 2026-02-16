@@ -47,11 +47,11 @@ end
         @test hna_test(50,0, :gaussian) < 1e-5
         @test hna_test(101,0, :gaussian) < 3e-7
     end
-    # @testset "Adaptive quadrature" begin
+    @testset "Adaptive quadrature" begin
     #     @test hna_test(0, 1e-2, :adaptive) < 1e-2
     #     @test hna_test(0, 1e-6, :adaptive) < 1e-5
     #     @test hna_test(0, 1e-10, :adaptive) < 1e-10
-    # end
+    end
 end
 
 # hna_test(0, 1e-12, :adaptive) 

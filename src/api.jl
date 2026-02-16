@@ -44,24 +44,39 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     a,b = NodesDict[:endpoint]
     sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
 
-    # Evaluate each contour on the shortest path
-    global xleg, wleg = gausslegendre(N)
-    global xlag, wlag = gausslaguerre(N)
+    # choose quadrature and precompute weights and nodes
+    if quadtype == :gaussian
+        qleg = gausslegendre(N)
+        qlag = gausslaguerre(N)
+        qsin = gausslegendre(Int(floor(sqrt(N))))
+        quad = (qleg = qleg, qlag = qlag, qsingular = qsin)
+    elseif quadtype == :adaptive
+    else
+        @error "quadtype is not in (:gaussian, :adaptive)"
+    end
 
+    # global xleg, wleg = gausslegendre(N)
+    # global xlag, wlag = gausslaguerre(N)
+
+    # Evaluate each contour on the shortest path
     S = zero(ComplexF64)
     γtot = Vector{ComplexContour}()
-    for e in sd_edges
+    for e in sd_edges 
         i1,i2 = e.src, e.dst
         if haskey(EdgesList, (i1, i2))
-            γ = EdgesList[(i1,i2)]
-            push!(γtot, γ)
-            x,w = choose_quadrature(γ)
-            S += integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
-        else
-            γ = EdgesList[(i2,i1)] # the contour is traversed in the opposite direction
-            push!(γtot, γ)
-            x,w = choose_quadrature(γ)    
-            S -= integrate(γ, f, G, ω, x, w, quadtype; δfine, δquad, atol)
+            γ = EdgesList[(i1,i2)]; push!(γtot, γ)
+            if quadtype == :gaussian
+                S += integrate(γ, f, G, ω, quad; δfine, δquad)
+            elseif quadtype == :adaptive
+                S += integrate(γ, f, G, ω; δfine, δquad, atol)
+            end
+        else # the contour is traversed in the opposite direction
+            γ = EdgesList[(i2,i1)]; push!(γtot, γ)
+            if quadtype == :gaussian
+                S -= integrate(γ, f, G, ω, quad; δfine, δquad)
+            elseif quadtype == :adaptive
+                S -= integrate(γ, f, G, ω; δfine, δquad, atol)
+            end
         end
     end
 
@@ -72,7 +87,6 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
 
     fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
 
-     
     if plot_sd 
         γall = Vector{ComplexContour}() # contains all traced contours
         for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
@@ -97,7 +111,6 @@ function endpoint_at_valley!(G::AbstractPhaseFunction, θ)
     v = goes_to_valley(G, θ)
     if v isa Nothing @warn "endpoint with θ=$(θ/π)π  is not in valley region" end
     # THIS IS A PATCH FIX TO PUT THE POINT OUTSIDE NonOscillatoryRegion!!
-    @show cis(v)
     return (G.rstar_valley + 5) * cis(v) # place far away in valley direction
 end
 

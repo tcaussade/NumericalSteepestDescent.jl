@@ -1,10 +1,14 @@
 using PathFinder
 
+"""
+    Trying to evaluate 36.2.6 in DLMF to replicate Fig 36.3.6
+"""
+
 f(z) = 1.0
 ω    = 1.0
 
-X = range(-2,2, length = 20)
-Y = range(-2,2, length = 20)
+X = range(-5,5, length = 50)
+Y = range(-5,5, length = 50)
 Z = zeros(length(X), length(Y))
 
 z = 0.0
@@ -27,7 +31,7 @@ using WGLMakie
 fig = Figure() #Figure(size = (500,400),)
 ax = Axis(fig[1, 1], title = "Pearcey catastrophe integral", 
             xlabel = "Re", ylabel = "Im")
-levelset = contourf!(ax,X,Y,Z; range(0, 5, 200), 
+levelset = contourf!(ax,X,Y,Z; levels = range(0, 4, 200), 
                         colormap = :jet, # colormap = :hot
                         extendlow = :auto, extendhigh = :auto)
 Colorbar(fig[1,2], levelset)

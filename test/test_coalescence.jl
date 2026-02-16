@@ -24,9 +24,9 @@ function coalescence_test(numQuadPts, showText=false)
                 end
                 poly_coeffs = [0.0; -r^P; zeros(P-1); 1.0/(P+1)]  
                 G = PolynomialPhaseFunction(poly_coeffs)
+                g(z) = PathFinder.evalphase(z,G)
                 I_PF,_ = integrate(a, b, z -> 1.0, G, freq; N=numQuadPts) 
-                integrand(x) = exp(1im * freq * PathFinder.evalphase(G,x))
-                I_ML,_ = quadgk(integrand, a, b)
+                I_ML,_ = quadgk(x -> cis(freq * g(x)), a, b)
                 Ierr = abs(I_PF - I_ML) / abs(I_ML)
                 if showText
                     println("\t\trel err=$Ierr")

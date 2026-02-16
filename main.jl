@@ -1,11 +1,12 @@
 using PathFinder
 
 # Basic usage example for arbitrary polynomial phase
-ω    = 10000 # frequency parameter
+ω    = 50 # frequency parameter
 f(z) = 1.0 # Amplitude function
 z0,z1 = (-1,1) # specify (finite) endpoints 
 
 example1 = [3,5,6,2,9,5,1,4,1,3]
+example1 = ([0,+0.05,0,1])
 PolyPhase = PolynomialPhaseFunction(example1) 
 val, figs = integrate(z0,z1,f,PolyPhase,ω; plot_graph = true, plot_sd = true)
 figs[1]
@@ -24,6 +25,7 @@ val, _ = integrate(z0,z1, f, LinPhase, ω)
 # We also can handle a square-root phase given by g(z) = √(z^2+a^2) + bz 
 # This is a common integral to evaluate in HNA methods for high-frequency scattering problems
 a,b = (1.0, -1/sqrt(2))
+a,b = (1.0, -0.8947368421052632)
 ω = 50
 @show SqrtPhase = SquareRootPhaseFunction(a, b)
 val0, figs = integrate(0.0, 1.0,f,SqrtPhase,ω; quadtype = :gaussian, N=10, 

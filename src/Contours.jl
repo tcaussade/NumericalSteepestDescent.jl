@@ -1,23 +1,14 @@
 """ 
-    Struct for complex contour 
+    ComplexContour
 
-    Type can be :finite, :infiniteSD or :finiteSD, and is needed to choose suitable quadature rules
-    Orientation tells in which way the contour is traversed.
+Struct for complex contour 
 
-    If contour is :finite or :finiteSD, location should be two points 
-    If contour is :infiniteSD, location is point and valley angle.
+Type can be :finite, :infiniteSD or :finiteSD, and is needed to choose suitable quadature rules
+Orientation tells in which way the contour is traversed.
+
+If contour is :finite or :finiteSD, location should be two points 
+If contour is :infiniteSD, location is point and valley angle.
 """
-
-# struct ComplexContour
-#     location :: Vector{ComplexF64}
-#     type :: Symbol # Finite / Infinite SD / Finite SD
-#     orientation :: Symbol # 
-#     function ComplexContour(location, type::Symbol, orientation::Symbol)
-#         @assert type in (:finite, :infiniteSD, :finiteSD)
-#         @assert orientation in (:positive, :negative)
-#         new(location, type, orientation)
-#     end
-# end
 
 struct ComplexContour
     contourtype :: Symbol # Finite / Infinite SD / Finite SD
@@ -37,20 +28,49 @@ at(γ::ComplexContour) = γ.source
 to(γ::ComplexContour) = γ.destination
 
 
+""" 
+    Store traced contours in dictionary 
+"""
+
+function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall};
+                          δODE, δcoarse)
+    # entrances     = Vector{ComplexF64}()
+    # valley_points = Vector{ComplexF64}()
+    # η_to_entrance = Dict{ComplexF64, ComplexF64}()
+    # η_to_valley   = Dict{ComplexF64, ComplexF64}()
+    ve = Vector{ComplexContour}()
+    vv = Vector{ComplexContour}()
+    vp = Vector{ComplexContour}()
+    for η in points
+        h_end, pointtype = tracecontour_coarse(η, G, Ω; δODE, δcoarse) 
+        if pointtype == :entrance
+            γ = ComplexContour(:finiteSD, η, h_end)
+            push!(ve,γ)
+        elseif pointtype == :infvalley
+            γ = ComplexContour(:infiniteSD, η, h_end)
+            push!(vv,γ)
+        elseif pointtype == :pole
+            γ = ComplexContour(:infiniteSD, η, h_end)
+            push!(vp,γ)
+        end
+    end
+    return ve, vv, vp
+end
+
 """
     Coarse tracing for SD contour at η
     Goal is determining if the contour goes to a valley or into the non-oscillatory region.
 """
 
-function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
+function tracecontour_coarse(η, G::AbstractPhaseFunction, Ω; δODE, δcoarse)
     Pstat = get_Pstat(Ω)
     p1 = zero(ComplexF64)
     h1 = η # initial conditions 
     n = 0  # counter of iterations
     d = dist(h1, Pstat)
-    g(z)   = evalphase(G,z)
-    dg(z)  = evalphase_derivative(G, z)
-    dg2(z) = evalphase_derivative2(G, z)
+    g(z)   = evalphase(z,G)
+    dg(z)  = evalphase_derivative(z,G)
+    dg2(z) = evalphase_derivative2(z,G)
     while d > 0 
         n+=1
         # predictor
@@ -63,27 +83,26 @@ function tracecontour_coarse(G::AbstractPhaseFunction, η, Ω; δODE, δcoarse)
         # println("iterating, h1 = $(abs(h1)) * cis($(angle(h1)/π))π")
         h1 = find_zero((h->g(h)-g(η)-im*p2,dg),h2,Roots.Newton(); rtol = rtol)
         p1 = p2
-
-        # determine if we have found entrance point or a valley
-        if isinΩ(Ω, h1)    
+    
+        if isinΩ(Ω, h1) # check if we entered non-oscillatory region - we have found an entrance
             # @info "Reached Ω from η1=$η to η2=$h1 in $n steps."
             # STORE AT THIS MOMENT WHATEVER WE NEED FOR LATER!!
             return (h1, :entrance)
 
-        else
-            # check if in valley region
-            bool_valley, hvalley = isinValley(G,h1)
-            if bool_valley return (hvalley, :valley) end
-
-            # check if near a pole
-            bool_pole, hpole = isnearPole(G,h1)
-            if bool_pole return (hpole, :pole) end
+        else # check if we entered a no-return region - we are at a valley
+            bool, hval, typeval = isinValley(h1,G)
+            if bool return (hval, typeval) end
         end
     end
 end
 
+function isinValley(z,::AbstractPhaseFunction)
+    return bool, hval, typeval
+end
 
-""" Check if z is inside the non-oscillatory region"""
+""" 
+    Check if z is inside the non-oscillatory region
+"""
 function isinΩ(Ω::Vector{NonOscillatoryBall}, z)
     for Ball in Ω
         c, r = centre_and_radius(Ball)
@@ -94,40 +113,70 @@ function isinΩ(Ω::Vector{NonOscillatoryBall}, z)
     return false
 end
 
-""" 
-    Check if z is in a valley (PolynomialPhase) 
-    For SqrtPhase and LinearPhase, we know a priori this is the case 
+
+"""
+    Below are phase specific routines to identify valleys
+
+tracing_contours() is adapted to special cases where we can exploit phase structure
 """
 
-# method for Polynomial Phase function
-function isinValley(G::PolynomialPhaseFunction, z)
-    # determine if z is in a valley region
-    if abs(z) > G.rStar
-        v = goes_to_valley(G, angle(z))
-        if v isa Nothing # not in valley angular region - keep tracing
-            return false, nothing
-        end
-        hvalley = G.rStar * cis(v) 
-        return true, hvalley 
-        
-    end
-    return false, nothing
+###
+# Linear phase
+###
+
+# valleyangle(θ, ::LinearPhaseFunction) = 
+
+function tracecontour_coarse(::Any, ::LinearPhaseFunction, ::Any; δODE, δcoarse) 
+    # we don't need to trace anything...
+    return (cis(π/2), :infvalley)
 end
-function goes_to_valley(G::PolynomialPhaseFunction, θ) 
-    # identifies the valley where θ is
-    J = degree(G)
-    valleys = G.v
-    for v in valleys
-        dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
-       # @show dist, θ/π, v/π
-        if dist ≤ π/(2J)
-            #@show v/π
-            return v
+
+###
+# Polynomial phase
+###
+
+function isinValley(z, G::PolynomialPhaseFunction)
+    if abs(z) > rstar_valley(G)
+        v = valleyangle(angle(z), G)
+        if v isa Nothing 
+            return false, nothing, nothing # break if not in valley at infinity
+        else
+            hval = rstar_valley(G) * cis(v)
+            return true, hval, :infvalley
+            # should evaluate G(r,θ) here too!
         end
+    else
+        return false, nothing, nothing # break if not in valley at infinity
     end
 end
 
-# method for Rational Phase function
+function valleyangle(θ, G::PolynomialPhaseFunction) # find the angular valley of arg(z)
+    J = degree(G)
+    valleys = infvalleys(G)
+    for v in valleys
+        dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
+        if dist ≤ π/(2J) return v end
+    end
+end
+
+###
+# Sqrt phase
+###
+
+function tracecontour_coarse(η, G::SquareRootPhaseFunction, ::Any; δODE, δcoarse)
+    # we don't need to trace anything...
+    ξ = stationary_points(G)[1]
+    v = π/2 * sign(real(η) - ξ) # we are assuming η is real
+    return cis(v), :infvalley
+end
+
+
+###
+# Rational phase
+###
+
+""" UNDER DEVELOPMENT """
+
 function isinValley(G::RationalPhaseFunction, z)
     # check if in valley at infinity
     if abs(z) > G.rstar_valley
@@ -176,87 +225,15 @@ function near_pole(G::RationalPhaseFunction, z)
     end
 end
 
-function isnearPole(G::AbstractPhaseFunction, z)
+function isnearPole(::AbstractPhaseFunction, ::Any)
     # if the function is not RationalPhase we don't expect any poles
     return false, nothing
 end
 
-# method for sqrt phase function
-function isinValley(G::SquareRootPhaseFunction, z)
-    if abs(z) == Inf
-        return false, nothing
-    end
-    if abs(G.ξ[1]) == Inf 
-        ξ = 1e12 * sign(real(G.ξ[1]))
-        v = π/2 * sign(real(z) - ξ)
-    else
-        v = π/2 * sign(real(z) - G.ξ[1])
-    end
-    hvalley = cis(v) # this is patch fix!! re-do
-    return true, hvalley
-end
-
-function isinValley(::LinearPhaseFunction, z)
-    return true, cis(π/2)
-end
 
 
 
-""" Store traced contours in dictionary 
-    Specialised method are provided for some phase functions.
-"""
 
-function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall};
-                          δODE, δcoarse)
-    # entrances     = Vector{ComplexF64}()
-    # valley_points = Vector{ComplexF64}()
-    # η_to_entrance = Dict{ComplexF64, ComplexF64}()
-    # η_to_valley   = Dict{ComplexF64, ComplexF64}()
-    ve = Vector{ComplexContour}()
-    vv = Vector{ComplexContour}()
-    vp = Vector{ComplexContour}()
-    for η in points
-        h_end, status = tracecontour_coarse(G, η, Ω; δODE, δcoarse)
-        if status == :entrance
-            γ = ComplexContour(:finiteSD, η, h_end)
-            push!(ve,γ)
-        elseif status == :valley # at infinity
-            γ = ComplexContour(:infiniteSD, η, h_end)
-            push!(vv,γ)
-        elseif status == :pole
-            γ = ComplexContour(:infiniteSD, η, h_end)
-            push!(vp,γ)
-        end
-    end
-    # return entrances, η_to_entrance, valley_points, η_to_valley
-    # return η_to_entrance, η_to_valley
-    return ve, vv, vp
-end
 
-function tracing_contours(G::LinearPhaseFunction, points, ::Vector{NonOscillatoryBall};
-        δODE, δcoarse)
-    vv = Vector{ComplexContour}()
-    ve = Vector{ComplexContour}()
-    for η in points
-        h_end = isinValley(G,η)[2] 
-        γ = ComplexContour(:infiniteSD, η, h_end)
-        push!(vv,γ)
-    end
-    return ve, vv
-end
 
-function tracing_contours(G::SquareRootPhaseFunction, points, ::Vector{NonOscillatoryBall};
-        δODE, δcoarse)
-    vv = Vector{ComplexContour}()
-    ve = Vector{ComplexContour}()
-    for η in points
-        @show bool, h_end = isinValley(G, η) 
-        # bool = true if we want to trace from there, false if ξ is too large
-        if bool
-            @show γ = ComplexContour(:infiniteSD, η, h_end)
-            push!(vv,γ)
-        end
-    end
-    return ve, vv
-end
 

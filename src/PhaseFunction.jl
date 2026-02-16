@@ -46,9 +46,11 @@ end
 
 degree(G::PolynomialPhaseFunction)                   = length(G.p)-1
 stationary_points(G::PolynomialPhaseFunction)        = G.ξ
-evalphase(G::PolynomialPhaseFunction, z)             = G.p(z)
-evalphase_derivative(G::PolynomialPhaseFunction, z)  = G.dp(z)
-evalphase_derivative2(G::PolynomialPhaseFunction, z) = G.dp2(z)
+evalphase(z, G::PolynomialPhaseFunction)             = G.p(z)
+evalphase_derivative(z, G::PolynomialPhaseFunction)  = G.dp(z)
+evalphase_derivative2(z, G::PolynomialPhaseFunction) = G.dp2(z)
+rstar_valley(G::PolynomialPhaseFunction) = G.rstar_valley
+infvalleys(G::PolynomialPhaseFunction) = G.v
 
 function rStar(p::Polynomial)
     # define threshold distance for valley region
@@ -72,9 +74,33 @@ struct LinearPhaseFunction <: AbstractPhaseFunction
 end
 
 stationary_points(G::LinearPhaseFunction)       = G.ξ
-evalphase(::LinearPhaseFunction, z)             = z
-evalphase_derivative(::LinearPhaseFunction, z)  = 1.0
-evalphase_derivative2(::LinearPhaseFunction, z) = 0.0
+evalphase(z, ::LinearPhaseFunction)             = z
+evalphase_derivative(z, ::LinearPhaseFunction)  = 1.0
+evalphase_derivative2(z,::LinearPhaseFunction) = 0.0
+
+""" 
+    Struct for g(z) = √(z^2+a^2) + b*z
+"""
+
+struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
+    a :: Float64
+    b :: Float64 
+    ξ :: Vector{ComplexF64} # using Vector struct for consistency
+    function SquareRootPhaseFunction(a::T, b::T) where T
+        @assert a>0 "Parameter `a` should be positive"
+        @assert abs(b) ≤ 1 "Parameter `b` should be between -1 and 1"   
+        @info "Methods assume the integration contour is real" 
+        # binf = (1-inftol) * sign(b) # ξ goes to ∞ as b tends to ±1
+        # ξ = 1-abs(b) > inftol ? -a*b/sqrt(1-b^2) : -a*binf/sqrt(1-binf^2)
+        ξ =  abs(b) == 1 ? -Inf*sign(b) : -a*b/sqrt(1-b^2)
+        new{T}(a,b,[ξ])
+    end
+end
+
+stationary_points(G::SquareRootPhaseFunction)        = G.ξ
+evalphase(z, G::SquareRootPhaseFunction)             = sqrt(z^2 + G.a^2) + G.b * z
+evalphase_derivative(z, G::SquareRootPhaseFunction)  = z/sqrt(z^2 + G.a^2) + G.b
+evalphase_derivative2(z, G::SquareRootPhaseFunction) = G.a^2 / (z^2 + G.a^2)^(3/2)
 
 """
     Struct for rational phase function
@@ -94,7 +120,7 @@ struct RationalPhaseFunction <: AbstractPhaseFunction
     rstar_pole :: Vector{Float64}
     function RationalPhaseFunction(analytic_coefs::Vector,poles::Vector, poles_coefs::Vector)
         
-        @assert length(poles) == length(poles_coefs)
+        @assert length(poles) == length(poles_coefs) "Coefficients of singular part are not well specified"
         
         analytic_part = Polynomial(analytic_coefs)
         # den = fromroots(pole_vals) # Polynomial(den_coefs)
@@ -132,15 +158,14 @@ struct RationalPhaseFunction <: AbstractPhaseFunction
     end
 end
 
-# fix: degree of rat phase should be without the singular part??
-
-# degree(G::PolynomialPhaseFunction)               = length(G.p)-1
 stationary_points(G::RationalPhaseFunction)        = G.ξ
-evalphase(G::RationalPhaseFunction, z)             = G.rat(z)
-evalphase_derivative(G::RationalPhaseFunction, z)  = G.drat(z)
-evalphase_derivative2(G::RationalPhaseFunction, z) = G.ddrat(z)
+evalphase(z, G::RationalPhaseFunction)             = G.rat(z)
+evalphase_derivative(z, G::RationalPhaseFunction)  = G.drat(z)
+evalphase_derivative2(z, G::RationalPhaseFunction) = G.ddrat(z)
 numerator(G::RationalPhaseFunction)   = G.rat.num
 denominator(G::RationalPhaseFunction) = G.rat.den
+rstar_valley(G::RationalPhaseFunction) = G.rstar_valley
+infvalleys(G::RationalPhaseFunction) = G.vinf
 
 
 function rStar_valley(αj, poles, αpk)
@@ -168,7 +193,7 @@ function rStar_valley(αj, poles, αpk)
     @assert singular_part_regularised.den(1.0) ≈ 1.0 # if this fails there is a bug
     G = analytic_part * reg - singular_part_regularised.num
 
-    return maximum(real.(roots(G)))
+    return maximum(real.(roots(G))) + 1e-12 # fix for monomial analytic part
 end
 
 function rStar_pole(αj, poles, αpk)
@@ -188,7 +213,7 @@ function rStar_pole(αj, poles, αpk)
         # Singular part
         singular_part = Polynomial(0.0)
 
-        singular_part += Kp * abs(αpk[i][end]) / sqrt(2) * id // fromroots(zeros(Kp+1))
+        singular_part += Kp * abs(αpk[i][end]) / sqrt(2) * id // fromroots(zeros(Kp+1)) 
         reg = fromroots(zeros(Kp+1)) # used to convert into polynomial equation
 
         for k=1:Kp-1
@@ -210,30 +235,9 @@ function rStar_pole(αj, poles, αpk)
         @assert singular_part_regularised.den(1.0) ≈ 1.0 # if this fails there is a bug
         G = singular_part_regularised.num - analytic_part * reg
 
-        rp[i] = maximum(real.(roots(G)))
+        # @show roots(G)
+        rp[i] = maximum(real.(roots(G))) + 1e-12 # fix for monomial analytic part
     end
     return rp
 end
 
-""" 
-    Struct for g(z) = √(z^2+a^2) + b*z
-"""
-
-struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
-    a :: Float64
-    b :: Float64 
-    ξ :: Vector{ComplexF64} # using Vector struct for consistency
-    function SquareRootPhaseFunction(a::T, b::T) where T
-        @assert a>0 "Parameter `a` should be positive"
-        @assert abs(b) ≤ 1 "Parameter `b` should be between -1 and 1"    
-        # binf = (1-inftol) * sign(b) # ξ goes to ∞ as b tends to ±1
-        # ξ = 1-abs(b) > inftol ? -a*b/sqrt(1-b^2) : -a*binf/sqrt(1-binf^2)
-        ξ =  abs(b) == 1 ? -Inf*sign(b) : -a*b/sqrt(1-b^2)
-        new{T}(a,b,[ξ])
-    end
-end
-
-stationary_points(G::SquareRootPhaseFunction)        = G.ξ
-evalphase(G::SquareRootPhaseFunction, z)             = sqrt(z^2 + G.a^2) + G.b * z
-evalphase_derivative(G::SquareRootPhaseFunction, z)  = z/sqrt(z^2 + G.a^2) + G.b
-evalphase_derivative2(G::SquareRootPhaseFunction, z) = G.a^2 / (z^2 + G.a^2)^(3/2)

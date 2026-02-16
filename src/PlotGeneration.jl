@@ -23,6 +23,9 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
         )
     # WARNING: setting umax too large might result in trouble
 
+    g(z)  = evalphase(z,G)
+    dg(z) = evalphase_derivative(z,G)
+
     xmin = -set
     xmax = +set
     ymin = -set
@@ -37,7 +40,7 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
     # plot levelset of phase function
     X = [x for x in x for _ in y]
     Y = [y for _ in x for y in y]
-    Z = [evalphase(G, x+im*y) for x in x for y in y]
+    Z = [g(x+im*y) for x in x for y in y]
     # color_lim = 300 # maximum(imag(Z)) / 2
     levelset = contourf!(ax,X,Y,-imag.(Z); levels = range(-color_lim, color_lim, 20), 
                          colormap = :balance, extendlow = :auto, extendhigh = :auto)
@@ -51,8 +54,6 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
     end
 
     # add contours of the quasi-SD deformation
-    g(z)  = evalphase(G,z)
-    dg(z) = evalphase_derivative(G,z)
     for c in γall
         if abs(at(c)) > inftol 
             # @show abs(at(c))
@@ -63,7 +64,7 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
             hη = points_on_SDcontour(at(c), G, u; δfine = 1e-12)
             lines!(ax, reim.(hη); color = :blue, linewidth = lw)
         elseif contour_type(c) == :finiteSD
-            U = im*(evalphase(G, at(c)) - evalphase(G,to(c)))
+            U = im*(g(at(c)) - g(to(c)))
             # U = im*(G.p(at(c)) - G.p(to(c)))
             u_tmp = u * U/umax
             hη = points_on_SDcontour(at(c), G, u_tmp; δfine = 1e-6)

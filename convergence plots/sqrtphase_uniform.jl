@@ -1,20 +1,20 @@
 using PathFinder
 using QuadGK
-using CairoMakie
+using WGLMakie
 using SpecialFunctions
 
 quadtype = :gaussian
 quads = [10,15,30]
 # ωvals = [1,5,10,20]
-ω = 50
+ω = 30
 
 singular = false
 
 avals = 10 .^ range(-5, 0, length=50)
-bfix  = 0.0
+bfix  = 0.2
 relErrA = zeros(length(avals), length(quads))
 
-bvals = range(-1.0,1.0, length = 50)
+bvals = range(-1.0,1.0, length = 20)
 afix  = 1.0
 relErrB = zeros(length(bvals), length(quads))
 

@@ -1,6 +1,8 @@
 
 """
-    Struct representing a non-oscillatory ball in the complex plane
+    NonOscillatoryBall
+
+Struct representing a non-oscillatory ball in the complex plane. 
 """
 
 struct NonOscillatoryBall 
@@ -10,16 +12,6 @@ end
 centre_and_radius(B::NonOscillatoryBall) = (B.c, B.r)
 
 ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays) = _compute_ballradius(G, ξ, Cω; Nrays)
-    
-function ballradius(G::SquareRootPhaseFunction, ξ, Cω; Nrays)
-    # if stationary point is too large, drop non-oscillatory ball
-    # we do it by giving it a small radius (which won't affect the algorithm)
-    if abs(ξ) > G.a # should be adjusted to endpoints!
-        return 1e-4
-    else
-        return _compute_ballradius(G, ξ, Cω; Nrays)
-    end
-end
 
 function _compute_ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
     ### THIS IS A SLOW PART OF THE CODE!!!
@@ -32,63 +24,26 @@ function _compute_ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
 end
 
 function findradius(G::AbstractPhaseFunction, ξ, Cω, θ)
-    g(z) = evalphase(G,z)
+    g(z) = evalphase(z,G)
     ray(r) = ξ + r*cispi(θ)
     un(r) = abs(g(ray(r)) - g(ξ))^2 - Cω^2
     guess = find_zeros_range(G,ξ) # heuristic choice - can we do better?
     # return find_zero(un, guess, Bisection())
-    rs = find_zeros(un, guess[1], guess[2], no_pts = 21)
+    rs = find_zeros(un, guess[1], guess[2], no_pts = 41)
     if isempty(rs) return Inf else return minimum(rs) end
 end
-
-find_zeros_range(::PolynomialPhaseFunction,::Number) = (0.0, 10.0)
-""" is radius ∞ as ω tends to zero? """
-function find_zeros_range(G::RationalPhaseFunction, ξ::Number) 
-    return (0.0, 10.0) 
-    # @show maxradius =  minimum(abs.( G.p .- ξ ))
-    # return (0.0, maxradius)
-end
-
-# find_zeros_range(::LinearPhaseFunction) = nothing
-function find_zeros_range(G::SquareRootPhaseFunction, ::Number) 
-    rmin = max(1.0 /(1-abs(G.b)) - 100., 0.0)
-    rmax = 1.0 /(1-abs(G.b)) + 100 # min(1.0 /(1-abs(G.b)) + 100., 1e20)
-    sort([0.0, rmax])
-end
-
-# function findradius(G::PolynomialPhaseFunction, ξ, Cω, θ)  
-# ## THIS METHOD IS SLOWER THAN GENERAL PURPOSE APPROACH
-#     g(z) = evalphase(G,z)
-#     # specialised method for polynomials
-#     coef = coeffs(G.p)
-#     J = length(coef)-1
-#     # compute coefficients of g(ξ + r e^(iθ))
-#     gpoly = Polynomial(0.0)
-#     for j = 0:J
-#         # trig += Polynomial(coef[j+1] * [binomial(j,k) * c^(j-k) * r^k for k = 0:j])
-#         gpoly += Polynomial(coef[j+1] * [binomial(j,k) * ξ^(j-k) * cis(k*θ) for k=0:j])
-#     end
-#     # construct G(r) = |g(ξ+re^{iθ})-g(ξ)|^2 - Cω^2
-#     G = (gpoly-g(ξ)) * conj(gpoly-g(ξ)) - Cω^2
-
-#     rvals = roots(G)
-#     rvals = real.(rvals[ abs.(imag.(rvals)) .< 0.01])
-
-#     return minimum(rvals[rvals .> 0.0]) # keep only positive roots
-# end
-
-
 
 """
     Construct the non-oscillatory region Ω
 
-    G      : phase function (subtype of AbstractPhaseFunction)
-    Cball  : constant defining the size of the non-oscillatory region
-    ω      : frequency parameter
-    δball  : overlap tolerance between non-oscillatory balls (default 1.0)
+G      : phase function (subtype of AbstractPhaseFunction)
+Cball  : constant defining the size of the non-oscillatory region
+ω      : frequency parameter
+δball  : overlap tolerance between non-oscillatory balls (default 1.0)
 
-    Returns a Vector of NonOscillatoryBalls representing the non-oscillatory region.
+Returns a Vector of NonOscillatoryBalls representing the non-oscillatory region.
 """
+
 
 function NonOscillatoryRegion(G::AbstractPhaseFunction, ω; 
                               Cball, δball, Nrays)
@@ -130,13 +85,67 @@ end
 
 dist(hη, Pstat :: Vector) = minimum(abs.(hη .- Pstat)) # dist(hn, P_statpoint)
 
-
 """
     Determine the set of exit points of the non-oscillatory region
 """
 
-# function filter_imaginary(x::Vector; tol = 1e-2)
-#     real.(x[ abs.(imag.(x)) .< tol ])
+function exitpoints(G::AbstractPhaseFunction, Ω::Vector{NonOscillatoryBall})
+    Pexit = ComplexF64[]
+    g(z) = evalphase(z,G)
+    for Ball in Ω
+        c,r = centre_and_radius(Ball) 
+        trig   = θ -> imag(g(c + r*cis(θ)))
+        dtrig  = θ -> ForwardDiff.derivative(trig,θ)  # first derivative of Im(g)
+        ddtrig = θ -> ForwardDiff.derivative(dtrig,θ) # second derivative of Im(g)
+        θ = find_zeros(dtrig, 0,  2π) # find the roots of dtrig
+
+        maxima = Float64[] # second-derivative test
+        [ddtrig(θ) < 0.0 ? push!(maxima, θ) : nothing for θ in θ] 
+
+        exits = [c+ r*cis(θ) for θ in maxima]
+        [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits] # add exit point
+    end
+    return Pexit
+end
+
+
+"""
+    Some key functions must be adapted to the structure of the phase
+    Others can be improved by exploiting the structure
+"""
+
+###
+# Linear phase specific
+###
+
+# find_zeros_range(::LinearPhaseFunction) = nothing
+
+exitpoints(::LinearPhaseFunction, ::Vector{NonOscillatoryBall}) = ComplexF64[]
+
+###
+# Polynomial specific functions
+###
+
+find_zeros_range(::PolynomialPhaseFunction,::Number) = (0.0, 10.0)
+# ## THIS METHOD IS SLOWER THAN GENERAL PURPOSE APPROACH
+# function findradius(G::PolynomialPhaseFunction, ξ, Cω, θ)  
+#     g(z) = evalphase(G,z)
+#     # specialised method for polynomials
+#     coef = coeffs(G.p)
+#     J = length(coef)-1
+#     # compute coefficients of g(ξ + r e^(iθ))
+#     gpoly = Polynomial(0.0)
+#     for j = 0:J
+#         # trig += Polynomial(coef[j+1] * [binomial(j,k) * c^(j-k) * r^k for k = 0:j])
+#         gpoly += Polynomial(coef[j+1] * [binomial(j,k) * ξ^(j-k) * cis(k*θ) for k=0:j])
+#     end
+#     # construct G(r) = |g(ξ+re^{iθ})-g(ξ)|^2 - Cω^2
+#     G = (gpoly-g(ξ)) * conj(gpoly-g(ξ)) - Cω^2
+
+#     rvals = roots(G)
+#     rvals = real.(rvals[ abs.(imag.(rvals)) .< 0.01])
+
+#     return minimum(rvals[rvals .> 0.0]) # keep only positive roots
 # end
 
 function exitpoints(G::PolynomialPhaseFunction, Ω :: Vector{NonOscillatoryBall})
@@ -174,28 +183,29 @@ function exitpoints(G::PolynomialPhaseFunction, Ω :: Vector{NonOscillatoryBall}
     return Pexit
 end
 
-function exitpoints(G::AbstractPhaseFunction, Ω::Vector{NonOscillatoryBall})
-    Pexit = ComplexF64[]
-    g(z) = evalphase(G,z)
-    for Ball in Ω
-        c,r = centre_and_radius(Ball) 
-        trig   = θ -> imag(g(c + r*cis(θ)))
-        dtrig  = θ -> ForwardDiff.derivative(trig,θ)  # first derivative of Im(g)
-        ddtrig = θ -> ForwardDiff.derivative(dtrig,θ) # second derivative of Im(g)
-        θ = find_zeros(dtrig, 0,  2π) # find the roots of dtrig
+###
+# Square-root specific
+###
 
-        maxima = Float64[] # second-derivative test
-        [ddtrig(θ) < 0.0 ? push!(maxima, θ) : nothing for θ in θ] 
-
-        exits = [c+ r*cis(θ) for θ in maxima]
-        [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits] # add exit point
+function ballradius(G::SquareRootPhaseFunction, ξ, Cω; Nrays)
+    # if stationary point is too large, drop non-oscillatory ball
+    # we do it by giving it a small radius (which won't affect the algorithm)
+    if abs(ξ) > 5 # should be adjusted to endpoints!
+        return 1e-4
+    else
+        return _compute_ballradius(G, ξ, Cω; Nrays)
     end
-    return Pexit
+end
+
+function find_zeros_range(G::SquareRootPhaseFunction, ::Number) 
+    rmin = max(1.0 /(1-abs(G.b)) - 100., 0.0)
+    rmax = 1.0 /(1-abs(G.b)) + 100 # min(1.0 /(1-abs(G.b)) + 100., 1e20)
+    sort([0.0, rmax])
 end
 
 function exitpoints(G::SquareRootPhaseFunction, Ω::Vector{NonOscillatoryBall})
     c,r = centre_and_radius(Ω[1]) 
-    g(z) = evalphase(G,z)
+    g(z) = evalphase(z,G)
     trig   = θ -> imag(g(c + r*cis(θ)))
     dtrig  = θ -> ForwardDiff.derivative(trig,θ)  # first derivative of Im(g)
     ddtrig = θ -> ForwardDiff.derivative(dtrig,θ) # second derivative of Im(g)
@@ -207,12 +217,24 @@ function exitpoints(G::SquareRootPhaseFunction, Ω::Vector{NonOscillatoryBall})
         return [c+ r*cis(θ) for θ in maxima]
     else # move along real axis
         # @info "moving along real axis"
-        # xmin = max(real(kwargs[1]),real(c-r))
-        # xmax = min(real(kwargs[2]),real(c+r))
-        # return Complex.([xmin, xmax]) # 
-        return [c-r, c+r]
+        xmin = max(0,real(c-r))
+        xmax = min(1,real(c+r))
+        return [xmin, xmax] # assumes integration along [0,1]
     end
 end
 
-exitpoints(::LinearPhaseFunction, ::Vector{NonOscillatoryBall}) = ComplexF64[]
+###
+# Rational phase-specific
+###
+
+""" is radius ∞ as ω tends to zero? """
+function find_zeros_range(G::RationalPhaseFunction, ξ::Number) 
+    return (0.0, 10.0) 
+    # @show maxradius =  minimum(abs.( G.p .- ξ ))
+    # return (0.0, maxradius)
+end
+
+
+
+
 
