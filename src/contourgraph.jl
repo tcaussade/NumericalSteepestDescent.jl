@@ -13,7 +13,7 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     NodesDict = Dict{Symbol, Vector{ComplexF64}}()
     
     # add small perturbation to distinguish between endpoints and stationary points when they coincide
-    NodesDict[:endpoint]  = [a,b]        .+ rand()*eps() * 10
+    NodesDict[:endpoint]  = [a,b]        .+ im* eps() * 10
     NodesDict[:statpoint] = get_Pstat(Ω)
     NodesDict[:exits] = exitpoints(G,Ω) #.+ rand()*eps()
     exits_outside_Ω = _filter_exits(G, Ω, NodesDict[:exits]) # used to filter manually placed exit points
@@ -24,7 +24,6 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     endpoints_outside_Ω, exits_outside_Ω
     trace_from = [endpoints_outside_Ω; exits_outside_Ω] 
     γ_to_entrance, γ_to_valley, γ_to_pole = tracing_contours(G, trace_from, Ω; δODE, δcoarse) 
-
 
     NodesDict[:valleys]   = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
     NodesDict[:entrances] = [to(γ) for γ in γ_to_entrance] 

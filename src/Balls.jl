@@ -14,7 +14,6 @@ centre_and_radius(B::NonOscillatoryBall) = (B.c, B.r)
 ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays) = _compute_ballradius(G, ξ, Cω; Nrays)
 
 function _compute_ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
-    ### THIS IS A SLOW PART OF THE CODE!!!
     r = zeros(Nrays)
     for n = 1:Nrays
         θ = 2*n/Nrays
@@ -24,6 +23,7 @@ function _compute_ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
 end
 
 function findradius(G::AbstractPhaseFunction, ξ, Cω, θ)
+     ### THIS IS A SLOW PART OF THE CODE!!!
     g(z) = evalphase(z,G)
     ray(r) = ξ + r*cispi(θ)
     un(r) = abs(g(ray(r)) - g(ξ))^2 - Cω^2
@@ -188,12 +188,10 @@ end
 ###
 
 function ballradius(G::SquareRootPhaseFunction, ξ, Cω; Nrays)
-    # if stationary point is too large, drop non-oscillatory ball
+    # if stationary point is too large, drop contour tracing on a half-plane
     # we do it by giving it a small radius (which won't affect the algorithm)
-    if abs(ξ) > 5 # should be adjusted to endpoints!
-        return 1e-4
-    else
-        return _compute_ballradius(G, ξ, Cω; Nrays)
+    if abs(ξ) == Inf return NaN
+    else return _compute_ballradius(G, ξ, Cω; Nrays)
     end
 end
 
@@ -204,6 +202,13 @@ function find_zeros_range(G::SquareRootPhaseFunction, ::Number)
 end
 
 function exitpoints(G::SquareRootPhaseFunction, Ω::Vector{NonOscillatoryBall})
+
+    """ DEV here """
+    # special case, phase is constant on a half-plane
+    # if abs(G.b) == 1.0 
+    #     return [0.0im]
+    # end
+
     c,r = centre_and_radius(Ω[1]) 
     g(z) = evalphase(z,G)
     trig   = θ -> imag(g(c + r*cis(θ)))
@@ -211,15 +216,15 @@ function exitpoints(G::SquareRootPhaseFunction, Ω::Vector{NonOscillatoryBall})
     ddtrig = θ -> ForwardDiff.derivative(dtrig,θ) # second derivative of Im(g)
   
     θ = find_zeros(dtrig, 0,  2π) # find the roots of dtrig
-    if abs(im*G.a - c) > 2*r # check if branch point is away from the ball,
+    if abs(im*G.a - c) > singular_tol(G)*r # check if branch point is away from the ball,
         maxima = Float64[] # second-derivative test
         [ddtrig(θ) < 0.0 ? push!(maxima, θ) : nothing for θ in θ] 
         return [c+ r*cis(θ) for θ in maxima]
     else # move along real axis
         # @info "moving along real axis"
-        xmin = max(0,real(c-r))
-        xmax = min(1,real(c+r))
-        return [xmin, xmax] # assumes integration along [0,1]
+        # xmin = max(0,real(c-r)) # assumes integration along [0,1]
+        # xmax = min(1,real(c+r))
+        return [c-r, c+r] 
     end
 end
 

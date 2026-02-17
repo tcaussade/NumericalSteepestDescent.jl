@@ -40,36 +40,6 @@ function integrate(γ::ComplexContour,f,G,ω; δfine, δquad, atol)
     end
 end
 
-# function integrate(γ::ComplexContour, f, G, ω, x, w, quadtype :: Symbol; δfine, δquad, atol)
-    
-#     if does_not_contribute(G,ω,γ; δquad) return 0.0 + 0.0im end
-
-#     if quadtype == :gaussian
-#         # choose appropriate integration method based on contour type
-#         if contour_type(γ) == :finite   
-#             # @show _is_singular(G,γ)
-#             if _is_singular(G,γ)
-#                 # println("singular quad!")
-#                 return integrate_finite_hp(γ, f, G, ω, x, w)
-#             else
-#                 return integrate_finite(γ, f, G, ω, x, w)
-#             end
-#         elseif contour_type(γ) == :infiniteSD
-#             return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
-#         elseif contour_type(γ) == :finiteSD
-#             return integrate_finiteSD(γ, f, G, ω, x, w; δfine, δquad)
-#         end
-#     elseif quadtype == :adaptive
-#         if contour_type(γ) == :finite   
-#             return integrate_finite_gk(γ, f, G, ω; atol)
-#         elseif contour_type(γ) == :infiniteSD || contour_type(γ) == :finiteSD
-#             return integrate_SD_gk(γ, f, G, ω; δfine, δquad, atol)
-#         end
-#     else 
-#         @error "quadtype $quadtype is not valid.\nshould be :gaussian or :adaptive" 
-#     end
-# end
-
 """ 
     We use Gauss-Legendre for finite contours
 """
@@ -88,34 +58,37 @@ function integrate_finite(γ::ComplexContour, f::Function, G::AbstractPhaseFunct
 end
 
 
-
 """
-    Singular quadrature routine (if needed). Criteria should be added to specific phase functions
+    Singular quadrature routine (if needed). 
+    Criteria should be added to specific phase functions
 """
-
-_is_singular(::AbstractPhaseFunction, ::ComplexContour) = false #
-
-function _is_singular(G::SquareRootPhaseFunction, γ::ComplexContour)
-    L = abs.(at(γ) - to(γ))
-    tol = 1.0 # arbitrary choice
-    if G.a / L < tol 
-        return true
-    else
-        return false
-    end
-end
 
 const σ = 0.17 # Grading parameter
 
+# in general 
+_is_singular(::AbstractPhaseFunction, ::ComplexContour) = false 
+
+function _is_singular(G::SquareRootPhaseFunction, γ::ComplexContour)
+    L = abs.(at(γ) - to(γ))
+    if G.a > L/singular_tol(G) return false  
+    else return true 
+    end
+end
+
+function layersnumber(ε) :: Integer
+    return ceil(log(abs(ε)*(1-σ))/log(σ))
+end
 
 function integrate_finite_hp(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w)
-    # evaluate integral along finite straight line from a to b
+    # evaluate integral along finite straight line from a to b 
+    # assumed it is on the real axis
     g(z) = evalphase(z,G)
     L   = abs(to(γ)-at(γ))
     @assert abs(at(γ)) < abs(to(γ)) 
 
     S = zero(ComplexF64)
-    n = ceil(log(2*G.a*σ/(1-σ))/log(σ)) # number of layers
+    n = layersnumber(im*G.a) 
+    # @show n = ceil(log(2*G.a*σ/(1-σ))/log(σ)) # number of layers
     for i in range(1,n-1)
         el1,el2 = at(γ) .+ L.*([σ^i, σ^(i-1)]) # mesh sub-interval
         h = trace_finite(el1,el2)
@@ -148,10 +121,10 @@ function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine,
     g(z)  = evalphase(z,G)
     dg(z) = evalphase_derivative(z,G)
     h = zeros(ComplexF64, length(xvec))
+    # @show η0
     # f(u) = g(u)-g(η)-im*xvec[1]
     h[1] = Roots.newton(u -> g(u)-g(η)-im*xvec[1], dg, η0; rtol = δfine) # x0 = η
     # h[1] = Roots.newton(f,dg, η0)
-    # @show η
     for j in 2:length(xvec)
         # println(h[j-1])
         h[j] = Roots.newton(u -> g(u)-g(η)-im*xvec[j], dg, h[j-1]; rtol = δfine) # x0 = h[j-1]

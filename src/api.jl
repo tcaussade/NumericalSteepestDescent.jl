@@ -32,8 +32,8 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         )
   
     # place endpoints at infinity if specified
-    a = infcontour[1] ? endpoint_at_valley!(G, a) : a
-    b = infcontour[2] ? endpoint_at_valley!(G, b) : b
+    a = infcontour[1] ? endpoint_at_valley(a, G) : a
+    b = infcontour[2] ? endpoint_at_valley(b, G) : b
     
     Ω = NonOscillatoryRegion(G, ω; Cball, δball,  Nrays)
 
@@ -48,15 +48,14 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     if quadtype == :gaussian
         qleg = gausslegendre(N)
         qlag = gausslaguerre(N)
-        qsin = gausslegendre(Int(floor(sqrt(N))))
+        if G isa SquareRootPhaseFunction 
+            qsin = gausslegendre(Int(floor(N/layersnumber(G.a))) + 1) 
+        else qsin = nothing end
         quad = (qleg = qleg, qlag = qlag, qsingular = qsin)
     elseif quadtype == :adaptive
     else
         @error "quadtype is not in (:gaussian, :adaptive)"
     end
-
-    # global xleg, wleg = gausslegendre(N)
-    # global xlag, wlag = gausslaguerre(N)
 
     # Evaluate each contour on the shortest path
     S = zero(ComplexF64)
@@ -106,21 +105,14 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
 end
 
 
-function endpoint_at_valley!(G::AbstractPhaseFunction, θ)
+function endpoint_at_valley(θ, G::AbstractPhaseFunction)
     # place endpoint at valley if specified as endpoint at infinity
-    v = goes_to_valley(G, θ)
+    v = valleyangle(θ, G)
     if v isa Nothing @warn "endpoint with θ=$(θ/π)π  is not in valley region" end
     # THIS IS A PATCH FIX TO PUT THE POINT OUTSIDE NonOscillatoryRegion!!
     return (G.rstar_valley + 5) * cis(v) # place far away in valley direction
 end
 
-function choose_quadrature(γ)
-    if contour_type(γ) == :infiniteSD # Choose quadrature nodes
-        return x,w = xlag,wlag
-    else 
-        return x,w = xleg,wleg 
-    end
-end
 
 """ 
     Show QuasiSD contour deformation 
@@ -170,8 +162,8 @@ function showContourGraph!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction, 
                          resolution = 200,
                          set = 10)
 
-    a = infcontour[1] ? endpoint_at_valley!(G, a) : a
-    b = infcontour[2] ? endpoint_at_valley!(G, b) : b
+    a = infcontour[1] ? endpoint_at_valley(a,G) : a
+    b = infcontour[2] ? endpoint_at_valley(b,G) : b
 
     Ω = NonOscillatoryRegion(G, ω; Cball, δball=1e-3,  Nrays=16)
     CG, CtoG, NodesDict, _ = ContourGraph(G, a, b, Ω; δODE=0.1, δcoarse=0.01)

@@ -76,23 +76,24 @@ end
 stationary_points(G::LinearPhaseFunction)       = G.ξ
 evalphase(z, ::LinearPhaseFunction)             = z
 evalphase_derivative(z, ::LinearPhaseFunction)  = 1.0
-evalphase_derivative2(z,::LinearPhaseFunction) = 0.0
+evalphase_derivative2(z,::LinearPhaseFunction)  = 0.0
 
 """ 
     Struct for g(z) = √(z^2+a^2) + b*z
 """
 
 struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
-    a :: Float64
-    b :: Float64 
+    a :: T
+    b :: T
     ξ :: Vector{ComplexF64} # using Vector struct for consistency
-    function SquareRootPhaseFunction(a::T, b::T) where T
+    function SquareRootPhaseFunction(a, b)
         @assert a>0 "Parameter `a` should be positive"
-        @assert abs(b) ≤ 1 "Parameter `b` should be between -1 and 1"   
-        @info "Methods assume the integration contour is real" 
+        @assert abs(b) < 1 "Parameter `b` should be in (-1,1)"   
+        # @info "Methods assume the integration contour is real" 
         # binf = (1-inftol) * sign(b) # ξ goes to ∞ as b tends to ±1
         # ξ = 1-abs(b) > inftol ? -a*b/sqrt(1-b^2) : -a*binf/sqrt(1-binf^2)
         ξ =  abs(b) == 1 ? -Inf*sign(b) : -a*b/sqrt(1-b^2)
+        T = promote_type(typeof(a), typeof(b))
         new{T}(a,b,[ξ])
     end
 end
@@ -101,6 +102,11 @@ stationary_points(G::SquareRootPhaseFunction)        = G.ξ
 evalphase(z, G::SquareRootPhaseFunction)             = sqrt(z^2 + G.a^2) + G.b * z
 evalphase_derivative(z, G::SquareRootPhaseFunction)  = z/sqrt(z^2 + G.a^2) + G.b
 evalphase_derivative2(z, G::SquareRootPhaseFunction) = G.a^2 / (z^2 + G.a^2)^(3/2)
+
+# we use knowledge of the phase when "a" is small
+# parameter below affects tolerance to decide whether the 
+# integral is singular, and how to choose contour deformation by hand.
+singular_tol(::SquareRootPhaseFunction) = 2. # this is an arbitrary choice
 
 """
     Struct for rational phase function
