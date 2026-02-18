@@ -78,34 +78,44 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
             end
         end
     end
-    
-    # for γ in γtot
-    #     @show γ
-    # end
+
+    if abs(S) > 1e12
+        @warn "Value of the integral is large"
+    end
 
     if isempty(γtot) 
         @warn "The graph is not connected between endpoints!"
         return nothing, [plot_ContourGraph(CG, Ω, CtoG, NodesDict)]
     end
+    
+    # for γ in γtot
+    #     @show γ
+    # end
 
-    fig1 = plot_graph ? plot_ContourGraph(CG, Ω, CtoG, NodesDict) : nothing
-
-    if plot_sd 
-        γall = Vector{ComplexContour}() # contains all traced contours
-        for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
-            for ηj in [NodesDict[:valleys]; NodesDict[:entrances]; NodesDict[:poles]]
-                i = CtoG[ηi]
-                j = CtoG[ηj]
-                if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
-            end
+    if plot_graph || plot_sd
+        figs = []
+        if plot_graph
+            fig1 = plot_ContourGraph(CG, Ω, CtoG, NodesDict)
+            push!(figs, fig1)
         end
-        fig2 =  plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol)
-    else
-        fig2 = nothing
-    end
-    figs = [fig1, fig2]
 
-    return S, figs
+        if plot_sd 
+            γall = Vector{ComplexContour}() # contains all traced contours
+            for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
+                for ηj in [NodesDict[:valleys]; NodesDict[:entrances]; NodesDict[:poles]]
+                    i = CtoG[ηi]
+                    j = CtoG[ηj]
+                    if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
+                end
+            end
+            fig2 =  plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol)
+            push!(figs, fig2)
+        end
+
+        return S, figs
+    end
+    #else, if no plot is needed...
+    return S
 end
 
 

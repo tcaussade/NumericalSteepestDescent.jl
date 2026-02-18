@@ -29,7 +29,7 @@ function hna_test_gaussian(nQuadPts, outputText=false)
                     println("ω = $ω, a = $a, b = $b")
                 end          
                 G = SquareRootPhaseFunction(a,b)
-                int = integrate(0.0, 1.0, x -> 1.0, G, ω; N=nQuadPts)[1]            
+                int = integrate(0.0, 1.0, x -> 1.0, G, ω; N=nQuadPts)            
                 absErr = abs(int-ref) #/ abs(ref)
                 if outputText
                     println("\t abs err = $absErr")
@@ -65,17 +65,17 @@ function hna_test_adaptive(atol, outputText=false)
     return maxRelErr
 end
 
-@testset "HNA Phase Test" begin
-    @testset "Gaussian quadrature" begin
-        @test hna_test_gaussian(25) < 1e-2
-        @test hna_test_gaussian(50) < 1e-5
-        @test hna_test_gaussian(100) < 3e-10
-    end
-    @testset "Adaptive quadrature" begin
-    #     @test hna_test_adaptive(1e-2) < 1e-2
-    #     @test hna_test_adaptive(1e-6) < 1e-5
-    #     @test hna_test_adaptive(1e-10) < 1e-10
-    end
+
+@testset "Gaussian quadrature" begin
+    @test hna_test_gaussian(25) < 1e-2
+    @test hna_test_gaussian(50) < 1e-5
+    @test hna_test_gaussian(100) < 3e-10
 end
+@testset "Adaptive quadrature" begin
+#     @test hna_test_adaptive(1e-2) < 1e-2
+#     @test hna_test_adaptive(1e-6) < 1e-5
+#     @test hna_test_adaptive(1e-10) < 1e-10
+end
+
 
 # hna_test(0, 1e-12, :adaptive) 

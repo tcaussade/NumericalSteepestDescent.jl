@@ -2,7 +2,6 @@ using PathFinder
 using QuadGK
 
 ω = 20.0
-a,b = -2, 2
 
 """ 
     Basic usage
@@ -13,16 +12,17 @@ pcoefs = [[d1,d2]] means that the pole a ps[1] takes the form d1/(z-p) + d2/(z-p
 """
 
 # trying g(z) = z + 1/z
-acoefs = [0,1]
+acoefs = im*[0,1]
 ps     = [0.0]
-pcoefs = [[1.]] #
+pcoefs = im*[[1/4]] #
 
 
 RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
 # Ω = PathFinder.NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
 # Pexit = PathFinder.exitpoints(RatPhase, Ω)
 # CG, CtoG, NodesDict, EdgesList = PathFinder.ContourGraph(RatPhase, a, b, Ω; δODE=0.1, δcoarse=0.01)
-val, figs = PathFinder.integrate(a,b,z->1.0,RatPhase,ω; 
+val, figs = PathFinder.integrate(1e-6,15,z->1.0,RatPhase,1.0; 
+                                infcontour = [false, false],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
@@ -68,25 +68,44 @@ PathFinder.evaluate_noreturn_Gpole(r, θ, PlasmaLensPhase; pole_idx = idx)
     See 36.2.6 in DLMF
 """
 x,y,z = (2.0, 0.22, 0.0)
-x,y,z = (5,5,0)
+x,y,z = (0,5,0)
 acoefs = [0,0,(x+z^2),0,2z,0,1]
 ps     = [0.0]
 pcoefs = [[0.0, y^2/12]] 
 CatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
 
 a,b = (-7π/12, π/12)
-val, figs = PathFinder.integrate(a,b,z->1.0,CatPhase,100.0; infcontour = [true,true],
+val, figs = PathFinder.integrate(a,b,z->1.0,CatPhase,0.01; infcontour = [true,true],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
+
+""" Arbitrary Rational phase ? """
+
+acoefs = [3,1,4,1,5,9,2]
+ps     = [-2, im, 2-10im]
+pcoefs = [[1,6,1,8], [4,9], [4]]
+RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+
+ans = PathFinder.integrate(-5,5,z->1.0,RatPhase,200.0; plot_sd = true)
+
+fig = PathFinder.Figure()
+ax  = PathFinder.Axis(fig[1, 1], title = "", aspect = PathFinder.DataAspect(),
+              xlabel = "Re", ylabel = "Im", xticks = -2:1:2, yticks = -2:1:2)
+PathFinder.quasiSDdeformation!(fig, ax, -1,1, RatPhase, 1;
+                                                    umax = 80,
+                                                    color_lim = 300,
+                                                    resolution = 200,
+                                                    set = 8)
 
 """
     Questions and pendings:
     - non-oscillatory region might contain poles for low frequencies?
     - evaluation of residues (this is the hardest part!)
     - when stationary point lie close to poles, they might stay inside the rstar_pole ball, which leads to missing edges in graph
-    - sometimes Pexit fails to find all exit points.
+    - sometimes Pexit fails to find all exit points - can we devise an algorithm that always finds the solutions?
+    - 
 """
 
 """
@@ -100,21 +119,3 @@ figs[2]
         3. residues?
 """
 
-acoefs = [0,0,1]
-poles  = [0.0]
-poles_coefs = [[0.0 1.0];]
-function def_ratphase(acoefs, poles, poles_coefs)
-    @show apart = Polynomial(acoefs)
-    id = Polynomial(1.0)
-    spart = Polynomial(0.0)
-    for (i,zp) in enumerate(poles)
-        for (k,coef) in enumerate(poles_coefs[i,:])
-            pvec = zp * ones(k) 
-            spart += coef * id // fromroots(pvec) 
-        end
-    end
-    @show spart
-    return lowest_terms(apart + spart)
-end
-
-def_ratphase(acoefs, poles, poles_coefs)

@@ -113,28 +113,24 @@ singular_tol(::SquareRootPhaseFunction) = 2. # this is an arbitrary choice
 """
 
 struct RationalPhaseFunction <: AbstractPhaseFunction 
-    analytic  :: Polynomial # analytic part of the phase
-    principal :: RationalFunction # singular part of the phase
-    ξ :: Vector # stationary points
-    p :: Vector{ComplexF64} # poles
-    vinf  :: Vector{ComplexF64} # valleys at infinity
-    vpole :: Vector{Vector{ComplexF64}} # valleys at each pole
     rat   :: RationalFunction # phase in the form p(z)/q(z)
     drat  :: RationalFunction # first derivative of phase
     ddrat :: RationalFunction # second derivative of phase
+    ξ :: Vector # stationary points
+    p :: Vector{ComplexF64} # poles
+    vinf  :: Vector{ComplexF64} # valleys at infinity
     rstar_valley :: Float64
+    vpole :: Vector{Vector{ComplexF64}} # valleys at each pole
     rstar_pole :: Vector{Float64}
 
-    αj :: Vector
-    αpk:: Vector
+    coefs_analytic :: Vector
+    coefs_singular :: Vector
     function RationalPhaseFunction(analytic_coefs::Vector,poles::Vector, poles_coefs::Vector)
         
         @assert length(poles) == length(poles_coefs) "Coefficients of singular part are not well specified"
         @assert ~iszero(poles_coefs) "Phase has null singular part"
         
-        analytic_part = Polynomial(analytic_coefs)
-        # den = fromroots(pole_vals) # Polynomial(den_coefs)
-
+        # construct the function
         id = Polynomial(1.0)
         singular_part = Polynomial(0.0)
         for (i,zp) in enumerate(poles)
@@ -143,15 +139,22 @@ struct RationalPhaseFunction <: AbstractPhaseFunction
                 singular_part += coef * id // fromroots(pvec) 
             end
         end
-        rat = lowest_terms(analytic_part + singular_part)
+        rat = lowest_terms(Polynomial(analytic_coefs)+ singular_part)
         drat  = derivative(rat)
         ddrat = derivative(drat)
 
         dnum = derivative(rat.num)*rat.den - rat.num*derivative(rat.den)
-        ξ = setdiff(roots(dnum), poles) # dnum may have more solutions than we need  
+        ξ = Vector{ComplexF64}(undef,0)
+        for root in roots(dnum)
+            minimum(abs.(root.-poles)) > 1e-2 ? push!(ξ,root) : continue
+        end
+        
+        # setdiff(roots(dnum), poles) # dnum may have more solutions than we need  
         J = length(analytic_coefs)-1
+
         # valleys at infinity
         vinf   = [((2*(m-1)+1/2)*π - angle(analytic_coefs[end]))/J for m=1:J]
+        rinf = compute_rstar_valley(analytic_coefs, poles, poles_coefs)
 
         # valleys at poles
         vpole = Vector{Vector{ComplexF64}}(undef, length(poles))
@@ -159,33 +162,33 @@ struct RationalPhaseFunction <: AbstractPhaseFunction
             Kp = length(poles_coefs[p])
             vpole[p] = [(-(2*(m-1)+1/2)*π + angle(poles_coefs[p][end]))/Kp for m=1:Kp]
         end
-
-        # compute r⋆ for poles and valleys only once and store the value
-        rvalley = compute_rstar_valley(analytic_coefs, poles, poles_coefs)
         rpole   = compute_rstar_pole(analytic_coefs, poles, poles_coefs)
-        new(analytic_part, lowest_terms(singular_part), ξ ,poles, vinf, vpole,
-            rat, drat, ddrat, rvalley, rpole, analytic_coefs, poles_coefs)
+
+        new(rat, drat, ddrat, ξ ,poles, 
+            vinf, rinf, vpole, rpole,
+            analytic_coefs, poles_coefs)
     end
 end
 
 stationary_points(G::RationalPhaseFunction)        = G.ξ
+poles(G::RationalPhaseFunction)                    = G.p
 evalphase(z, G::RationalPhaseFunction)             = G.rat(z)
 evalphase_derivative(z, G::RationalPhaseFunction)  = G.drat(z)
 evalphase_derivative2(z, G::RationalPhaseFunction) = G.ddrat(z)
 
-analytic_part(G::RationalPhaseFunction) = G.analytic
-principal_part(G::RationalPhaseFunction) = G.principal
-degree(G::RationalPhaseFunction) = length(G.analytic)-1
-numerator(G::RationalPhaseFunction)   = G.rat.num
-denominator(G::RationalPhaseFunction) = G.rat.den
+degree(G::RationalPhaseFunction) = length(G.coefs_analytic)-1
 
 rstar_valley(G::RationalPhaseFunction) = G.rstar_valley
 rstar_pole(G::RationalPhaseFunction) = G.rstar_pole
 infvalleys(G::RationalPhaseFunction) = G.vinf
 polevalleys(G::RationalPhaseFunction) = G.vpole
-poles(G::RationalPhaseFunction) = G.p
 
-Base.show(io::IO, G::RationalPhaseFunction) = print(io, "RationalPhase: $(analytic_part(G)) + $(principal_part(G))")
+
+Base.show(io::IO, G::RationalPhaseFunction) = begin
+        analytic = Polynomial(G.coefs_analytic)
+        singular = G.rat - analytic
+        print(io, "RationalPhase: $analytic + $singular")
+end
 
 function compute_rstar_valley(αj, poles, αpk)
     J  = length(αj)-1
@@ -204,7 +207,7 @@ function compute_rstar_valley(αj, poles, αpk)
             pvec = abs(zp) * ones(k+1) 
             singular_part += k * abs(coef) * id // fromroots(pvec) 
         end
-        mult = length(αpk[i,:])
+        mult = length(αpk[i])
         reg *= fromroots(ones(mult+1) * abs(zp))
     end
 
@@ -265,8 +268,8 @@ function compute_rstar_pole(αj, poles, αpk)
 end
 
 function evaluate_noreturn_Gpole(r,θ,G::RationalPhaseFunction; pole_idx)
-    αj = G.αj
-    αpk = G.αpk
+    αj = G.coefs_analytic
+    αpk = G.coefs_singular
 
     i = pole_idx
     zp = poles(G)[i]

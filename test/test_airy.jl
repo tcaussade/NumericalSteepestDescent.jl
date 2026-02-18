@@ -19,7 +19,7 @@ function airy_test(nQuadPts, outputText=false)
         end
         airyJulia = airyai(x)
         G = PolynomialPhaseFunction(-1im * [0, -x, 0, 1/3])
-        integral,_ = integrate(-π/3, π/3, x -> 1.0, G, 1.0; N=nQuadPts, infcontour=[true,true])
+        integral = integrate(-π/3, π/3, x -> 1.0, G, 1.0; N=nQuadPts, infcontour=[true,true])
         airyPathFinder = (1/(2im*π)) * integral
         relErr = abs(airyJulia - airyPathFinder) / abs(airyJulia)
         if outputText
