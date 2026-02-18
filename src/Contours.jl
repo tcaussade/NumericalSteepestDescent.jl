@@ -83,7 +83,7 @@ function tracecontour_coarse(η, G::AbstractPhaseFunction, Ω; δODE, δcoarse)
         # println("iterating, h1 = $(abs(h1)) * cis($(angle(h1)/π))π")
         h1 = find_zero((h->g(h)-g(η)-im*p2,dg),h2,Roots.Newton(); rtol = rtol)
         p1 = p2
-    
+        
         if isinΩ(Ω, h1) # check if we entered non-oscillatory region - we have found an entrance
             # @info "Reached Ω from η1=$η to η2=$h1 in $n steps."
             # STORE AT THIS MOMENT WHATEVER WE NEED FOR LATER!!
@@ -96,9 +96,6 @@ function tracecontour_coarse(η, G::AbstractPhaseFunction, Ω; δODE, δcoarse)
     end
 end
 
-function isinValley(z,::AbstractPhaseFunction)
-    return bool, hval, typeval
-end
 
 """ 
     Check if z is inside the non-oscillatory region
@@ -138,19 +135,17 @@ end
 function isinValley(z, G::PolynomialPhaseFunction)
     if abs(z) > rstar_valley(G)
         v = valleyangle(angle(z), G)
-        if v isa Nothing 
-            return false, nothing, nothing # break if not in valley at infinity
-        else
+        if ~(v isa Nothing) # is in no-return region at infinity
             hval = rstar_valley(G) * cis(v)
             return true, hval, :infvalley
             # should evaluate G(r,θ) here too!
         end
-    else
-        return false, nothing, nothing # break if not in valley at infinity
     end
+    return false, nothing, nothing # break if not in valley at infinity
 end
 
-function valleyangle(θ, G::PolynomialPhaseFunction) # find the angular valley of arg(z)
+# This one also applies for RationalPhase
+function valleyangle(θ, G::AbstractPhaseFunction) # find the angular valley of arg(z)
     J = degree(G)
     valleys = infvalleys(G)
     for v in valleys
@@ -158,6 +153,7 @@ function valleyangle(θ, G::PolynomialPhaseFunction) # find the angular valley o
         if dist ≤ π/(2J) return v end
     end
 end
+
 
 ###
 # Sqrt phase
@@ -171,69 +167,41 @@ function tracecontour_coarse(η, G::SquareRootPhaseFunction, ::Any; δODE, δcoa
 end
 
 
+""" UNDER DEVELOPMENT """
 ###
 # Rational phase
 ###
 
-""" UNDER DEVELOPMENT """
+function isinValley(z, G::RationalPhaseFunction)
 
-function isinValley(G::RationalPhaseFunction, z)
-    # check if in valley at infinity
-    if abs(z) > G.rstar_valley
-        v = goes_to_valley(G, angle(z))
-        if !(v isa Nothing) # not in valley angular region - keep tracing
-            hvalley = G.rstar_valley * cis(v) 
-            return true, hvalley 
-        end    
-    end
-    return false, nothing
-end
-function goes_to_valley(G::RationalPhaseFunction, θ) 
-    # identifies the valley where θ is
-    J = length(G.analytic)-1 # degree(G.num)
-    valleys = G.vinf
-    for v in valleys
-        dist = minimum(abs.((θ-v) .- 2π*(-J:J)))
-       # @show dist, θ/π, v/π
-        if dist ≤ π/(2J)
-            #@show v/π
-            return v
+    # check if z is in valley at infinity
+    if abs(z) > rstar_valley(G)
+        v = valleyangle(angle(z), G)
+        if ~(v isa Nothing) # is in no-return region at infinity
+            hval = rstar_valley(G) * cis(v) 
+            return true, hval, :infvalley
+            # should evaluate G(r,θ) here too!
         end
-    end
-end
-function isnearPole(G::RationalPhaseFunction, z)
-    # check if in valley at a pole
-    zp = near_pole(G,z)
-    if !(zp isa Nothing) 
-        return true, zp
-    end
-    # else, not in valley at a pole - keep tracing
-    return false, nothing
-end
-function near_pole(G::RationalPhaseFunction, z)
-    # identifies nearby poles
-    for (i,zp) in enumerate(G.p)
-        if abs(z-zp) < G.rstar_pole[i]
-            Kp = length(G.vpole[i])
-            θ  = angle(z - zp)
-            for v in G.vpole[i] # check angle of valleys
-                # @show v/π, abs.((θ-v) .- 2π*(-2Kp:2Kp))/π
-                dist = minimum(abs.((θ-v) .- 2π*(-2Kp:2Kp)))
-                if dist ≤ π/(2*Kp) return zp + cis(-v) * 10*eps() end
+
+    # check if z is in valley at a pole
+    else
+        for (i,pole) in enumerate(poles(G))
+            rp = rstar_pole(G)[i]
+            
+            if abs(z-pole) < rp # is near pole
+                vp = polevalleys(G)[i]
+                Kp = length(vp)
+                for valley in vp # check if in angular valley at pole
+                    θ = minimum(abs.( (angle(z-pole)-valley) .- 2π*(-2Kp:2Kp) ))
+                    if θ < π/(2Kp)
+                        hval = pole + cis(-valley) * 10*eps()
+                        # add perturbation to distinguish between angular valleys
+                        Gval = evaluate_noreturn_Gpole(abs(z-pole), θ, G; pole_idx = i)
+                        if Gval > 0 return true, hval, :pole end               
+                    end
+                end
             end
         end
     end
+    return false, nothing, nothing # break if not in valley at infinity
 end
-
-function isnearPole(::AbstractPhaseFunction, ::Any)
-    # if the function is not RationalPhase we don't expect any poles
-    return false, nothing
-end
-
-
-
-
-
-
-
-

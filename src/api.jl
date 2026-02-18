@@ -78,6 +78,10 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
             end
         end
     end
+    
+    # for γ in γtot
+    #     @show γ
+    # end
 
     if isempty(γtot) 
         @warn "The graph is not connected between endpoints!"
@@ -110,7 +114,7 @@ function endpoint_at_valley(θ, G::AbstractPhaseFunction)
     v = valleyangle(θ, G)
     if v isa Nothing @warn "endpoint with θ=$(θ/π)π  is not in valley region" end
     # THIS IS A PATCH FIX TO PUT THE POINT OUTSIDE NonOscillatoryRegion!!
-    return (G.rstar_valley + 5) * cis(v) # place far away in valley direction
+    return (rstar_valley(G) + 5) * cis(v) # place far away in valley direction
 end
 
 

@@ -1,58 +1,84 @@
 using PathFinder
+using QuadGK
 
-# # z + 1/z = (z^2 + 1) / z
-# num,ps = [1,0,1],[0]
-# num,ps = [0,1],[im, -im]
-# num,ps = [1], [1,1,-2]
-# RatPhase = RationalPhaseFunction(num, ps)
-
-# function evalResidue(R::RationalPhaseFunction, z0)
-#     @assert z0 in poles(R)
-#     @show n = count(==(z0), poles(R)) # count multiplicity
-#     lim = derivative(R.num // fromroots(setdiff(poles(R), z0)), n-1)
-#     return lim(z0) * 1/factorial(n-1)
-# end
-
-# evalResidue(RatPhase, 1)
-
-
-
-""" trying g(z) = z + 1/z = (z^2+1)/z """
-acoefs = [0,1]
-ps     = [0.0]
-pcoefs = [[0.0, 1.]] # Should be a Vector of vectors to allow different pole orders at different points
-
-ω = 1.0
+ω = 20.0
 a,b = -2, 2
 
+""" 
+    Basic usage
+
+acoefs = [c1,c2] is equivalent to an analytic part of c1 + c2*z
+ps = [p] means there is a pole at p
+pcoefs = [[d1,d2]] means that the pole a ps[1] takes the form d1/(z-p) + d2/(z-p)^2 
+"""
+
+# trying g(z) = z + 1/z
+acoefs = [0,1]
+ps     = [0.0]
+pcoefs = [[1.]] #
+
+
 RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
-Ω = PathFinder.NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
-Pexit = PathFinder.exitpoints(RatPhase, Ω)
-CG, CtoG, NodesDict, EdgesList = PathFinder.ContourGraph(RatPhase, a, b, Ω; δODE=0.1, δcoarse=0.01)
+# Ω = PathFinder.NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
+# Pexit = PathFinder.exitpoints(RatPhase, Ω)
+# CG, CtoG, NodesDict, EdgesList = PathFinder.ContourGraph(RatPhase, a, b, Ω; δODE=0.1, δcoarse=0.01)
 val, figs = PathFinder.integrate(a,b,z->1.0,RatPhase,ω; 
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
-""" trying catastrophe integral """
-x,y,z = (2.0, 0.2222222, 0.0)
-acoefs = im*[0,0,2(x+z^2),0,2z,0,1]
-ps     = [0.0]
-pcoefs = [[0.0, im*y^2/12]] 
-RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+Kp = 1
+θ = π/(4Kp)
+r = RatPhase.rstar_pole[1]
+PathFinder.evaluate_noreturn_Gpole(r, θ, RatPhase; pole_idx = 1)
 
-a,b = (-7π/12, π/12) .-π/24
-val, figs = PathFinder.integrate(a,b,z->1.0,RatPhase,5.0; infcontour = [true,true],
+refval = quadgk(z -> cis(ω*(z+1/z)), a, im, b)[1]
+@show abs(val-refval)/abs(refval)
+
+"""
+    Replicating Fig.3 in https://p-lpi.github.io
+
+There, the phase is g(z) = 0.5*(x-μ)^2 + α/(1+x^2) with μ=0 and α=2
+"""
+ν = 200
+α = 2
+μ = 0
+
+acoefs = [0.5*μ^2, -μ, 0.5]
+ps = [im, -im]
+pcoefs = 0.5im*α * [[-1], [1]]
+
+PlasmaLensPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+val, figs = PathFinder.integrate(π,0,z->1.0,PlasmaLensPhase,ν; 
+                                infcontour = [true, true],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
-using QuadGK
 
-g(z) = PathFinder.evalphase(RatPhase, z)
-# refval, _ = quadgk(z-> cis(ω * g(z)), a,-1,im,b)
-refval,_ = quadgk(z->cis(ω*g(z)), a,b)
-@show abs(refval - val) / abs(refval)
+idx = 1
+Kp = 1
+θ = π/(4Kp)
+r = PlasmaLensPhase.rstar_pole[idx]
+PathFinder.evaluate_noreturn_Gpole(r, θ, PlasmaLensPhase; pole_idx = idx)
+
+
+""" 
+    debugging catastrophe integral 
+    See 36.2.6 in DLMF
+"""
+x,y,z = (2.0, 0.22, 0.0)
+x,y,z = (5,5,0)
+acoefs = [0,0,(x+z^2),0,2z,0,1]
+ps     = [0.0]
+pcoefs = [[0.0, y^2/12]] 
+CatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+
+a,b = (-7π/12, π/12)
+val, figs = PathFinder.integrate(a,b,z->1.0,CatPhase,100.0; infcontour = [true,true],
+                                plot_graph = true, plot_sd = true)
+figs[1]
+figs[2]
 
 
 """

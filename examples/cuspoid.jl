@@ -21,7 +21,7 @@ end
 
 fig = Figure() #Figure(size = (500,400),)
 ax = Axis(fig[1, 1], title = "Pearcey catastrophe integral", 
-            xlabel = "Re", ylabel = "Im")
+            xlabel = "x", ylabel = "y")
 levelset = contourf!(ax,X,Y,Z; levels = 200, 
                         colormap = :jet, # colormap = :hot
                         extendlow = :auto, extendhigh = :auto)

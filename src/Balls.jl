@@ -233,7 +233,7 @@ end
 ###
 
 """ is radius ∞ as ω tends to zero? """
-function find_zeros_range(G::RationalPhaseFunction, ξ::Number) 
+function find_zeros_range(::RationalPhaseFunction, ::Number) 
     return (0.0, 10.0) 
     # @show maxradius =  minimum(abs.( G.p .- ξ ))
     # return (0.0, maxradius)
