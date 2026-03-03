@@ -62,6 +62,12 @@ function rStar(p::Polynomial)
     return rstar + 1e-6 # PATCH FIX - rstar = 0 for monomials
 end
 
+function evaluate_noreturn_Ginf(r,θ,G::PolynomialPhaseFunction)
+    J = degree(G)
+    αj = coeffs(G.p)
+    J*αj[end]*r^(J-1) * min(1/sqrt(2), cos(J*θ)) - sum([j*αj[j+1]*r^(j-1) for j=1:J-1])
+end
+
 """
     Struct for Linear phase function
 """
@@ -192,77 +198,90 @@ end
 
 function compute_rstar_valley(αj, poles, αpk)
     J  = length(αj)-1
-    id = Polynomial(1.0)
+
+    # Get regularising term ∏(r-|zp|)^(Kp+1)
+    # reg = 1.0
+    # for (p,zp) in enumerate(poles)
+    #     Kp = length(αpk[p])
+    #     reg *= fromroots(ones(Kp+1) * abs(zp)) # (r-|zp|)^(Kp+1)
+    # end
+
     # Analytic part: J*|αJ|*r^(J-1)/√2 - ∑j*|αj|*r^(j-1)
-    analytic_part = Polynomial([[-(j-1)*abs(αj[j]) for j = 2:J]; J*abs(αj[end])/sqrt(2)])
+    analytic_part = Polynomial([[-j*abs(αj[j+1]) for j = 1:J-1]; J*abs(αj[end])/sqrt(2)])
+    # analytic_part *= reg
 
     # Singular part: ∑∑ |k*α_(p,k)| * (z-zp)^(k-1)
-    singular_part = RationalFunction(Polynomial(0.0), id)
-    reg = id  # used to convert into a polynomial equation
-
-    id = Polynomial(1.0)
-    singular_part = Polynomial(0.0)
-    for (i,zp) in enumerate(poles)
-        for (k,coef) in enumerate(αpk[i])
-            pvec = abs(zp) * ones(k+1) 
-            singular_part += k * abs(coef) * id // fromroots(pvec) 
+    singular_part = 0.0
+    for (p,zp) in enumerate(poles)
+        Kp = length(αpk[p])
+        for k = 1:Kp
+            singular_part += k * abs(αpk[p][k]) * (1.0 // fromroots(abs(zp) * ones(k+1))) 
         end
-        mult = length(αpk[i])
-        reg *= fromroots(ones(mult+1) * abs(zp))
     end
+    # @show singular_part
+    # singular_part = lowest_terms(singular_part * reg) # cancel out singularities
+    # @assert singular_part.den(1.0) ≈ 1.0 # if this fails there is a bug
 
-    singular_part_regularised = lowest_terms(reg * singular_part) # cancel out singularities
-    @assert singular_part_regularised.den(1.0) ≈ 1.0 # if this fails there is a bug
-    G = analytic_part * reg - singular_part_regularised.num
+    # G = analytic_part * reg - singular_part_regularised.num
 
-    return maximum(real.(roots(G))) + 1e-12 # fix for monomial analytic part
+    r = roots(analytic_part - singular_part)[1] # works with Polynomial.RationalFunction
+    rstar = maximum(real.(r))
+    M = (maximum(abs.(poles)))
+    # return rstar > M ? rstar : M
+    # @assert rstar > M "Simplied criteria for valleys at infinity not verified \n rstar = $rstar < M = $M"
+    return maximum(rstar)
+
+    # rstar = maximum(real.(roots(G))) + 1e-12 # fix for monomial analytic part
+    # @assert rstar > (maximum(abs.(poles)))
+    # return rstar
+end
+
+function evaluate_noreturn_Ginf(r,θ,G::RationalPhaseFunction)
+    αj = G.coefs_analytic
+    αpk = G.coefs_singular
+    J = degree(G)
+
+    S = zero(Float64)
+    S += J*abs(αj[end])*min(1/sqrt(2), cos(J*θ))*r^(J-1)
+    S -= sum([j*abs(αj[j+1]*r^(j-1)) for j=1:J-1])
+    for (p,zp) in enumerate(poles(G))
+        Kp = length(αpk[p])
+        S -= sum([k*abs(αpk[p][k])*abs(r-abs(zp))^(-k-1) for k=1:Kp])
+    end
+    return S
 end
 
 function compute_rstar_pole(αj, poles, αpk)
     J  = length(αj)-1
-    id = Polynomial(1.0)
+    lenP = length(poles)
 
-    rp = zeros(length(poles))
-    for (i,zp) in enumerate(poles)
-        Kp = length(αpk[i])
+    rp = zeros(lenP)
+    for (p,zp) in enumerate(poles)
+        Kp = length(αpk[p])
 
-        # Analytic part: Kp*|α_(P,Kp)|*r^(-Kp-1) - ∑j*|αj|*(|zp|+r)^(j-1)
-        analytic_part = Polynomial(0.0)
-        for j = 1:J
-            vec = -abs(zp) * ones(j-1)
-            analytic_part += j * abs(αj[j+1]) * fromroots(vec)
+        # Dominant term
+        singular_part = Kp*abs(αpk[p][end])/sqrt(2) * 1.0//fromroots(zeros(Kp+1)) # * r^(-Kp-1)
+        # Lower order terms associated with zp
+        if Kp > 1
+            singular_part -= sum([k*abs(αpk[p][k]) * 1.0//fromroots(zeros(k+1)) for k=1:Kp-1])
         end
-        # Singular part
-        singular_part = Polynomial(0.0)
-
-        singular_part += Kp * abs(αpk[i][end]) / sqrt(2) * id // fromroots(zeros(Kp+1)) 
-        reg = fromroots(zeros(Kp+1)) # used to convert into polynomial equation
-
-        for k=1:Kp-1
-            singular_part -= k * abs(αpk[i][k]) * id // fromroots(zeros(k+1))
-        end
-
-        for pp in setdiff(1:length(poles), i) # iterate over p' ≠ p
-            zpp = poles[pp] 
+        # Terms associated to other poles
+        for pp in setdiff(1:lenP, p)
             Kpp = length(αpk[pp])
-            # @show αpk[pp]
-            for k = 1:Kpp # from k = 1 to K_p'
-                ppvec = ones(k+1) * abs(zp - zpp)
-                singular_part -= (-1)^(-k-1) * k * abs(αpk[pp][k]) * id // fromroots(ppvec)
-                # singular_part -= k * abs(αpk[pp][k]) * id // fromroots(ppvec)
-            end
-            reg *= fromroots(ones(Kpp+1) * abs(zpp - zp)) #* (-1)^(Kpp+1)
+            singular_part -= sum([k*abs(αpk[pp][k]) * 1.0//fromroots(ones(k+1)*abs(zp-poles[pp])) for k=1:Kpp])
         end
-        """Testing"""
-        # @show singular_part
-        # @show analytic_part
+        # Polynomial part terms
+        analytic_part = sum([j*abs(αj[j+1]) * fromroots(-abs(zp)*ones(j-1)) for j=1:J])
 
-        singular_part_regularised = lowest_terms(singular_part * reg)
-        @assert singular_part_regularised.den(1.0) ≈ 1.0 # if this fails there is a bug
-        G = singular_part_regularised.num - analytic_part * reg
+        r = roots(singular_part - analytic_part)[1] # works with Polynomial.RationalFunction
+        rstar = minimum(real.(r[abs.(imag.(r)) .< 1e-6])) # filter imaginary roots
 
-        # @show roots(G)
-        rp[i] = maximum(real.(roots(G))) + 1e-12 # fix for monomial analytic part
+        if lenP == 1 Mp = Inf
+        else Mp = minimum([abs(zp-poles[pp]) for pp in setdiff(1:lenP, p)])
+        end
+        @assert rstar < Mp "Simplied criteria for valleys at poles not verified"
+        rp[p] =  maximum(real.(r))
+
     end
     return rp
 end
@@ -271,19 +290,19 @@ function evaluate_noreturn_Gpole(r,θ,G::RationalPhaseFunction; pole_idx)
     αj = G.coefs_analytic
     αpk = G.coefs_singular
 
-    i = pole_idx
-    zp = poles(G)[i]
-    Kp = length(polevalleys(G)[i])
+    p = pole_idx
+    zp = poles(G)[p]
+    Kp = length(αpk[p])
     J = degree(G)
 
     Gval = zero(Float64)
-    Gval += Kp*abs(αpk[i][end]) * r^(-Kp-1) * min(1/sqrt(2), cos(Kp*θ))
-    Gval -= sum([j*abs(αj[j+1]) * (abs(zp)+r)^(j-1) for j = 1:J])
-    Gval -= sum([k*abs(αpk[i][k]) * r^(-k-1) for k = 1:Kp-1])
-    for pp in setdiff(1:length(poles(G)), i)
+    Gval += Kp*abs(αpk[p][end]) * r^(-Kp-1) * min(1/sqrt(2), cos(Kp*θ))
+    Gval -= sum([k*abs(αpk[p][k]) * r^(-k-1) for k = 1:Kp-1])
+    for pp in setdiff(1:length(poles(G)), p)
         Kpp = length(αpk[pp])
         zpp = poles(G)[pp]
-        Gval -= sum([k*abs(αpk[pp][k]) * (abs(zpp-zp) - r)^(-k-1) for k = 1:Kpp])
+        Gval -= sum([k*abs(αpk[pp][k]) * (r - abs(zp-zpp))^(-k-1) for k = 1:Kpp])
     end
+    Gval -= sum([j*abs(αj[j+1]) * (r+abs(zp))^(j-1) for j = 1:J])
     return Gval
 end

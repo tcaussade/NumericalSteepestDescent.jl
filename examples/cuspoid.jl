@@ -8,7 +8,6 @@ X = range(-7,7, length = 120)
 Y = range(-7,2, length = 120)
 Z = zeros(length(X), length(Y))
 
-a,b = (9π/8, π/8)
 a,b = π/1, 0.0
 for (i,x) in enumerate(X)
     for (j,y) in enumerate(Y)

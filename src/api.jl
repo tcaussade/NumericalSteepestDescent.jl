@@ -79,6 +79,9 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         end
     end
 
+    # Add contribution of residues if necessary
+    # S += add_residues(G,γtot)
+
     if abs(S) > 1e12
         @warn "Value of the integral is large"
     end
@@ -141,8 +144,8 @@ function quasiSDdeformation!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction
                          resolution = 200,
                          set = 10)
 
-    a = infcontour[1] ? endpoint_at_valley!(G, a) : a
-    b = infcontour[2] ? endpoint_at_valley!(G, b) : b
+    a = infcontour[1] ? endpoint_at_valley(a,G) : a
+    b = infcontour[2] ? endpoint_at_valley(b,G) : b
 
     Ω = NonOscillatoryRegion(G, ω; Cball, δball=1e-3,  Nrays=16)
     CG, CtoG, NodesDict, EdgesList = ContourGraph(G, a, b, Ω; δODE=0.1, δcoarse=0.01)

@@ -1,9 +1,10 @@
 name = "PathFinder"
 uuid = "ea5c52bc-9edc-428a-9677-4a4d9540cecb"
-authors = ["tcaussade "]
 version = "0.1.0"
+authors = ["tcaussade "]
 
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"
@@ -15,6 +16,7 @@ Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
+CairoMakie = "0.15.6"
 FastGaussQuadrature = "1.1.0"
 ForwardDiff = "1.3.1"
 GraphMakie = "0.6.3"

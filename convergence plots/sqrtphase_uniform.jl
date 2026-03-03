@@ -11,10 +11,10 @@ quads = [10,15,30]
 singular = false
 
 avals = 10 .^ range(-10, 0, length=80)
-bfix  = 1-1e-12
+bfix  = 0.0
 relErrA = zeros(length(avals), length(quads))
 
-bvals = range(-1.0,1.0, length = 80)
+bvals = range(-1.0,1.0, length = 80)[2:end-1]
 afix  = 1.0
 relErrB = zeros(length(bvals), length(quads))
 
@@ -28,7 +28,7 @@ relErrB = zeros(length(bvals), length(quads))
         G = SquareRootPhaseFunction(a,bfix)
         @show (a, bfix)
         for (n,N) in enumerate(quads)
-            intA = integrate(0.0, 1.0, fA, G, ω; N)[1]   
+            intA = integrate(0.0, 1.0, fA, G, ω; N)  
             relErrA[j,n] = abs(intA-refA) #/ abs(refA)      
         end   
     end

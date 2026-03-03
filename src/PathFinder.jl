@@ -15,8 +15,10 @@ using ForwardDiff
 using Graphs
 using QuadGK
 # Plots
-using WGLMakie
-using WGLMakie.Colors
+# using WGLMakie
+# using WGLMakie.Colors
+using CairoMakie
+using CairoMakie.Colors
 using GraphMakie
 
 include("PhaseFunction.jl")
@@ -28,6 +30,7 @@ include("Contours.jl")
 include("ContourGraph.jl")
 include("quadrature.jl")
 include("PlotGeneration.jl")
+include("Residues.jl")
 
 include("api.jl")
 
