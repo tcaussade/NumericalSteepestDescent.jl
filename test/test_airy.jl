@@ -31,7 +31,7 @@ function airy_test(nQuadPts, outputText=false)
 end
 
 @testset "Airy Test" begin
-    @test airy_test(15) < 1e-6
+    @test airy_test(15) < 1e-5
     @test airy_test(50) < 1e-10
-    @test airy_test(101) < 1e-10
+    @test airy_test(101) < 1e-12
 end

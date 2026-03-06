@@ -17,10 +17,10 @@ frame_iteration(ω) = PathFinder.quasiSDdeformation!(fig, ax, -1,1, Phase, ω;
                                                     resolution = 200,
                                                     set = 1.5)
 
-fig = Figure()
-ax  = Axis(fig[1, 1], title = "", aspect = DataAspect(),
+fig = PathFinder.Figure()
+ax  = PathFinder.Axis(fig[1, 1], title = "", aspect = PathFinder.DataAspect(),
               xlabel = "Re", ylabel = "Im", xticks = -2:1:2, yticks = -2:1:2)
-frame_iteration(10000)
+frame_iteration(5)
 fig
 
 record(fig, "generic.gif", freqvals;

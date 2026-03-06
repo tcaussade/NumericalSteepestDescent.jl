@@ -12,7 +12,7 @@ a,b = π/1, 0.0
 for (i,x) in enumerate(X)
     for (j,y) in enumerate(Y)
         Phase = PolynomialPhaseFunction([0, x, y, 0, 1])
-        Ψ, _ = integrate(a,b,f,Phase,ω; infcontour = [true,true])
+        Ψ = integrate(a,b,f,Phase,ω; infcontour = [true,true])
         Z[i,j] = abs.(Ψ)
     end 
 end
