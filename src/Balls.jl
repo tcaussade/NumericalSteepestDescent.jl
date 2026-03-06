@@ -127,26 +127,23 @@ exitpoints(::LinearPhaseFunction, ::Vector{NonOscillatoryBall}) = ComplexF64[]
 ###
 
 find_zeros_range(::PolynomialPhaseFunction,::Number) = (0.0, 10.0)
-# ## THIS METHOD IS SLOWER THAN GENERAL PURPOSE APPROACH
-# function findradius(G::PolynomialPhaseFunction, ξ, Cω, θ)  
-#     g(z) = evalphase(G,z)
-#     # specialised method for polynomials
-#     coef = coeffs(G.p)
-#     J = length(coef)-1
-#     # compute coefficients of g(ξ + r e^(iθ))
-#     gpoly = Polynomial(0.0)
-#     for j = 0:J
-#         # trig += Polynomial(coef[j+1] * [binomial(j,k) * c^(j-k) * r^k for k = 0:j])
-#         gpoly += Polynomial(coef[j+1] * [binomial(j,k) * ξ^(j-k) * cis(k*θ) for k=0:j])
-#     end
-#     # construct G(r) = |g(ξ+re^{iθ})-g(ξ)|^2 - Cω^2
-#     G = (gpoly-g(ξ)) * conj(gpoly-g(ξ)) - Cω^2
 
-#     rvals = roots(G)
-#     rvals = real.(rvals[ abs.(imag.(rvals)) .< 0.01])
+function findradius(G::PolynomialPhaseFunction, ξ, Cω, θ)  
+    # specialised method for polynomials
+    g(z) = evalphase(z,G)
+    coef = coeffs(G.p)
+    gpoly = Polynomial(0.0)
+    for j = 0:degree(G) # compute coefficients of g(ξ + r e^(iθ))
+        gpoly += Polynomial(coef[j+1] * [binomial(j,k) * ξ^(j-k) * cispi(k*θ) for k=0:j])
+    end
+    # construct G(r) = |g(ξ+re^{iθ})-g(ξ)|^2 - Cω^2
+    G = (gpoly-g(ξ)) * conj(gpoly-g(ξ)) - Cω^2
 
-#     return minimum(rvals[rvals .> 0.0]) # keep only positive roots
-# end
+    rvals = roots(G)
+    rvals = real.(rvals[ abs.(imag.(rvals)) .< 0.01])
+
+    return minimum(rvals[rvals .> 0.0]) # keep only positive roots
+end
 
 function exitpoints(G::PolynomialPhaseFunction, Ω :: Vector{NonOscillatoryBall})
     Pexit = ComplexF64[]
