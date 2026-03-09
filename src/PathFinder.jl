@@ -15,10 +15,10 @@ using ForwardDiff
 using Graphs
 using QuadGK
 # Plots
-# using WGLMakie
-# using WGLMakie.Colors
-using CairoMakie
-using CairoMakie.Colors
+using WGLMakie
+using WGLMakie.Colors
+# using CairoMakie
+# using CairoMakie.Colors
 using GraphMakie
 
 include("PhaseFunction.jl")

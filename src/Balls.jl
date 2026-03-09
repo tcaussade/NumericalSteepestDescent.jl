@@ -23,7 +23,7 @@ function _compute_ballradius(G::AbstractPhaseFunction, ξ, Cω; Nrays)
 end
 
 function findradius(G::AbstractPhaseFunction, ξ, Cω, θ)
-     ### THIS IS A SLOW PART OF THE CODE!!!
+    ### THIS IS A SLOW PART OF THE CODE!!!
     g(z) = evalphase(z,G)
     ray(r) = ξ + r*cispi(θ)
     un(r) = abs(g(ray(r)) - g(ξ))^2 - Cω^2
@@ -145,37 +145,67 @@ function findradius(G::PolynomialPhaseFunction, ξ, Cω, θ)
     return minimum(rvals[rvals .> 0.0]) # keep only positive roots
 end
 
+# function exitpoints(G::PolynomialPhaseFunction, Ω :: Vector{NonOscillatoryBall})
+#     # Look for local minima at the boundary of the non-oscillatory region
+#     Pexit = ComplexF64[]
+#     coef = coeffs(G.p)
+#     J = length(coef)-1
+#     for Ball in Ω # find exit points on the boundary of each ball
+#         c, r = centre_and_radius(Ball)
+#         # g(c + r e^(iθ)) = ∑ aj*(c + r exp(iθ))^j = ∑ bj * exp(ijθ) for j = 0:J
+#         trig = Polynomial(0.0) # store g(c + r e^(iθ)) as Polynomial
+#         for j = 0:J 
+#             trig += Polynomial(coef[j+1] * [binomial(j,k) * c^(j-k) * r^k for k = 0:j])
+#         end
+#         tc = trig.coeffs 
+#         # coefficients of first derivative of Im(g) = ∑ aj cos(jθ) + bj sin(jθ)
+#         dtrig_cos = collect(0:J) .* real.(tc)
+#         dtrig_sin = -collect(0:J) .* imag.(tc)
+#         # coefficients of second derivative of Im(g) = ∑ aj' cos(jθ) + bj' sin(jθ)
+#         ddtrig_cos = -collect(0:J).^2 .* imag.(tc)
+#         ddtrig_sin = -collect(0:J).^2 .* real.(tc)
+        
+#         # find the roots of dtrig
+#         tall = roots_trig_polynomial(dtrig_cos, dtrig_sin)
+#         t = real.(tall[ abs.(imag.(tall)) .< 0.01 ])
+#         # second-derivataive test to keep only maxima of Im g
+#         dd(t) = sum( ddtrig_cos[k+1] * cos(k*t) + ddtrig_sin[k+1] * sin(k*t) for k = 0:J )
+#         maxima = Float64[]
+#         [dd(t) < 0.0 ? push!(maxima, t) : nothing for t in t]
+        
+#         # check if exit points are already in Ω (other non-oscillatory balls)
+#         exits = [c+ r*cis(t) for t in maxima]
+#         [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
+#         # [push!(Pexit, z) for z in exits]
+#     end
+#     return Pexit
+# end
+
 function exitpoints(G::PolynomialPhaseFunction, Ω :: Vector{NonOscillatoryBall})
+    # Look for η s.t. Re g(η) - Re g(ξ) = 0
     Pexit = ComplexF64[]
+    g(z) = evalphase(z,G)
     coef = coeffs(G.p)
     J = length(coef)-1
     for Ball in Ω # find exit points on the boundary of each ball
         c, r = centre_and_radius(Ball)
-        # g(c + r e^(iθ)) = ∑ aj*(c + r exp(iθ))^j = ∑ bj * exp(ijθ) for j = 0:J
-        trig = Polynomial(0.0) # store g(c + r e^(iθ)) as Polynomial
+        trig = Polynomial(-real(g(c))) # store g(c + r e^(iθ)) as Polynomial
         for j = 0:J 
             trig += Polynomial(coef[j+1] * [binomial(j,k) * c^(j-k) * r^k for k = 0:j])
         end
         tc = trig.coeffs 
-        # coefficients of first derivative of Im(g) = ∑ aj cos(jθ) + bj sin(jθ)
-        dtrig_cos = collect(0:J) .* real.(tc)
-        dtrig_sin = -collect(0:J) .* imag.(tc)
-        # coefficients of second derivative of Im(g) = ∑ aj' cos(jθ) + bj' sin(jθ)
-        ddtrig_cos = -collect(0:J).^2 .* imag.(tc)
-        ddtrig_sin = -collect(0:J).^2 .* real.(tc)
-        
-        # find the roots of dtrig
-        tall = roots_trig_polynomial(dtrig_cos, dtrig_sin)
+        trig_cos = real.(tc)
+        trig_sin = -imag.(tc)
+        tall = roots_trig_polynomial(trig_cos, trig_sin)
         t = real.(tall[ abs.(imag.(tall)) .< 0.01 ])
-        # second-derivataive test to keep only maxima of Im g
-        dd(t) = sum( ddtrig_cos[k+1] * cos(k*t) + ddtrig_sin[k+1] * sin(k*t) for k = 0:J )
-        maxima = Float64[]
-        [dd(t) < 0.0 ? push!(maxima, t) : nothing for t in t]
-        
+        # Keep only descent directions
+        exits = Vector{ComplexF64}(undef,0)
+        for θ in t
+            z = c+r*cis(θ)
+            if -imag(g(z)) < -imag(g(c)) push!(exits,z) end
+        end
         # check if exit points are already in Ω (other non-oscillatory balls)
-        exits = [c+ r*cis(t) for t in maxima]
         [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
-        # [push!(Pexit, z) for z in exits]
     end
     return Pexit
 end
@@ -236,7 +266,102 @@ function find_zeros_range(::RationalPhaseFunction, ::Number)
     # return (0.0, maxradius)
 end
 
+function findradius(G::RationalPhaseFunction, ξ, Cω, θ)  
+    αj  = G.coefs_analytic
+    αpk = G.coefs_singular
+    gpoly = Polynomial(0.0) # store coefficients of g(ξ + r e^(iθ)) as ∑ cm * r^m
 
+    Q = Polynomial(1.0) # q(z) = ∏(z-zp)^Kp
+    for (p,zp) in enumerate(poles(G)) 
+        Kp = length(αpk[p])
+
+        # singular part is regularised by q(z)
+        regterm = Polynomial(0.0)
+        for k = 1:Kp # regularised term at index p
+            regterm += αpk[p][k] * Polynomial([binomial(Kp-k,m)*(ξ-zp)^(Kp-k-m)*cispi(m*θ) for m = 0:Kp-k])
+        end
+        otherterm = Polynomial(1.0) # other terms at indexes p' ≠ p
+        for pp in setdiff(1:length(poles(G)), p)
+            Kpp = length(αpk[pp])
+            zpp = poles(G)[pp]
+            otherterm *= Polynomial([binomial(Kpp,m)*(ξ-zpp)^(Kpp-m)*cispi(m*θ) for m = 0:Kpp])
+        end
+        gpoly += regterm * otherterm
+
+        # store q(z)
+        Q *= Polynomial([binomial(Kp,m)*(ξ-zp)^(Kp-m)*cispi(m*θ) for m = 0:Kp])
+    end
+
+    polyterm = Polynomial(0.0)
+    for j = 0:degree(G)
+        polyterm += αj[j+1] * Polynomial([binomial(j,m)*ξ^(j-m)*cispi(m*θ) for m=0:j])
+    end
+    gpoly += polyterm * Q
+
+    # construct G(r) = |g(z)-g(ξ)|^2*|q(z)|^2 - Cω^2*|q(z)|^2, with z = ξ+re^{iθ}
+    gξ = evalphase(ξ,G)
+    G = (gpoly-gξ*Q) * conj(gpoly-gξ*Q) - Cω^2* Q*conj(Q)
+
+    rvals = roots(G)
+    rvals = real.(rvals[ abs.(imag.(rvals)) .< 0.1])
+
+    return minimum(rvals[rvals .> 0.0]) # keep only positive roots
+end
+
+function exitpoints(G::RationalPhaseFunction, Ω :: Vector{NonOscillatoryBall})
+    # Look for η s.t. Re g(η) - Re g(ξ) = 0
+    Pexit = ComplexF64[]
+    g(z) = evalphase(z,G)
+    αj  = G.coefs_analytic
+    αpk = G.coefs_singular
+
+    for Ball in Ω # find exit points on the boundary of each ball
+        c, r = centre_and_radius(Ball)
+        Q = Polynomial(1.0) # q(z) = ∏(z-zp)^Kp
+        for (p,zp) in enumerate(poles(G))
+            Kp = length(αpk[p])
+            Q *= Polynomial([binomial(Kp,m)*(c-zp)^(Kp-m)*r^m for m = 0:Kp])
+        end
+        gpoly = 0.0
+        for (p,zp) in enumerate(poles(G))
+            Kp = length(αpk[p])
+            regterm = Polynomial(0.0)
+            for k = 1:Kp # regularised term at index p
+                regterm += αpk[p][k] * Polynomial([binomial(Kp-k,m)*(c-zp)^(Kp-k-m)*r^m for m = 0:Kp-k])
+            end
+            for pp in setdiff(1:length(poles(G)), p)
+                Kpp = length(αpk[pp])
+                zpp = poles(G)[pp]
+                regterm *= Polynomial([binomial(Kpp,m)*(c-zpp)^(Kpp-m)*r^m for m = 0:Kpp])
+            end
+            gpoly += regterm
+        end
+        polyterm = Polynomial(0.0)
+        for j = 0:degree(G)
+            polyterm += αj[j+1] * Polynomial([binomial(j,m)*c^(j-m)*r^m for m=0:j])
+        end
+        gpoly += polyterm * Q
+
+        # Now, create the equation Re g(z) = Re g(ξ) for z(θ) = ξ + r*cis(θ) 
+        gpoly -= g(c)*Q 
+        trig_cos = real.(gpoly.coeffs)
+        trig_sin = -imag.(gpoly.coeffs)
+        # Solve the equation for θ (and remove imaginary solutions)
+        tall = roots_trig_polynomial(trig_cos, trig_sin)
+        t = real.(tall[ abs.(imag.(tall)) .< 0.01 ])
+
+        # Keep only descent directions
+        exits = Vector{ComplexF64}(undef,0)
+        for θ in t
+            z = c+r*cis(θ)
+            if -imag(g(z)) < -imag(g(c)) push!(exits,z) end
+        end
+        # check if exit points are already in Ω (other non-oscillatory balls)
+        [!isinΩ(setdiff(Ω, [Ball]), z) ? push!(Pexit, z) : nothing for z in exits]
+        # [push!(Pexit, z) for z in exits]
+    end
+    return Pexit
+end
 
 
 

@@ -198,6 +198,7 @@ end
 
 function compute_rstar_valley(αj, poles, αpk)
     J  = length(αj)-1
+    
 
     # Get regularising term ∏(r-|zp|)^(Kp+1)
     # reg = 1.0
@@ -297,7 +298,7 @@ function evaluate_noreturn_Gpole(r,θ,G::RationalPhaseFunction; pole_idx)
 
     Gval = zero(Float64)
     Gval += Kp*abs(αpk[p][end]) * r^(-Kp-1) * min(1/sqrt(2), cos(Kp*θ))
-    Gval -= sum([k*abs(αpk[p][k]) * r^(-k-1) for k = 1:Kp-1])
+    if Kp>1 Gval -= sum([k*abs(αpk[p][k]) * r^(-k-1) for k = 1:Kp-1]) end
     for pp in setdiff(1:length(poles(G)), p)
         Kpp = length(αpk[pp])
         zpp = poles(G)[pp]

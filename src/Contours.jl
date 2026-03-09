@@ -42,6 +42,7 @@ function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscill
     vv = Vector{ComplexContour}()
     vp = Vector{ComplexContour}()
     for η in points
+        # println("Tracing from η=$η")
         h_end, pointtype = tracecontour_coarse(η, G, Ω; δODE, δcoarse) 
         if pointtype == :entrance
             γ = ComplexContour(:finiteSD, η, h_end)
@@ -167,7 +168,6 @@ function tracecontour_coarse(η, G::SquareRootPhaseFunction, ::Any; δODE, δcoa
 end
 
 
-""" UNDER DEVELOPMENT """
 ###
 # Rational phase
 ###

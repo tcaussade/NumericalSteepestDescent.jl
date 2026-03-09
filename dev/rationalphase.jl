@@ -1,7 +1,7 @@
 using PathFinder
 using QuadGK
 
-ω = 20.0
+ω = 50.0
 
 """ 
     Basic usage
@@ -12,25 +12,32 @@ pcoefs = [[d1,d2]] means that the pole a ps[1] takes the form d1/(z-p) + d2/(z-p
 """
 
 # trying g(z) = z + 1/z
-acoefs = im*[0,1]
+acoefs = [0,1]
 ps     = [0.0]
-pcoefs = im*[[1/4]] #
+pcoefs = [[1]] #
 
 
 RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
 # Ω = PathFinder.NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
 # Pexit = PathFinder.exitpoints(RatPhase, Ω)
 # CG, CtoG, NodesDict, EdgesList = PathFinder.ContourGraph(RatPhase, a, b, Ω; δODE=0.1, δcoarse=0.01)
-val, figs = PathFinder.integrate(1e-6,15,z->1.0,RatPhase,1.0; 
+val, figs = PathFinder.integrate(-2,2,z->1.0,RatPhase,ω; 
                                 infcontour = [false, false],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
+# bm = @benchmark integrate(-2,2,z->1.0,RatPhase,ω)
+
 Kp = 1
 θ = π/(4Kp)
 r = RatPhase.rstar_pole[1]
 PathFinder.evaluate_noreturn_Gpole(r, θ, RatPhase; pole_idx = 1)
+
+r = RatPhase.rstar_valley
+J = 2
+θ = π/(4J)
+PathFinder.evaluate_noreturn_Ginf(r,θ, RatPhase)
 
 refval = quadgk(z -> cis(ω*(z+1/z)), a, im, b)[1]
 @show abs(val-refval)/abs(refval)
@@ -40,9 +47,9 @@ refval = quadgk(z -> cis(ω*(z+1/z)), a, im, b)[1]
 
 There, the phase is g(z) = 0.5*(x-μ)^2 + α/(1+x^2) with μ=0 and α=2
 """
-ν = 200
-α = 2
-μ = 0
+ν = 100
+μ, α = (-0.4,1.0344893103448276)
+μ,α = (0,1)
 
 acoefs = [0.5*μ^2, -μ, 0.5]
 ps = [im, -im]
@@ -55,12 +62,19 @@ val, figs = PathFinder.integrate(π,0,z->1.0,PlasmaLensPhase,ν;
 figs[1]
 figs[2]
 
+r = PlasmaLensPhase.rstar_valley
+J = 2
+θ = π/(4J)
+PathFinder.evaluate_noreturn_Ginf(r,θ, PlasmaLensPhase)
 
 idx = 1
 Kp = 1
-θ = π/(4Kp)
+θ = π/(Kp) * 0.2500001
 r = PlasmaLensPhase.rstar_pole[idx]
 PathFinder.evaluate_noreturn_Gpole(r, θ, PlasmaLensPhase; pole_idx = idx)
+
+
+
 
 
 """ 
@@ -69,26 +83,45 @@ PathFinder.evaluate_noreturn_Gpole(r, θ, PlasmaLensPhase; pole_idx = idx)
 """
 x,y,z = (2.0, 0.22, 0.0)
 x,y,z = (0,5,0)
+x,y,z = (3.673469387755102,-1.7142857142857142,0.0)
+x,y,z = (3.6,-1,0.0)
 acoefs = [0,0,(x+z^2),0,2z,0,1]
 ps     = [0.0]
 pcoefs = [[0.0, y^2/12]] 
 CatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
 
 a,b = (-7π/12, π/12)
-val, figs = PathFinder.integrate(a,b,z->1.0,CatPhase,0.01; infcontour = [true,true],
+val, figs = PathFinder.integrate(a,b,z->1.0,CatPhase,1; infcontour = [true,true],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
+@profview integrate(a,b,z->1.0,CatPhase,1; infcontour = [true,true])
+
+""" arbitrary """
+d = 0.5
+Dipole = RationalPhaseFunction([3,1,3,4,5,1,2], [d,-d], [[0.5,-0.25im],[0.5,0.5,0.5]])
+v,fig = integrate(-2d,2d,z->1.0,Dipole,10.0; plot_graph = true, plot_sd = true)
+fig[2]
+
+""" Case when poles might lie close to each other """
+
+acoefs = [0,0,1]
+ps     = [0.0, 0.01, 0.5, 1.0,1.1]
+pcoefs = [[1], [-im], [1], [1], [1]]
+ClosePhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+val, figs = PathFinder.integrate(-1,2,z->1.0,ClosePhase,10.0;
+                                plot_graph = true, plot_sd = true)
+figs[2]
 
 """ Arbitrary Rational phase ? """
 
-acoefs = [3,1,4,1,5,9,2]
-ps     = [-2, im, 2-10im]
-pcoefs = [[1,6,1,8], [4,9], [4]]
+acoefs = [3,1,4]
+ps     = [0, im]
+pcoefs = [[1,2,3], [im]]# [[1,6,1,8], [4,9], [4]]
 RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
 
-ans = PathFinder.integrate(-5,5,z->1.0,RatPhase,200.0; plot_sd = true)
+val,plt = PathFinder.integrate(-1,1,z->1.0,RatPhase,10.0; plot_sd = true)
 
 fig = PathFinder.Figure()
 ax  = PathFinder.Axis(fig[1, 1], title = "", aspect = PathFinder.DataAspect(),

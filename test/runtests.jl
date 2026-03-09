@@ -15,6 +15,7 @@ using QuadGK
         include("test_hnaphase.jl")
     end
     @testset "Rational phase" begin
-        include("test_umbilic.jl")
+        include("test_airy2.jl")
+        # include("test_umbilic.jl")
     end
 end

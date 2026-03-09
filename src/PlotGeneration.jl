@@ -83,6 +83,11 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
     display = contour_type(γ[end]) == :finite ? to(γ[end]) : at(γ[end])
     !infcontour[2] ? scatter!(ax, reim.([display]), color = "black") : nothing
     # scatter!(ax, reim.([at(γ[1]), at(γ[end])]), color = "black")
+
+    if G isa RationalPhaseFunction
+        scatter!(ax, reim.(poles(G)), color = "purple", marker = :rect, markersize = 12)
+    end
+
     limits!(xmin,xmax,ymin,ymax)
     Colorbar(fig[1,2], levelset)
     return fig

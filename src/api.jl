@@ -38,11 +38,14 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     Ω = NonOscillatoryRegion(G, ω; Cball, δball,  Nrays)
 
     CG, CtoG, NodesDict, EdgesList = ContourGraph(G, a, b, Ω; δODE, δcoarse)
+    # println("created graph")
     # CG is ContourGraph, CtoG maps complex plane points to graph vertices
     # NodesDict contains the different types of nodes in the graph
     # EdgesList maps graph edges to ComplexContours
     a,b = NodesDict[:endpoint]
     sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
+
+    # println("found shortest path")
 
     # choose quadrature and precompute weights and nodes
     if quadtype == :gaussian
@@ -81,6 +84,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
 
     # Add contribution of residues if necessary
     # S += add_residues(G,γtot)
+    # println("applied quadrature")
 
     if abs(S) > 1e12
         @warn "Value of the integral is large"
@@ -99,6 +103,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         figs = []
         if plot_graph
             fig1 = plot_ContourGraph(CG, Ω, CtoG, NodesDict)
+            println("Graph plot created")
             push!(figs, fig1)
         end
 
@@ -112,6 +117,7 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
                 end
             end
             fig2 =  plot_SDcontours(G,γtot, Ω, γall; infcontour, inftol)
+            println("SD plot created")
             push!(figs, fig2)
         end
 

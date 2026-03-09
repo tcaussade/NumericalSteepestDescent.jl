@@ -16,6 +16,7 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     NodesDict[:endpoint]  = [a,b]        .+ im* eps() * 10
     NodesDict[:statpoint] = get_Pstat(Ω)
     NodesDict[:exits] = exitpoints(G,Ω) #.+ rand()*eps()
+    # println("found exit points")
     exits_outside_Ω = _filter_exits(G, Ω, NodesDict[:exits]) # used to filter manually placed exit points
     # trace all possible SD contours
     aδ, bδ = NodesDict[:endpoint]
@@ -24,10 +25,13 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
     endpoints_outside_Ω, exits_outside_Ω
     trace_from = [endpoints_outside_Ω; exits_outside_Ω] 
     γ_to_entrance, γ_to_valley, γ_to_pole = tracing_contours(G, trace_from, Ω; δODE, δcoarse) 
+    # println("found valleys and entrances")
 
     NodesDict[:valleys]   = unique([to(γ) for γ in γ_to_valley]) # remove repeated valley if more than one contour goes there
     NodesDict[:entrances] = [to(γ) for γ in γ_to_entrance] 
     NodesDict[:poles] = unique([to(γ) for γ in γ_to_pole])
+
+    # println("found all points")
 
     plane_to_graph = Dict{ComplexF64,Int16}() # map complex plane points to graph vertices
     i = 0
