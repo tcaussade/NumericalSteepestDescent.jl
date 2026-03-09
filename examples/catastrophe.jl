@@ -24,7 +24,7 @@ for (i,x) in enumerate(X)
         Z[i,j] = abs.(amp(x,y) * Ψ)
         # catch
         #     println("(x,y,z) = ($x,$y,$z) did not throw a value")
-        end
+        # end
     end 
 end
 
