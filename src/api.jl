@@ -5,9 +5,11 @@
         - phase function G
         - frequency ω
     Returns the value and a vector of figures
+
+    γ0 is assumed as the union of straight lines connecting given points
 """
 
-function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω; 
+function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω; 
         # default parameters
         Cball = 2π,    # control maximum number of oscillations on non-oscillatory bals
         Nrays = 16,    # number of rays used to determine ball radius
@@ -32,8 +34,8 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
         )
   
     # place endpoints at infinity if specified
-    a = infcontour[1] ? endpoint_at_valley(a, G) : a
-    b = infcontour[2] ? endpoint_at_valley(b, G) : b
+    a = infcontour[1] ? endpoint_at_valley(first(γ0), G) : first(γ0)
+    b = infcontour[2] ? endpoint_at_valley(last(γ0), G) : last(γ0)
     
     Ω = NonOscillatoryRegion(G, ω; Cball, δball,  Nrays)
 
@@ -42,8 +44,17 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     # CG is ContourGraph, CtoG maps complex plane points to graph vertices
     # NodesDict contains the different types of nodes in the graph
     # EdgesList maps graph edges to ComplexContours
+
     a,b = NodesDict[:endpoint]
-    sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
+    # sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
+
+    # extract nodes associated with valleys and poles
+    vinf_nodes  = [CtoG[v] for v in NodesDict[:valleys]]
+    vpole_nodes = [CtoG[v] for v in NodesDict[:poles]]
+    vnodes = [vinf_nodes; vpole_nodes]
+
+    all_SDedges = get_all_paths(CG, CtoG[a], CtoG[b], vnodes)
+    sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
 
     # println("found shortest path")
 
@@ -64,16 +75,19 @@ function integrate(a, b, f::Function, G::AbstractPhaseFunction, ω;
     S = zero(ComplexF64)
     γtot = Vector{ComplexContour}()
     for e in sd_edges 
-        i1,i2 = e.src, e.dst
-        if haskey(EdgesList, (i1, i2))
-            γ = EdgesList[(i1,i2)]; push!(γtot, γ)
+    # for i in eachindex(sd_nodes)[2:end]
+        # i1 = sd_nodes[i-1]
+        # i2 = sd_nodes[i]
+        # i1,i2 = e.src, e.dst
+        if haskey(EdgesList, e)
+            γ = EdgesList[e]; push!(γtot, γ)
             if quadtype == :gaussian
                 S += integrate(γ, f, G, ω, quad; δfine, δquad)
             elseif quadtype == :adaptive
                 S += integrate(γ, f, G, ω; δfine, δquad, atol)
             end
         else # the contour is traversed in the opposite direction
-            γ = EdgesList[(i2,i1)]; push!(γtot, γ)
+            γ = EdgesList[reverse(e)]; push!(γtot, γ)
             if quadtype == :gaussian
                 S -= integrate(γ, f, G, ω, quad; δfine, δquad)
             elseif quadtype == :adaptive
@@ -135,6 +149,7 @@ function endpoint_at_valley(θ, G::AbstractPhaseFunction)
     # THIS IS A PATCH FIX TO PUT THE POINT OUTSIDE NonOscillatoryRegion!!
     return (rstar_valley(G) + 5) * cis(v) # place far away in valley direction
 end
+
 
 
 """ 

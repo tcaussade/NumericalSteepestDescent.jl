@@ -1,7 +1,7 @@
 using PathFinder
 using QuadGK
 
-ω = 50.0
+ω = 20
 
 """ 
     Basic usage
@@ -21,11 +21,20 @@ RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
 # Ω = PathFinder.NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
 # Pexit = PathFinder.exitpoints(RatPhase, Ω)
 # CG, CtoG, NodesDict, EdgesList = PathFinder.ContourGraph(RatPhase, a, b, Ω; δODE=0.1, δcoarse=0.01)
-val, figs = PathFinder.integrate(-2,2,z->1.0,RatPhase,ω; 
+val, figs = PathFinder.integrate([-2,-im,2],z->1.0,RatPhase,ω; 
                                 infcontour = [false, false],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
+
+integrate([-2,-1im,2],z->1.0,RatPhase,ω)
+
+v= NodesDict[:valleys]
+vnodes = [CtoG[v] for v in NodesDict[:valleys]]
+
+p1 = yen_k_shortest_paths(CG, 1, 2, weights(CG), 10).paths
+p2 = all_simple_paths(CG, Int16(1), Int16(2)) |> collect
+p3 = simple_paths(CG, Int16(1), Int16(2),vnodes)
 
 # bm = @benchmark integrate(-2,2,z->1.0,RatPhase,ω)
 

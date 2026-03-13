@@ -42,7 +42,7 @@ function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillator
         end
     end
 
-    ContourGraph = SimpleGraph(length(plane_to_graph))
+    ContourGraph = SimpleGraph{Int16}(length(plane_to_graph))
     EdgesList = Dict{Tuple{Int,Int}, ComplexContour}()
 
     # Part 1: create edges between nodes inside the same ball.
@@ -140,18 +140,6 @@ function connect_stationarypoints!(Ω::Vector{NonOscillatoryBall}, CG ::SimpleGr
     return
 end
 
-# function connect_ball_to_valleyyorentrance!(pts::Vector{ComplexF64}, ηdict::Dict, CG ::SimpleGraph, dict::Dict)
-#     # create edges between exit points - endpoints and entrance-valleys.
-#     # Dict contains η ∈ [Pexit, Pendp] and where it goes
-#     for η in pts
-#         if haskey(ηdict, η)
-#             goesto = ηdict[η]
-#             add_edge!(CG, dict[η], dict[goesto])
-#         end
-#     end
-#     return
-# end
-
 function connect_ball_to_valleyyorentrance!(γvec :: Vector{ComplexContour}, CG ::SimpleGraph, CtoG::Dict, GtoContour::Dict)
     # create edges between exit points - endpoints and entrance-valleys.
     for γ in γvec
@@ -164,10 +152,57 @@ function connect_ball_to_valleyyorentrance!(γvec :: Vector{ComplexContour}, CG 
 end
 
 """
-    Plot graph
+    Finding suitable paths
 """
 
+function get_all_paths(CG::Graph, n1, n2, vnodes)
 
+    paths_nodes = simple_paths(CG, n1, n2, vnodes)
+    # paths_nodes = yen_k_shortest_paths(CG, n1, n2, weights(CG), 10).paths
+    # @show length(paths_nodes)
+    all_lists = []
+    for path in paths_nodes
+        edgelist = [(path[i], path[i+1]) for i in eachindex(path[1:end-1])]
+        push!(all_lists, edgelist)
+    end
+    return all_lists
+end
+
+"""
+    We are using a Depth First Search (DFS) algorithm to find all contours connecting endpoints.
+    - For polynomial phase, it suffices to choose shortest path
+    - For rational phase, we might have to take a longer path to avoid resiudes.
+"""
+
+function quasi_sd_contour(::AbstractPhaseFunction, ::Dict, paths, ::Any)
+    idx = argmin(length.(paths))
+    return paths[idx]
+end
+
+
+function quasi_sd_contour(G::RationalPhaseFunction, EdgesList::Dict, paths, γ0)
+    # γ0 is the collection of nodes for starting integration contour.
+    sort!(paths, by = length) # sort by length and begin with shortest
+    for path in paths
+        γ = Vector{ComplexContour}()
+        for e in path # get a quasi-sd contour
+            haskey(EdgesList,e) ? push!(γ, EdgesList[e]) : push!(γ, EdgesList[reverse(e)])
+        end
+        for zp in poles(G) # check if γ - γ0 crossed poles
+            γfull = winding_contour(γ, γ0)
+            nγ = winding_number(zp,γfull)
+            if abs(nγ)<0.5 return path 
+            end
+        end
+    end
+    @warn "There are no residue-free paths"
+    return
+end
+
+
+"""
+    Plot graph
+"""
 
 function plot_ContourGraph(graph::SimpleGraph, Ω::Vector, z_to_G::Dict, NodesDict :: Dict)
     

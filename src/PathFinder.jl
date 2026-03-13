@@ -24,6 +24,7 @@ using GraphMakie
 include("PhaseFunction.jl")
 
 include("root_finding.jl")
+include("graph_traversal.jl")
 
 include("Balls.jl")
 include("Contours.jl")
