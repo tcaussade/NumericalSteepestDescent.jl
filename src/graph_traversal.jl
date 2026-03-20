@@ -1,3 +1,74 @@
+
+"""
+    - For phases with no poles, it suffices to choose shortest path in the graph.
+
+    - For rational phase, we might have to take a longer path to avoid resiudes.
+    For this, we are using a Depth First Search (DFS) algorithm to find all contours connecting endpoints. 
+"""
+
+function get_deformation(::AbstractPhaseFunction, CG, start_node, end_node, ::Dict, ::Dict, γ0)
+    sd_edges = a_star(CG, start_node, end_node)
+    return [(e.src, e.dst) for e in sd_edges]
+end
+
+# function quasi_sd_contour(::AbstractPhaseFunction, ::Dict, paths, ::Any)
+#     idx = argmin(length.(paths))
+#     return paths[idx]
+# end
+
+
+"""
+    If G is a rational function,
+    Find shortest path in the quasi SD contour that avoids poles.
+"""
+
+function get_deformation(G::RationalFunction, CG, start_node, end_node, NodesDict, EdgesList, γ0)
+
+    # extract nodes associated with valleys and poles
+    vinf_nodes  = [CtoG[v] for v in NodesDict[:valleys]]
+    vpole_nodes = [CtoG[v] for v in NodesDict[:poles]]
+    vnodes = [vinf_nodes; vpole_nodes]
+
+    all_SDedges = get_all_paths(CG, start_node, end_node, vnodes)
+    sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
+    return sd_edges
+end
+
+function get_all_paths(CG::Graph, n1, n2, vnodes)
+
+    paths_nodes = simple_paths(CG, n1, n2, vnodes)
+    # paths_nodes = yen_k_shortest_paths(CG, n1, n2, weights(CG), 10).paths
+    # @show length(paths_nodes)
+    all_lists = []
+    for path in paths_nodes
+        edgelist = [(path[i], path[i+1]) for i in eachindex(path[1:end-1])]
+        push!(all_lists, edgelist)
+    end
+    return all_lists
+end
+
+function quasi_sd_contour(G::RationalPhaseFunction, EdgesList::Dict, paths, γ0)
+    # γ0 is the collection of nodes for starting integration contour.
+    sort!(paths, by = length) # sort by length and begin with shortest
+    for path in paths
+        γ = Vector{ComplexContour}()
+        for e in path # get a quasi-sd contour
+            haskey(EdgesList,e) ? push!(γ, EdgesList[e]) : push!(γ, EdgesList[reverse(e)])
+        end
+        nγ = zero(ComplexF64)
+        for zp in poles(G) # check if γ - γ0 crossed poles
+            γfull = winding_contour(γ, γ0)
+            nγ += winding_number(zp,γfull)
+        end
+        # TOLERANCE HERE SHOULD BE MORE STRICT?
+        if abs(nγ)<0.1 return path end
+    end
+    @warn "There are no residue-free paths"
+    return
+end
+
+
+
 """
     Custom implementation of a graph traversal algorithm to find paths between two nodes in a graph,
      with the additional constraint that the path should not cross any poles of the integrand. 
@@ -38,8 +109,8 @@ function simple_paths(G::Graph, n1, n2, valley_nodes :: Vector{Int16})
     return all_paths
 end
 
-# remove redundant edges in paths that are traversed in both directions
-function filter_path(path)
-    fil
+# # remove redundant edges in paths that are traversed in both directions
+# function filter_path(path)
+#     fil
 
-end
+# end

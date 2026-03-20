@@ -48,13 +48,9 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
     a,b = NodesDict[:endpoint]
     # sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
 
-    # extract nodes associated with valleys and poles
-    vinf_nodes  = [CtoG[v] for v in NodesDict[:valleys]]
-    vpole_nodes = [CtoG[v] for v in NodesDict[:poles]]
-    vnodes = [vinf_nodes; vpole_nodes]
-
-    all_SDedges = get_all_paths(CG, CtoG[a], CtoG[b], vnodes)
-    sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
+    sd_edges = get_deformation(G, CG, CtoG[a], CtoG[b], NodesDict, EdgesList, γ0)
+    # all_SDedges = get_all_paths(CG, CtoG[a], CtoG[b], vnodes)
+    # sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
 
     # println("found shortest path")
 

@@ -40,7 +40,7 @@ function coalescence_test(numQuadPts, showText=false)
 end
 
 @testset "Coalescence Test" begin
-    # @test coalescence_test(25) < 1e-3
-    # @test coalescence_test(40) < 1e-8
-    # @test coalescence_test(101) < 1e-12
+    @test coalescence_test(25) < 1e-3
+    @test coalescence_test(40) < 1e-8
+    @test coalescence_test(101) < 1e-12
 end
