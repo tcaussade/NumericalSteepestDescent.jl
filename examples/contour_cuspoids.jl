@@ -1,4 +1,4 @@
-using PathFinder
+using NumericalSteepestDescent
 using CairoMakie
 
 # Show deformed contour for a given instance of cuspoid integral
@@ -7,7 +7,7 @@ yvals = range(-8,8, step = 1/framerate)
 x = 0
 G(x,y) = PolynomialPhaseFunction([0, x, y, 0, 1])
 
-frame_iteration(y) = PathFinder.quasiSDdeformation!(fig, ax, a,b, G(x,y), 1;
+frame_iteration(y) = PathFinder.quasiSDdeformation!(fig, ax, [a,b], G(x,y), 1;
                                                     umax = 100, color_lim = 100,
                                                     infcontour = [true,true])
 

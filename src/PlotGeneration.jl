@@ -19,7 +19,7 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
         umax = 20, # control how far tracing a contour for plots
         color_lim  = 300, # control color limits of the colorbar
         resolution = 200, # increasing this paramter improves image quality
-        set        = 10 # plotsize
+        set        = 5 # plotsize
         )
     # WARNING: setting umax too large might result in trouble
 

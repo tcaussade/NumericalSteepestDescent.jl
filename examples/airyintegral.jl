@@ -3,7 +3,7 @@
     Airy phase quasi SD contour deformation
 """
 
-using PathFinder
+using NumericalSteepestDescent
 using CairoMakie
 
 framerate = 20
@@ -11,7 +11,7 @@ framerate = 20
 xvals = range(-5,5, step = 1/framerate)
 G(x) = PolynomialPhaseFunction(-im*[0,-x,0,1/3])
 
-frame_iteration(x) = PathFinder.quasiSDdeformation!(fig, ax, -π/3,π/3, G(x), 1.0; infcontour = [true, true],
+frame_iteration(x) = PathFinder.quasiSDdeformation!(fig, ax, [-π/3,π/3], G(x), 1.0; infcontour = [true, true],
                                                     umax = 150,
                                                     color_lim = 100)
 

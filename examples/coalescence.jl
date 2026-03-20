@@ -4,7 +4,7 @@
     with r>0 
 """
 
-using PathFinder
+using NumericalSteepestDescent
 using CairoMakie
 
 framerate = 100
@@ -14,7 +14,7 @@ G(r) = PolynomialPhaseFunction([0.0; -r^P; zeros(P-1); 1.0/(P+1)])
 rvals = range(1e-4, 1e0, step = 1/framerate)
 #10 .^ range(-4, 0, step=1/framerate)
 
-frame_iteration(r) = PathFinder.quasiSDdeformation!(fig, ax, -1,1, G(r), 1000.0;
+frame_iteration(r) = PathFinder.quasiSDdeformation!(fig, ax, [-1,1], G(r), 1000.0;
                                                     umax = 10,
                                                     color_lim = 8,
                                                     resolution = 500,

@@ -3,7 +3,7 @@
     Show quasiSD contour changes with frequency
 """
 
-using PathFinder
+using NumericalSteepestDescent
 using CairoMakie
 
 framerate = 20
@@ -11,7 +11,7 @@ Phase = PolynomialPhaseFunction([3,5,6,2,9,5,1,4,1,3])
 freqvals = range(0.001,20, step = 1/framerate)
 #10 .^ range(-4, 0, step=1/framerate)
 
-frame_iteration(ω) = PathFinder.quasiSDdeformation!(fig, ax, -1,1, Phase, ω;
+frame_iteration(ω) = PathFinder.quasiSDdeformation!(fig, ax, [-1,1], Phase, ω;
                                                     umax = 80,
                                                     color_lim = 100,
                                                     resolution = 200,

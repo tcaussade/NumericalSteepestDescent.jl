@@ -56,32 +56,33 @@ refval = quadgk(z -> cis(ω*(z+1/z)), a, im, b)[1]
 
 There, the phase is g(z) = 0.5*(x-μ)^2 + α/(1+x^2) with μ=0 and α=2
 """
-ν = 100
+ν = 20
 μ, α = (-0.4,1.0344893103448276)
-μ,α = (0,1)
+μ,α = (0,5)
 
 acoefs = [0.5*μ^2, -μ, 0.5]
 ps = [im, -im]
 pcoefs = 0.5im*α * [[-1], [1]]
 
 PlasmaLensPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
-val, figs = PathFinder.integrate(π,0,z->1.0,PlasmaLensPhase,ν; 
+val, figs = PathFinder.integrate([π,0],z->1.0,PlasmaLensPhase,ν; 
                                 infcontour = [true, true],
                                 plot_graph = true, plot_sd = true)
-figs[1]
 figs[2]
 
-r = PlasmaLensPhase.rstar_valley
-J = 2
-θ = π/(4J)
-PathFinder.evaluate_noreturn_Ginf(r,θ, PlasmaLensPhase)
+# r = PlasmaLensPhase.rstar_valley
+# J = 2
+# θ = π/(4J)
+# PathFinder.evaluate_noreturn_Ginf(r,θ, PlasmaLensPhase)
 
-idx = 1
-Kp = 1
-θ = π/(Kp) * 0.2500001
-r = PlasmaLensPhase.rstar_pole[idx]
-PathFinder.evaluate_noreturn_Gpole(r, θ, PlasmaLensPhase; pole_idx = idx)
+# idx = 1
+# Kp = 1
+# θ = π/(Kp) * 0.2500001
+# r = PlasmaLensPhase.rstar_pole[idx]
+# PathFinder.evaluate_noreturn_Gpole(r, θ, PlasmaLensPhase; pole_idx = idx)
 
+
+PathFinder.winding_number(-0.9999im, [-1.0-im, 1.0-im, 1.0+im, -1.0+im, -1.0-im]) # should be 1
 
 
 
@@ -100,7 +101,7 @@ pcoefs = [[0.0, y^2/12]]
 CatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
 
 a,b = (-7π/12, π/12)
-val, figs = PathFinder.integrate(a,b,z->1.0,CatPhase,1; infcontour = [true,true],
+val, figs = PathFinder.integrate([a,b],z->1.0,CatPhase,1; infcontour = [true,true],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
@@ -110,7 +111,7 @@ figs[2]
 """ arbitrary """
 d = 0.5
 Dipole = RationalPhaseFunction([3,1,3,4,5,1,2], [d,-d], [[0.5,-0.25im],[0.5,0.5,0.5]])
-v,fig = integrate(-2d,2d,z->1.0,Dipole,10.0; plot_graph = true, plot_sd = true)
+v,fig = integrate([-im,im,1],z->1.0,Dipole,10.0; plot_graph = true, plot_sd = true)
 fig[2]
 
 """ Case when poles might lie close to each other """

@@ -1,4 +1,4 @@
-name = "PathFinder"
+name = "NumericalSteepestDescent"
 uuid = "ea5c52bc-9edc-428a-9677-4a4d9540cecb"
 version = "0.1.0"
 authors = ["tcaussade "]

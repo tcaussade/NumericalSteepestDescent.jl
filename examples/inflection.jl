@@ -1,4 +1,4 @@
-using PathFinder
+using NumericalSteepestDescent
 # using Polynomials
 
 f(z) = 1.0
@@ -16,7 +16,7 @@ Z = zeros(length(X), length(Y))
 for (i,x) in enumerate(X)
     for (j,y) in enumerate(Y)
         Phase = G(x,y)
-        Ψ, _ = integrate(a,b,f,Phase,ω; infcontour = [true,true])
+        Ψ, _ = integrate([a,b],f,Phase,ω; infcontour = [true,true])
         Z[i,j] = abs.(Ψ)
         Z0[i,j] = real.(Ψ .* cis(k*x)) # Compute approximate solution to Helmholtz equation
     end 
@@ -28,7 +28,7 @@ Z0= zeros(length(X), length(Y))
 for (i,x) in enumerate(X)
     for (j,y) in enumerate(Y)
         Phase = G(x,y)
-        Ψ, _ = integrate(a,b,f,Phase,ω; infcontour = [true,true])
+        Ψ, _ = integrate([a,b],f,Phase,ω; infcontour = [true,true])
         Z0[i,j] = real.(Ψ .* cis(k*x)) # Compute approximate solution to Helmholtz equation
     end 
 end

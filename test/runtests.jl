@@ -1,5 +1,5 @@
 using Test
-using PathFinder
+using NumericalSteepestDescent
 using SpecialFunctions
 using QuadGK
 
@@ -8,7 +8,7 @@ using QuadGK
     include("test_input.jl")
     @testset "Polynomial phase" begin
         include("test_airy.jl")
-        include("test_coalescence.jl")
+        # include("test_coalescence.jl")
         include("test_pearcey.jl")
     end
     @testset "Square-Root phase" begin

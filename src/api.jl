@@ -34,9 +34,9 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
         )
   
     # place endpoints at infinity if specified
-    a = infcontour[1] ? endpoint_at_valley(first(γ0), G) : first(γ0)
-    b = infcontour[2] ? endpoint_at_valley(last(γ0), G) : last(γ0)
-    
+    γ0 = infinite_endpoints!(γ0, G, infcontour)
+    a,b = γ0[1], γ0[end]
+
     Ω = NonOscillatoryRegion(G, ω; Cball, δball,  Nrays)
 
     CG, CtoG, NodesDict, EdgesList = ContourGraph(G, a, b, Ω; δODE, δcoarse)
@@ -142,6 +142,12 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
 end
 
 
+function infinite_endpoints!(γ0, G::AbstractPhaseFunction, infcontour)
+    γ0 = convert.(ComplexF64, γ0)
+    γ0[1]   = infcontour[1] ? endpoint_at_valley(first(γ0), G) : first(γ0)
+    γ0[end] = infcontour[2] ? endpoint_at_valley(last(γ0), G) : last(γ0)
+    return γ0
+end
 function endpoint_at_valley(θ, G::AbstractPhaseFunction)
     # place endpoint at valley if specified as endpoint at infinity
     v = valleyangle(θ, G)
@@ -156,7 +162,7 @@ end
     Show QuasiSD contour deformation 
     This method is useful for creating gif animations.
 """
-function quasiSDdeformation!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction, ω; 
+function quasiSDdeformation!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhaseFunction, ω; 
                          infcontour = [false, false], 
                          Cball = 2π,
                          inftol = 1e6,
@@ -165,24 +171,30 @@ function quasiSDdeformation!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction
                          resolution = 200,
                          set = 10)
 
-    a = infcontour[1] ? endpoint_at_valley(a,G) : a
-    b = infcontour[2] ? endpoint_at_valley(b,G) : b
+    γ0 = infinite_endpoints!(γ0, G, infcontour)
+    a,b = γ0[1], γ0[end]
 
     Ω = NonOscillatoryRegion(G, ω; Cball, δball=1e-3,  Nrays=16)
     CG, CtoG, NodesDict, EdgesList = ContourGraph(G, a, b, Ω; δODE=0.1, δcoarse=0.01)
     a,b = NodesDict[:endpoint]
-    sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
+    # sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
+    vinf_nodes  = [CtoG[v] for v in NodesDict[:valleys]]
+    vpole_nodes = [CtoG[v] for v in NodesDict[:poles]]
+    vnodes = [vinf_nodes; vpole_nodes]
+
+    all_SDedges = get_all_paths(CG, CtoG[a], CtoG[b], vnodes)
+    sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
 
     γtot = Vector{ComplexContour}()
-    for e in sd_edges i1,i2 = e.src, e.dst
-        if haskey(EdgesList, (i1, i2)) γ = EdgesList[(i1,i2)]; push!(γtot, γ)
-        else γ = EdgesList[(i2,i1)]; push!(γtot, γ)
+    for e in sd_edges # i1,i2 = e.src, e.dst
+        if haskey(EdgesList, e) γ = EdgesList[e]; push!(γtot, γ)
+        else γ = EdgesList[reverse(e)]; push!(γtot, γ)
         end
     end
 
     γall = Vector{ComplexContour}() 
     for ηi in [NodesDict[:exits]; NodesDict[:endpoint]]
-        for ηj in [NodesDict[:valleys]; NodesDict[:entrances]]
+        for ηj in [NodesDict[:valleys]; NodesDict[:entrances]; NodesDict[:poles]]
             i,j = CtoG[ηi], CtoG[ηj]
             if haskey(EdgesList, (i,j)) push!(γall, EdgesList[(i,j)]) end
         end
@@ -191,7 +203,7 @@ function quasiSDdeformation!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction
     return plot_SDcontours!(fig, ax, G,γtot, Ω, γall; infcontour, inftol, umax, color_lim, resolution, set)
 end
 
-function showContourGraph!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction, ω; 
+function showContourGraph!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhaseFunction, ω; 
                          infcontour = [false, false], 
                          Cball = 2π,
                          inftol = 1e6,
@@ -200,8 +212,8 @@ function showContourGraph!(fig::Figure,ax::Axis, a,b, G::AbstractPhaseFunction, 
                          resolution = 200,
                          set = 10)
 
-    a = infcontour[1] ? endpoint_at_valley(a,G) : a
-    b = infcontour[2] ? endpoint_at_valley(b,G) : b
+    γ0 = infinite_endpoints!(γ0, G, infcontour)
+    a,b = γ0[1], γ0[end]
 
     Ω = NonOscillatoryRegion(G, ω; Cball, δball=1e-3,  Nrays=16)
     CG, CtoG, NodesDict, _ = ContourGraph(G, a, b, Ω; δODE=0.1, δcoarse=0.01)

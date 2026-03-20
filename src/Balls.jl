@@ -296,11 +296,12 @@ function findradius(G::RationalPhaseFunction, ξ, Cω, θ)
     for j = 0:degree(G)
         polyterm += αj[j+1] * Polynomial([binomial(j,m)*ξ^(j-m)*cispi(m*θ) for m=0:j])
     end
-    gpoly += polyterm * Q
+    gpoly += (polyterm - evalphase(ξ,G)) * Q
 
     # construct G(r) = |g(z)-g(ξ)|^2*|q(z)|^2 - Cω^2*|q(z)|^2, with z = ξ+re^{iθ}
-    gξ = evalphase(ξ,G)
-    G = (gpoly-gξ*Q) * conj(gpoly-gξ*Q) - Cω^2* Q*conj(Q)
+    # gξ = evalphase(ξ,G)
+    # G = (gpoly-gξ*Q) * conj(gpoly-gξ*Q) - Cω^2* Q*conj(Q)
+    G = gpoly * conj(gpoly) - Cω^2* Q*conj(Q)
 
     rvals = roots(G)
     rvals = real.(rvals[ abs.(imag.(rvals)) .< 0.1])

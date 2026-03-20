@@ -29,7 +29,7 @@ function hna_test_gaussian(nQuadPts, outputText=false)
                     println("ω = $ω, a = $a, b = $b")
                 end          
                 G = SquareRootPhaseFunction(a,b)
-                int = integrate(0.0, 1.0, x -> 1.0, G, ω; N=nQuadPts)            
+                int = integrate([0.0, 1.0], x -> 1.0, G, ω; N=nQuadPts)            
                 absErr = abs(int-ref) #/ abs(ref)
                 if outputText
                     println("\t abs err = $absErr")

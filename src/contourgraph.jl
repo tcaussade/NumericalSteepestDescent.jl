@@ -188,12 +188,13 @@ function quasi_sd_contour(G::RationalPhaseFunction, EdgesList::Dict, paths, γ0)
         for e in path # get a quasi-sd contour
             haskey(EdgesList,e) ? push!(γ, EdgesList[e]) : push!(γ, EdgesList[reverse(e)])
         end
+        nγ = zero(ComplexF64)
         for zp in poles(G) # check if γ - γ0 crossed poles
             γfull = winding_contour(γ, γ0)
-            nγ = winding_number(zp,γfull)
-            if abs(nγ)<0.5 return path 
-            end
+            nγ += winding_number(zp,γfull)
         end
+        # TOLERANCE HERE SHOULD BE MORE STRICT?
+        if abs(nγ)<0.1 return path end
     end
     @warn "There are no residue-free paths"
     return

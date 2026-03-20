@@ -3,7 +3,7 @@
     Phase encountered in a BEM matrix for HNA methods
 """
 
-using PathFinder
+using NumericalSteepestDescent
 using CairoMakie
 
 a = 0.1
@@ -13,7 +13,7 @@ framerate = 60
 bvals = range(-0.99,0.99, step = 1/framerate)
 G(a,b) = SquareRootPhaseFunction(a,b)
 
-frame_iteration(b) = PathFinder.quasiSDdeformation!(fig, ax, 0,1, G(a,b), 100;
+frame_iteration(b) = PathFinder.quasiSDdeformation!(fig, ax, [0,1], G(a,b), 100;
                                                     umax = 20,
                                                     color_lim = 2)
 

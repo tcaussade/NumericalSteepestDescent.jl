@@ -1,6 +1,6 @@
 using Test
 using SpecialFunctions
-using PathFinder
+using NumericalSteepestDescent
 
 """
     Test the Airy function implementation against Julia's SpecialFunctions.airyai
@@ -20,7 +20,7 @@ function airy_test(nQuadPts, min_z, outputText=false)
         end
         airyJulia = airyai(z)
         G = RationalPhaseFunction([0,0,0,im/3],[0],[[0,0,im*z^3/3]])
-        integral = integrate(1e-2, 0.0, z -> 1.0, G, 1.0; N=nQuadPts, infcontour=[false,true])
+        integral = integrate([1e-2, 0.0], z -> 1.0, G, 1.0; N=nQuadPts, infcontour=[false,true])
         airyPathFinder = (sqrt(3)/(2*π)) * integral
         relErr = abs(airyJulia - airyPathFinder) / abs(airyJulia)
         if outputText

@@ -77,7 +77,7 @@ function pearcey_test(numQuadPts, outputText=false)
                 println("\ty=$y")
             end
             G = PolynomialPhaseFunction([0.0, y, x, 0.0, 1.0])
-            I_GHH= integrate(π, 0.0, z -> 1.0, G, 1.0; N=numQuadPts, infcontour = [true true])
+            I_GHH= integrate([π, 0.0], z -> 1.0, G, 1.0; N=numQuadPts, infcontour = [true true])
             I_CHK = kirk_pearcey_data(x, y)
             err[xCount, yCount] = abs(I_CHK - I_GHH) / abs(I_CHK)
             # @test abs(I_CHK - I_GHH) / abs(I_CHK) < errtol

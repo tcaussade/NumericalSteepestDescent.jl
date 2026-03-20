@@ -195,7 +195,7 @@ function isinValley(z, G::RationalPhaseFunction)
                 for valley in vp # check if in angular valley at pole
                     θ = minimum(abs.( (angle(z-pole)-valley) .- 2π*(-2Kp:2Kp) ))
                     if θ < π/(2Kp)
-                        hval = pole + cis(valley) * 10*eps()
+                        hval = pole + cis(valley) * 1e-2
                         # add perturbation to distinguish between angular valleys
                         Gval = evaluate_noreturn_Gpole(abs(z-pole), θ, G; pole_idx = i)
                         if Gval > 0 return true, hval, :pole end    
