@@ -1,4 +1,4 @@
-using PathFinder
+using NumericalSteepestDescent
 using QuadGK
 # using WGLMakie
 using SpecialFunctions

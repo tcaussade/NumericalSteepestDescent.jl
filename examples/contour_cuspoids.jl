@@ -3,25 +3,27 @@ using CairoMakie
 
 # Show deformed contour for a given instance of cuspoid integral
 framerate = 10
-yvals = range(-8,8, step = 1/framerate)
-x = 0
+vals = range(-8,8, step = 1/framerate)
+# x = 0
+y = -1
 G(x,y) = PolynomialPhaseFunction([0, x, y, 0, 1])
 
-frame_iteration(y) = PathFinder.quasiSDdeformation!(fig, ax, [a,b], G(x,y), 1;
+a,b = π/1, 0.0
+frame_iteration(x) = NumericalSteepestDescent.quasiSDdeformation!(fig, ax, [a,b], G(x,y), 1;
                                                     umax = 100, color_lim = 100,
                                                     infcontour = [true,true])
 
 fig = Figure()
 ax  = Axis(fig[1, 1], title = "", aspect = DataAspect(),
               xlabel = "Re", ylabel = "Im", xticks = -8:2:8, yticks = -8:2:8)
-frame_iteration(first(xvals))
+frame_iteration(first(vals))
 limits!(-3,3,-3,3)
 fig
 
-record(fig, "cuspoid.gif", yvals;
+record(fig, "animations/cuspoid_x.gif", vals;
         framerate = framerate) do y
     empty!(ax)
-    ax.title = "y = $(round(y, digits = 2))"
+    ax.title = "x = $(round(y, digits = 2))"
     frame_iteration(y)
     limits!(-3,3,-3,3)
 end

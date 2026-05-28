@@ -18,7 +18,7 @@ ps = [im, -im]
 pcoefs = 0.25im*α * [[-1], [1]]
 
 PlasmaLensPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
-val, figs = PathFinder.integrate([π,0],z->1.0,PlasmaLensPhase,ν; 
+val, figs = integrate([π,0],z->1.0,PlasmaLensPhase,ν; 
                                 infcontour = [true, true],
                                 plot_graph = true, plot_sd = true)
 figs[1]
@@ -30,14 +30,15 @@ framerate = 80
 α = 5
 
 PlasmaPhase(μ) = RationalPhaseFunction([0.5*μ^2, -μ, 0.5], [im, -im], 0.25im*α * [[-1], [1]])
-frame_iteration(μ) = PathFinder.quasiSDdeformation!(fig, ax, [π,0.0], PlasmaPhase(μ), ν; 
+frame_iteration(μ) = quasiSDdeformation!(fig, ax, [π,0.0], PlasmaPhase(μ), ν; 
                                                     infcontour = [true, true],
                                                     umax = 50,
                                                     color_lim = 10)
-fig = PathFinder.Figure()
+fig = Figure()
 ax  = Axis(fig[1, 1], title = "", aspect = DataAspect(),
               xlabel = "Re", ylabel = "Im", xticks = -8:2:8, yticks = -8:2:8)
-frame_iteration(first(μvals))
+# frame_iteration(first(μvals))
+frame_iteration(0.0)
 limits!(-4,4,-4,4)
 fig
 

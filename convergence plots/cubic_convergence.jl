@@ -1,11 +1,11 @@
-using PathFinder
-# using CairoMakie
+using NumericalSteepestDescent
+using CairoMakie
 # using WGLMakie
-using Polynomials
+# using Polynomials
 
 # choose roots
-dP = fromroots([-1.1,0.3im, 1+im, 1.2-im/5])
-P = Polynomials.integrate(dP)
+# dP = fromroots([-1.1,0.3im, 1+im, 1.2-im/5])
+# P = Polynomials.integrate(dP)
 
 freqs  = ([25, 50,100, 200, 400, 800])
 # freqs  = ([50, 200, 500])
@@ -27,31 +27,31 @@ CubicPhase = PolynomialPhaseFunction(-im*[0,-3a,0,1])
 
 # CubicPhase = PolynomialPhaseFunction([0, -8+24im, -(10+44im)/3, -(4-28im)/9, (1+im), -4/15, 1/18])
 
-val,fig = PathFinder.integrate(-1,1,z->1.0,CubicPhase,100; plot_sd = true)
+val,fig = integrate([-1,1],z->1.0,CubicPhase,100; plot_sd = true)
 @show val
 fig[1]
 
 f(z) = 1 #/(z-1-0.1im)
 e = zeros(length(freqs), length(nquads))
 for (i,ω) in enumerate(freqs)
-    ref = PathFinder.integrate(-π/3,π/3,f,CubicPhase,ω; N = 50, infcontour = [true, true])
+    ref = PathFinder.integrate([-π/3,π/3],f,CubicPhase,ω; N = 50, infcontour = [true, true])
     for (n,N) in enumerate(nquads)
-        val = PathFinder.integrate(-π/3,π/3,f,CubicPhase,ω; N, infcontour = [true true], Cball = 8π/8)
+        val = PathFinder.integrate([-π/3,π/3],f,CubicPhase,ω; N, infcontour = [true true], Cball = 8π/8)
         e[i,n] = abs(ref.-val) / abs(ref)
     end
 end
 
-fig = PathFinder.Figure()
-ax = PathFinder.Axis(fig[1,1], 
+fig = Figure()
+ax = Axis(fig[1,1], 
             xlabel = "number of quadrature points per contour (sqrt scale)",
             ylabel = "absolute error (log scale)",
             yscale = log10, xscale = sqrt)
 
 for (i,ω) in enumerate(freqs)
-    PathFinder.scatterlines!(nquads, e[i,:], label = "ω = $ω")
+    scatterlines!(nquads, e[i,:], label = "ω = $ω")
 end
-PathFinder.axislegend(ax)
-PathFinder.limits!(1,26,1e-16,1e-2)
+axislegend(ax)
+limits!(1,26,1e-16,1e-2)
 fig
 
 # uniformity in parameter space
