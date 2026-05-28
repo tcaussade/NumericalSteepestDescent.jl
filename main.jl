@@ -1,4 +1,4 @@
-using PathFinder
+using NumericalSteepestDescent
 
 # Basic usage example for arbitrary polynomial phase
 ω    = 10 # frequency parameter
