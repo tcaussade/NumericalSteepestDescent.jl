@@ -23,6 +23,7 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
 
         # quadrature
         quadtype = :gaussian, # specify quadrature type [:gaussian (default), :adaptive]   
+        infquadrule = :lag,   # specify quadrature rule for infinite SD contours [:lag (default), :tleg]
         N = 25,        # number of quadrature points (ignored if quadtype == :adaptive)
         atol = 1e-10, # tolerance for absolute error in adaptive quadrature. 
         # WARNING: setting rtol is unreliable for integrals with small values 
@@ -48,7 +49,7 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
     a,b = NodesDict[:endpoint]
     # sd_edges = a_star(CG, CtoG[a], CtoG[b]) # find shortest path
 
-    sd_edges = get_deformation(G, CG, CtoG[a], CtoG[b], NodesDict, EdgesList, γ0)
+    sd_edges = get_deformation(G, CG, a,b, CtoG, NodesDict, EdgesList, γ0)
     # all_SDedges = get_all_paths(CG, CtoG[a], CtoG[b], vnodes)
     # sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
 
@@ -67,6 +68,9 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
         @error "quadtype is not in (:gaussian, :adaptive)"
     end
 
+    # Tolerance in quadrature should be relative to largest contribution
+    # @show δquad = δquad * maximum([abs(cis(ω*evalphase(ξ, G))) for ξ in stationary_points(G)])
+
     # Evaluate each contour on the shortest path
     S = zero(ComplexF64)
     γtot = Vector{ComplexContour}()
@@ -78,14 +82,14 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
         if haskey(EdgesList, e)
             γ = EdgesList[e]; push!(γtot, γ)
             if quadtype == :gaussian
-                S += integrate(γ, f, G, ω, quad; δfine, δquad)
+                S += integrate(γ, f, G, ω, quad; δfine, δquad, infquadrule)
             elseif quadtype == :adaptive
                 S += integrate(γ, f, G, ω; δfine, δquad, atol)
             end
         else # the contour is traversed in the opposite direction
             γ = EdgesList[reverse(e)]; push!(γtot, γ)
             if quadtype == :gaussian
-                S -= integrate(γ, f, G, ω, quad; δfine, δquad)
+                S -= integrate(γ, f, G, ω, quad; δfine, δquad, infquadrule)
             elseif quadtype == :adaptive
                 S -= integrate(γ, f, G, ω; δfine, δquad, atol)
             end
@@ -178,8 +182,9 @@ function quasiSDdeformation!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhase
     vpole_nodes = [CtoG[v] for v in NodesDict[:poles]]
     vnodes = [vinf_nodes; vpole_nodes]
 
-    all_SDedges = get_all_paths(CG, CtoG[a], CtoG[b], vnodes)
-    sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
+    sd_edges = get_deformation(G, CG, a,b, CtoG, NodesDict, EdgesList, γ0)
+    # all_SDedges = get_all_paths(CG, CtoG[a], CtoG[b], vnodes)
+    # sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
 
     γtot = Vector{ComplexContour}()
     for e in sd_edges # i1,i2 = e.src, e.dst

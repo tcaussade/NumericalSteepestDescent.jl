@@ -151,55 +151,6 @@ function connect_ball_to_valleyyorentrance!(γvec :: Vector{ComplexContour}, CG 
     return
 end
 
-"""
-    Finding suitable paths
-"""
-
-function get_all_paths(CG::Graph, n1, n2, vnodes)
-
-    paths_nodes = simple_paths(CG, n1, n2, vnodes)
-    # paths_nodes = yen_k_shortest_paths(CG, n1, n2, weights(CG), 10).paths
-    # @show length(paths_nodes)
-    all_lists = []
-    for path in paths_nodes
-        edgelist = [(path[i], path[i+1]) for i in eachindex(path[1:end-1])]
-        push!(all_lists, edgelist)
-    end
-    return all_lists
-end
-
-"""
-    We are using a Depth First Search (DFS) algorithm to find all contours connecting endpoints.
-    - For polynomial phase, it suffices to choose shortest path
-    - For rational phase, we might have to take a longer path to avoid resiudes.
-"""
-
-function quasi_sd_contour(::AbstractPhaseFunction, ::Dict, paths, ::Any)
-    idx = argmin(length.(paths))
-    return paths[idx]
-end
-
-
-function quasi_sd_contour(G::RationalPhaseFunction, EdgesList::Dict, paths, γ0)
-    # γ0 is the collection of nodes for starting integration contour.
-    sort!(paths, by = length) # sort by length and begin with shortest
-    for path in paths
-        γ = Vector{ComplexContour}()
-        for e in path # get a quasi-sd contour
-            haskey(EdgesList,e) ? push!(γ, EdgesList[e]) : push!(γ, EdgesList[reverse(e)])
-        end
-        nγ = zero(ComplexF64)
-        for zp in poles(G) # check if γ - γ0 crossed poles
-            γfull = winding_contour(γ, γ0)
-            nγ += winding_number(zp,γfull)
-        end
-        # TOLERANCE HERE SHOULD BE MORE STRICT?
-        if abs(nγ)<0.1 return path end
-    end
-    @warn "There are no residue-free paths"
-    return
-end
-
 
 """
     Plot graph

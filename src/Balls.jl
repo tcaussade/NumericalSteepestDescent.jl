@@ -138,10 +138,11 @@ function findradius(G::PolynomialPhaseFunction, ξ, Cω, θ)
     end
     # construct G(r) = |g(ξ+re^{iθ})-g(ξ)|^2 - Cω^2
     G = (gpoly-g(ξ)) * conj(gpoly-g(ξ)) - Cω^2
-
-    rvals = roots(G)
-    rvals = real.(rvals[ abs.(imag.(rvals)) .< 0.01])
-
+    allroots = roots(G)
+    rvals = real.(allroots[ abs.(imag.(allroots)) .< 0.01])
+    if isempty(rvals) 
+        # Do bisection method to find roots.
+    end
     return minimum(rvals[rvals .> 0.0]) # keep only positive roots
 end
 

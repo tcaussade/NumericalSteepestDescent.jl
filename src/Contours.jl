@@ -84,6 +84,7 @@ function tracecontour_coarse(η, G::AbstractPhaseFunction, Ω; δODE, δcoarse)
         # println("iterating, h1 = $(abs(h1)) * cis($(angle(h1)/π))π")
         h1 = find_zero((h->g(h)-g(η)-im*p2,dg),h2,Roots.Newton(); rtol = rtol)
         p1 = p2
+        d = dist(h1, Pstat) # update distance to stationary point
         
         if isinΩ(Ω, h1) # check if we entered non-oscillatory region - we have found an entrance
             # @info "Reached Ω from η1=$η to η2=$h1 in $n steps."

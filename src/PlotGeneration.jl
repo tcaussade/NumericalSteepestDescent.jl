@@ -19,7 +19,7 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
         umax = 20, # control how far tracing a contour for plots
         color_lim  = 300, # control color limits of the colorbar
         resolution = 200, # increasing this paramter improves image quality
-        set        = 5 # plotsize
+        set        = 10 # plotsize
         )
     # WARNING: setting umax too large might result in trouble
 
@@ -45,7 +45,6 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
     levelset = contourf!(ax,X,Y,-imag.(Z); levels = range(-color_lim, color_lim, 20), 
                          colormap = :balance, extendlow = :auto, extendhigh = :auto)
     # contour!(ax,X,Y,real.(Z); levels = 11, color = :black, linewidth = 1, linestyle = :dash)
-        
     # plot non-oscillatory region
     for ball in Ω # Display Non-oscillatory region(s)
         c,r = centre_and_radius(ball)
@@ -63,12 +62,15 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
         if contour_type(c) == :infiniteSD
             hη = points_on_SDcontour(at(c), G, u; δfine = 1e-12)
             lines!(ax, reim.(hη); color = :blue, linewidth = lw)
+            scatter!(reim(at(c)), color = :purple)
         elseif contour_type(c) == :finiteSD
             U = im*(g(at(c)) - g(to(c)))
             # U = im*(G.p(at(c)) - G.p(to(c)))
             u_tmp = u * U/umax
             hη = points_on_SDcontour(at(c), G, u_tmp; δfine = 1e-6)
             lines!(ax, reim.(hη); color = :green, linewidth = lw)
+            scatter!(reim(at(c)), color = :purple)
+            scatter!(reim(to(c)), color = :green)
         end
     end
     for c in γ

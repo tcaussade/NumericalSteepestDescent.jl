@@ -6,8 +6,8 @@
     For this, we are using a Depth First Search (DFS) algorithm to find all contours connecting endpoints. 
 """
 
-function get_deformation(::AbstractPhaseFunction, CG, start_node, end_node, ::Dict, ::Dict, γ0)
-    sd_edges = a_star(CG, start_node, end_node)
+function get_deformation(::AbstractPhaseFunction, CG, start_point, end_point, CtoG, ::Dict, ::Dict, γ0)
+    sd_edges = a_star(CG, CtoG[start_point], CtoG[end_point])
     return [(e.src, e.dst) for e in sd_edges]
 end
 
@@ -22,14 +22,13 @@ end
     Find shortest path in the quasi SD contour that avoids poles.
 """
 
-function get_deformation(G::RationalFunction, CG, start_node, end_node, NodesDict, EdgesList, γ0)
-
+function get_deformation(G::RationalPhaseFunction, CG, start_point, end_point, CtoG, NodesDict::Dict, EdgesList::Dict, γ0)
     # extract nodes associated with valleys and poles
     vinf_nodes  = [CtoG[v] for v in NodesDict[:valleys]]
     vpole_nodes = [CtoG[v] for v in NodesDict[:poles]]
     vnodes = [vinf_nodes; vpole_nodes]
 
-    all_SDedges = get_all_paths(CG, start_node, end_node, vnodes)
+    all_SDedges = get_all_paths(CG, CtoG[start_point], CtoG[end_point], vnodes)
     sd_edges = quasi_sd_contour(G, EdgesList, all_SDedges, γ0)
     return sd_edges
 end

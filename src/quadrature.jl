@@ -11,7 +11,7 @@ function does_not_contribute(G,ω,γ; δquad)
 end
 
 
-function integrate(γ::ComplexContour,f,G,ω,quad; δfine, δquad) 
+function integrate(γ::ComplexContour,f,G,ω,quad; δfine, δquad, infquadrule) 
     # Do Gaussian quadrature
     if does_not_contribute(G,ω,γ; δquad) return 0.0 + 0.0im end
     
@@ -24,8 +24,16 @@ function integrate(γ::ComplexContour,f,G,ω,quad; δfine, δquad)
             return integrate_finite(γ, f, G, ω, x, w)
         end
     elseif contour_type(γ) == :infiniteSD
-        x,w = quad.qlag
-        return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
+        if infquadrule == :lag
+            x,w = quad.qlag
+            return integrate_infiniteSD(γ, f, G, ω, x, w; δfine)
+        elseif infquadrule == :tleg
+            x,w = quad.qleg
+            return integrate_truncated_infiniteSD(γ, f, G, ω, x, w; δfine, δquad)
+        else
+            error("Unknown quadrature rule for infinite SD contours: $infquadrule \n 
+            Available options are :lag (Gauss-Laguerre) and :tleg (truncated Gauss-Legendre)")
+        end
     elseif contour_type(γ) == :finiteSD
         x,w = quad.qleg
         return integrate_finiteSD(γ, f, G, ω, x, w; δfine, δquad)
@@ -103,24 +111,38 @@ end
 
 
 """ 
-    We use Gauss-Laguerre for infinite SD contours
+    We use Gauss-Laguerre or truncated Gauss-Legendre for infinite SD contours
 """
 
 function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; δfine)
-    # evaluate integral along infinite SD path at η
+    # evaluate integral along infinite SD path at η using Gauss-Laguerre quadrature
     g(z)  = evalphase(z,G)
     dg(z) = evalphase_derivative(z,G)
     η = at(γ)
     h = points_on_SDcontour(η, G, x/ω; δfine)
     dh = im ./ dg.(h)
-    cis(ω*g(η))/ω * dot(w, f.(h).*dh)    
+    return cis(ω*g(η))/ω * dot(w, f.(h).*dh)  
 end
+
+function integrate_truncated_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; δfine, δquad)
+    # evaluate integral along infinite SD path at η using truncated Gauss-Legendre quadrature
+    g(z)  = evalphase(z,G)
+    dg(z) = evalphase_derivative(z,G)
+    η = at(γ) 
+    Pt = -log(δquad / abs(cis(ω*g(η)))) # truncation point in u-domain
+    p = trace_finite(0,Pt)
+    h = points_on_SDcontour(η, G, p.(x)/ω; δfine)
+    dh = im ./ dg.(h)
+    return cis(ω*g(η))/ω * dot(w, f.(h).*dh.*exp.(-p.(x))) * 0.5*Pt  
+end
+
 
 function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine, η0 = η)
     # solve X in g(X) = g(η) + i x/ω
     g(z)  = evalphase(z,G)
     dg(z) = evalphase_derivative(z,G)
     h = zeros(ComplexF64, length(xvec))
+    @show η
     # @show η0
     # f(u) = g(u)-g(η)-im*xvec[1]
     h[1] = Roots.newton(u -> g(u)-g(η)-im*xvec[1], dg, η0; rtol = δfine) # x0 = η
@@ -152,8 +174,8 @@ function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFun
     # @assert abs(imag(umax)) < 1e-14 "umax = $umax should be real-valued \t η = $η"
 
     # possible truncation
-    M  = 1.0 # pending: should be M = max(cis(ω * g(η))) for all η ∈ {Pstat, Pendp, Pexit}
-    P = min(-log(δquad * M / abs(cis(ω*g(η)))), real(umax)*ω)
+    # M  = 1.0 # pending: should be M = max(cis(ω * g(η))) for all η ∈ {Pstat, Pendp, Pexit}
+    P = min(-log(δquad / abs(cis(ω*g(η)))), real(umax)*ω)
 
     p = trace_finite(0,P)
     h  = points_on_SDcontour(η, G, p.(x)/ω; δfine)
