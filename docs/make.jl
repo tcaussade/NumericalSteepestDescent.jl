@@ -2,12 +2,12 @@ using Documenter
 using NumericalSteepestDescent
 
 # Setup for doctests in docstrings
-DocMeta.setdocmeta!(NumericalSteepestDescent, :DocTestSetup, :(using LinearAlgebra, SpecialFunctions, FastGaussQuadrature))
+DocMeta.setdocmeta!(NumericalSteepestDescent)
 
 makedocs(;
     modules = [NumericalSteepestDescent],
     format = Documenter.HTML(
-        canonical = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
+        canonical = "https://tcaussade.github.io/NumericalSteepestDescent/",
         assets = [""],
         repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl",
         prettyurls = get(ENV, "CI", "false") == "true",
