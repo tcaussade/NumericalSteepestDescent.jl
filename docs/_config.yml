@@ -1,0 +1,58 @@
+# Site settings
+title: Numerical Steepest Descent
+description: A Julia package for numerical steepest descent methods
+url: "" # Set the production URL
+baseurl: "" # Leave blank for root domain
+
+# Build settings
+markdown: kramdown
+theme: minima
+
+# Kramdown settings
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-gist
+  - jekyll-paginate
+
+# Exclude files from the build
+exclude:
+  - .gitignore
+  - Gemfile
+  - Gemfile.lock
+  - LICENSE
+  - ../README.md
+  - ../src/
+  - ../test/
+  - ../examples/
+  - ../animations/
+  - ../Project.toml
+  - ../Manifest.toml
+  - ../main.jl
+  - ../monomial_example.jl
+
+# Include files in the build (if needed)
+include:
+  - .nojekyll
+
+# Collections (optional, for organizing content)
+collections:
+  pages:
+    output: true
+    permalink: /:name/
+
+# Defaults (optional)
+defaults:
+  - scope:
+      path: "docs"
+    values:
+      layout: "default"
