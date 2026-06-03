@@ -1,7 +1,17 @@
 # Book settings
+logo: logo.png
+
+# -----------------------------------------------------------------------------
+# Site Settings
+# -----------------------------------------------------------------------------
 title: NumericalSteepestDescent.jl
 author: Thomas Caussade
-logo: logo.png
+url: "https://github.com/tcaussade" # Change to your GitHub Pages URL
+baseurl: "/NumericalSteepestDescent.jl"
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
 
 # -----------------------------------------------------------------------------
 # Markdown & Rendering Configurations
