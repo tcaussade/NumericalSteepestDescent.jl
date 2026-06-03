@@ -32,5 +32,5 @@ f(z) = 1.0  # constant amplitude
 ω = 10.0
 
 # Compute the integral
-result = nsd(f, Phase, [a, b], ω)
+result = nsd([a, b], f, Phase, ω)
 ```

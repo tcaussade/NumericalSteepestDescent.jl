@@ -1,9 +1,7 @@
 # Book settings
-# Learn more at https://jupyterbook.org/customize/config.html
-
 title: NumericalSteepestDescent.jl
 author: Thomas Caussade
-# logo: logo.png
+logo: logo.png
 
 # Force re-execution of notebooks on each build.
 execute:
@@ -18,9 +16,23 @@ execute:
 bibtex_bibfiles:
   - references.bib
 
+parse:
+  myst_enable_extensions:
+    - amsmath
+    - dollarmath
+    - linkify
+
 sphinx:
   config:
     bibtex_reference_style: author_year
+    myst_enable_extensions:
+      - "amsmath"
+      - "dollarmath"
+    mathjax_path: https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+    mathjax_config:
+      tex:
+        inlineMath: [["$", "$"], ["\\(", "\\)"]]
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]]
 
 # Information about where the book exists on the web
 repository:
