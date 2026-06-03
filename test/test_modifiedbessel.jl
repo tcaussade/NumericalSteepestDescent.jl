@@ -26,8 +26,8 @@ function bessel_test(nQuadPts, outputText=false)
         G = RationalPhase(im*[0,1],[0],[im*[x^2/4]])
         f(t) = 1/t^(ν+1)
         integral = nsd([1e-6, 0], f, G, 1.0; N=nQuadPts, infcontour=[false,true])
-        besselPathFinder = 0.5*(0.5*x)^ν * integral
-        relErr = abs(besselJulia - besselPathFinder) / abs(besselJulia)
+        besselNumerical = 0.5*(0.5*x)^ν * integral
+        relErr = abs(besselJulia - besselNumerical) / abs(besselJulia)
         if outputText
             println("\trel err=$relErr")
         end

@@ -3,7 +3,7 @@ using NumericalSteepestDescent
 using SpecialFunctions
 using QuadGK
 
-@testset "PathFinder Tests" begin
+@testset "NumericalSteepestDescent Tests" begin
     include("test_plot.jl")
     include("test_input.jl")
     @testset "Polynomial phase" begin

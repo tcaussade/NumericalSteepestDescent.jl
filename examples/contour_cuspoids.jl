@@ -35,7 +35,7 @@ y = 1
 z = 0
 G(x,y,z) = RationalPhase([0,0,(z^2+x),0,2z,0,1],[0.],[[0.0, y^2/12]])
 
-frame_iteration(x) = PathFinder.quasiSDdeformation!(fig, ax, -7π/12,π/12, G(x,y,z), 1;
+frame_iteration(x) = quasiSDdeformation!(fig, ax, -7π/12,π/12, G(x,y,z), 1;
                                                     umax = 100, color_lim = 10,
                                                     infcontour = [true,true])
 

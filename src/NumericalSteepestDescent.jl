@@ -4,7 +4,7 @@ module NumericalSteepestDescent
     This package provides tools for numerical integration of highly oscillatory integrals 
     using contour deformation based on the (regularised) method of numerical steepest descent.
 
-    For a MATLAB version, see https://github.com/AndrewGibbs/PathFinder
+    For a MATLAB version, see https://github.com/AndrewGibbs/steepest-descent-contours
 """
 
 using FastGaussQuadrature

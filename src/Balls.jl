@@ -153,7 +153,7 @@ function findradius(G::PolynomialPhase, ξ, Cω, θ)
 end
 
 function PlanBisection(posroots,G)
-    # following same ideas as in https://github.com/AndrewGibbs/PathFinder/blob/master/src/root_finding/planBisection.m
+    # following same ideas as in https://github.com/AndrewGibbs/NumericalSteepestDescent/blob/master/src/root_finding/planBisection.m
     # If imaginary part using companion matrix is large, try something bisection
     # use roots from companion matrix as initial guesses for bisection.
     guesses = [0; real.(posroots); 2*maximum(real.(posroots))]

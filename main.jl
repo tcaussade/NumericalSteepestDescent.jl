@@ -25,7 +25,7 @@ LinPhase = LinearPhaseFunction()
 """ quick test for polynomial """
 r = PolyPhase.rstar_valley
 J = length(example1)-1
-PathFinder.evaluate_noreturn_Ginf(r,π/(4J),PolyPhase)
+evaluate_noreturn_Ginf(r,π/(4J),PolyPhase)
 
 # When the phase is linear the algorithm simplifies dramatically
 LinPhase = LinearPhaseFunction()

@@ -3,7 +3,7 @@ using SpecialFunctions
 
 """
     Test the Airy function implementation against Julia's SpecialFunctions.airyai
-    See Section 5.2 of the PathFinder paper for details.
+    See Section 5.2 of the NumericalSteepestDescent paper for details.
 """
 
 function airy_test(nQuadPts, outputText=false)
@@ -20,8 +20,8 @@ function airy_test(nQuadPts, outputText=false)
         airyJulia = airyai(x)
         G = PolynomialPhase(-1im * [0, -x, 0, 1/3])
         integral = nsd([-π/3, π/3], x -> 1.0, G, 1.0; N=nQuadPts, infcontour=[true,true])
-        airyPathFinder = (1/(2im*π)) * integral
-        relErr = abs(airyJulia - airyPathFinder) / abs(airyJulia)
+        airyNumerical = (1/(2im*π)) * integral
+        relErr = abs(airyJulia - airyNumerical) / abs(airyJulia)
         if outputText
             println("\trel err=$relErr")
         end

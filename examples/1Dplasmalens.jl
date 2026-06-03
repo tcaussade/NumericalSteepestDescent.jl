@@ -77,12 +77,12 @@ for (j,α) in enumerate(αvals)
     end
 end
 
-fig = PathFinder.Figure()
-ax = PathFinder.Axis(fig[1, 1], title = "Intensity pattern of a localised lens (ν=$ν)",  
+fig = Figure()
+ax = Axis(fig[1, 1], title = "Intensity pattern of a localised lens (ν=$ν)",  
                 xlabel = "μ", ylabel = "α")
-levelset = PathFinder.contourf!(ax,μvals,αvals,I; levels = range(0, 5, 100),
+levelset = contourf!(ax,μvals,αvals,I; levels = range(0, 5, 100),
                     colormap = :jet, # colormap = :hot
                     extendlow = :auto, extendhigh = :auto)
-PathFinder.Colorbar(fig[1,2], levelset)
+Colorbar(fig[1,2], levelset)
 limits!(first(μvals), last(μvals), first(αvals), last(αvals))
 fig
