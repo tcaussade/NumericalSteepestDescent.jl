@@ -1,8 +1,8 @@
 # Site settings
 title: Numerical Steepest Descent
 description: A Julia package for numerical steepest descent methods
-url: "" # Set the production URL
-baseurl: "" # Leave blank for root domain
+url: "https://tcaussade.github.io/NumericalSteepestDescent.jl/" # Set the production URL
+baseurl: "https://tcaussade.github.io/NumericalSteepestDescent.jl/" # Leave blank for root domain
 
 # Build settings
 markdown: kramdown
