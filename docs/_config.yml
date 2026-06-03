@@ -1,62 +1,38 @@
-# Site settings
-title: Numerical Steepest Descent
-description: A Julia package for numerical steepest descent methods
-url: "https://tcaussade.github.io/NumericalSteepestDescent.jl/" # Set the production URL
-baseurl: "https://tcaussade.github.io/NumericalSteepestDescent.jl/" # Leave blank for root domain
+# Book settings
+# Learn more at https://jupyterbook.org/customize/config.html
 
-# Build settings
-markdown: kramdown
-theme: minima
+title: NumericalSteepestDescent.jl
+author: Thomas Caussade
+# logo: logo.png
 
-# Kramdown settings
-kramdown:
-  input: GFM
-  syntax_highlighter: rouge
-  math_engine: mathjax
-  math_engine_opts:
-    preview: true
-    preview_as_code: true
-  syntax_highlighter_opts:
-    span:
-      line_numbers: false
-    block:
-      line_numbers: true
+# Force re-execution of notebooks on each build.
+execute:
+  execute_notebooks: force
 
-# Plugins
-plugins:
-  - jekyll-feed
-  - jekyll-gist
-  - jekyll-paginate
+# Define the name of the latex output file for PDF builds
+# latex:
+#   latex_documents:
+#     targetname: book.tex
 
-# Exclude files from the build
-exclude:
-  - .gitignore
-  - Gemfile
-  - Gemfile.lock
-  - LICENSE
-  - ../README.md
-  - ../src/
-  - ../test/
-  - ../examples/
-  - ../animations/
-  - ../Project.toml
-  - ../Manifest.toml
-  - ../main.jl
-  - ../monomial_example.jl
+# Add a bibtex file so that we can create citations
+bibtex_bibfiles:
+  - references.bib
 
-# Include files in the build (if needed)
-include:
-  - .nojekyll
+sphinx:
+  config:
+    bibtex_reference_style: author_year
 
-# Collections (optional, for organizing content)
-collections:
-  pages:
-    output: true
-    permalink: /:name/
+# Information about where the book exists on the web
+repository:
+  url: https://github.com/tcaussade/NumericalSteepestDescent.jl/tree/main  # Online location of your book
+  path_to_book: docs  # Optional path to your book, relative to the repository root
+  branch: main  # Which branch of the repository should be used when creating links (optional)
 
-# Defaults (optional)
-defaults:
-  - scope:
-      path: "docs"
-    values:
-      layout: "default"
+# Add GitHub buttons to your book
+# See https://jupyterbook.org/customize/config.html#add-a-link-to-your-repository
+html:
+  # use_issues_button: true
+  use_repository_button: true
+  sidebar:
+    collapse_navigation: true
+    navigation_depth: 4
