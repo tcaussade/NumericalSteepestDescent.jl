@@ -1,6 +1,6 @@
 # NumericalSteepestDescent.jl
 
-[![Documentation Status](https://img.shields.io/badge/docs-in%20progress-orange)](https://andrewgibbs.github.io/PathFinder/)
+[![Documentation Status](https://img.shields.io/badge/docs-in%20progress-orange)](https://tcaussade.github.io/NumericalSteepestDescent/)
 
 NumericalSteepestDescent.jl is a Julia package for the numerical evaluation of highly oscillatory integrals. 
 The aim is to efficiently evaluate integrals of the form
