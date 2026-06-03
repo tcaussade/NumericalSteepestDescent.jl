@@ -7,7 +7,7 @@ DocMeta.setdocmeta!(NumericalSteepestDescent)
 makedocs(;
     modules = [NumericalSteepestDescent],
     format = Documenter.HTML(
-        canonical = "https://tcaussade.github.io/NumericalSteepestDescent/",
+        canonical = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
         assets = [""],
         repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl",
         prettyurls = get(ENV, "CI", "false") == "true",
