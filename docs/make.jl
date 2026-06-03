@@ -9,7 +9,8 @@ makedocs(;
     format = Documenter.HTML(
         canonical = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
         assets = [""],
-        repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl"
+        repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl",
+        prettyurls = get(ENV, "CI", "false") == "true",
     ),
     pages = [
         "Home" => "intro.md",
@@ -20,4 +21,7 @@ makedocs(;
     authors = "Me",
 )
 
-deploydocs(; repo = "https://github.com/tcaussade/NumericalSteepestDescent.jl")
+# Only deploy from GitHub Actions CI
+if get(ENV, "CI", "false") == "true" && get(ENV, "GITHUB_EVENT_NAME", "") == "push"
+    deploydocs(; repo = "https://github.com/tcaussade/NumericalSteepestDescent.jl")
+end
