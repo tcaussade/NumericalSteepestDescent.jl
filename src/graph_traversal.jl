@@ -6,7 +6,7 @@
     For this, we are using a Depth First Search (DFS) algorithm to find all contours connecting endpoints. 
 """
 
-function get_deformation(::AbstractPhaseFunction, CG, start_point, end_point, CtoG, ::Dict, ::Dict, γ0)
+function get_deformation(::AbstractPhase, CG, start_point, end_point, CtoG, ::Dict, ::Dict, γ0)
     sd_edges = a_star(CG, CtoG[start_point], CtoG[end_point])
     return [(e.src, e.dst) for e in sd_edges]
 end
@@ -22,7 +22,7 @@ end
     Find shortest path in the quasi SD contour that avoids poles.
 """
 
-function get_deformation(G::RationalPhaseFunction, CG, start_point, end_point, CtoG, NodesDict::Dict, EdgesList::Dict, γ0)
+function get_deformation(G::RationalPhase, CG, start_point, end_point, CtoG, NodesDict::Dict, EdgesList::Dict, γ0)
     # extract nodes associated with valleys and poles
     vinf_nodes  = [CtoG[v] for v in NodesDict[:valleys]]
     vpole_nodes = [CtoG[v] for v in NodesDict[:poles]]
@@ -46,7 +46,7 @@ function get_all_paths(CG::Graph, n1, n2, vnodes)
     return all_lists
 end
 
-function quasi_sd_contour(G::RationalPhaseFunction, EdgesList::Dict, paths, γ0)
+function quasi_sd_contour(G::RationalPhase, EdgesList::Dict, paths, γ0)
     # γ0 is the collection of nodes for starting integration contour.
     sort!(paths, by = length) # sort by length and begin with shortest
     for path in paths

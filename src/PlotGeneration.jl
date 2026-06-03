@@ -2,7 +2,7 @@
     Functionalities to plot the quasi-SD contour deformation
 """
 
-function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
+function plot_SDcontours(G::AbstractPhase, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour, inftol,
         color_lim = 10)
 
@@ -14,7 +14,7 @@ function plot_SDcontours(G::AbstractPhaseFunction, γ::Vector{ComplexContour}, �
         plot_SDcontours!(fig, ax, G,γ,Ω, γall; infcontour, inftol, color_lim)
 end
 
-function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
+function plot_SDcontours!(fig, ax, G::AbstractPhase, γ::Vector{ComplexContour}, Ω, γall::Vector{ComplexContour};
         infcontour, inftol,
         umax = 20, # control how far tracing a contour for plots
         color_lim  = 300, # control color limits of the colorbar
@@ -86,7 +86,7 @@ function plot_SDcontours!(fig, ax, G::AbstractPhaseFunction, γ::Vector{ComplexC
     !infcontour[2] ? scatter!(ax, reim.([display]), color = "black") : nothing
     # scatter!(ax, reim.([at(γ[1]), at(γ[end])]), color = "black")
 
-    if G isa RationalPhaseFunction
+    if G isa RationalPhase
         scatter!(ax, reim.(poles(G)), color = "purple", marker = :rect, markersize = 12)
     end
 

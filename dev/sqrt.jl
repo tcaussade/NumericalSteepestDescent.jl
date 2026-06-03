@@ -10,9 +10,9 @@ a,b = (1.0, -0.9698492462311558)
 a,b = 0.001, -1.0
 
 a,b = 1, 0
-SqrtPhase = SquareRootPhaseFunction(a, b)
+SqrtPhase = SquareRootPhase(a, b)
 
-val0, figs = integrate(0.0, 1.0,f,SqrtPhase,ω; quadtype = :gaussian, N= 15
+val0, figs = nsd(0.0, 1.0,f,SqrtPhase,ω; quadtype = :gaussian, N= 15
 ,plot_sd=true, plot_graph=true)
 
 figs[1]

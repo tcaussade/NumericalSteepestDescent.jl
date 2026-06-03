@@ -18,9 +18,9 @@ a,b = (-7π/12, π/12)
 for (i,x) in enumerate(X)
     for (j,y) in enumerate(Y)
         println("Evaluating at ($x,$y,$z)")
-        Phase = PathFinder.RationalPhaseFunction([0,0,(z^2+x),0,2z,0,1],[0.],[[0.0, y^2/12]])
+        Phase = RationalPhase([0,0,(z^2+x),0,2z,0,1],[0.],[[0.0, y^2/12]])
         # try 
-        @time Ψ = PathFinder.integrate([a,b],f,Phase,ω; infcontour = [true,true])
+        @time Ψ = nsd([a,b],f,Phase,ω; infcontour = [true,true])
         Z[i,j] = abs.(amp(x,y) * Ψ)
         # catch
         #     println("(x,y,z) = ($x,$y,$z) did not throw a value")

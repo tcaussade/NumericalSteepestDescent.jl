@@ -23,9 +23,9 @@ function bessel_test(nQuadPts, outputText=false)
             println("x=$x")
         end
         besselJulia = besselk(ν, x)
-        G = RationalPhaseFunction(im*[0,1],[0],[im*[x^2/4]])
+        G = RationalPhase(im*[0,1],[0],[im*[x^2/4]])
         f(t) = 1/t^(ν+1)
-        integral = integrate([1e-6, 0], f, G, 1.0; N=nQuadPts, infcontour=[false,true])
+        integral = nsd([1e-6, 0], f, G, 1.0; N=nQuadPts, infcontour=[false,true])
         besselPathFinder = 0.5*(0.5*x)^ν * integral
         relErr = abs(besselJulia - besselPathFinder) / abs(besselJulia)
         if outputText

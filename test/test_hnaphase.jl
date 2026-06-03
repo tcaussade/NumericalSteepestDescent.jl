@@ -2,7 +2,7 @@ using Test
 using QuadGK
 
 """
-    Test the SquareRootPhaseFunction struct and evaluation for this phase
+    Test the SquareRootPhase struct and evaluation for this phase
 """
 
 
@@ -28,8 +28,8 @@ function hna_test_gaussian(nQuadPts, outputText=false)
                 if outputText
                     println("ω = $ω, a = $a, b = $b")
                 end          
-                G = SquareRootPhaseFunction(a,b)
-                int = integrate([0.0, 1.0], x -> 1.0, G, ω; N=nQuadPts)            
+                G = SquareRootPhase(a,b)
+                int = nsd([0.0, 1.0], x -> 1.0, G, ω; N=nQuadPts)            
                 absErr = abs(int-ref) #/ abs(ref)
                 if outputText
                     println("\t abs err = $absErr")
@@ -52,8 +52,8 @@ function hna_test_adaptive(atol, outputText=false)
                 if outputText
                     println("ω = $ω, a = $a, b = $b")
                 end
-                G = SquareRootPhaseFunction(a,b)          
-                int = integrate(0.0, 1.0, x -> 1.0, G, ω; quadtype, atol)[1]
+                G = SquareRootPhase(a,b)          
+                int = nsd(0.0, 1.0, x -> 1.0, G, ω; quadtype, atol)[1]
                 relErr = abs(int-ref)/ abs(ref)
                 if outputText
                     println("\t rel err = $relErr")

@@ -17,8 +17,8 @@ acoefs = [0.5*μ^2, -μ, 0.5]
 ps = [im, -im]
 pcoefs = 0.25im*α * [[-1], [1]]
 
-PlasmaLensPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
-val, figs = integrate([π,0],z->1.0,PlasmaLensPhase,ν; 
+PlasmaLensPhase = RationalPhase(acoefs, ps, pcoefs)
+val, figs = nsd([π,0],z->1.0,PlasmaLensPhase,ν; 
                                 infcontour = [true, true],
                                 plot_graph = true, plot_sd = true)
 figs[1]
@@ -29,7 +29,7 @@ framerate = 80
 μvals = range(-0.6,0.6, step = 1/framerate)
 α = 5
 
-PlasmaPhase(μ) = RationalPhaseFunction([0.5*μ^2, -μ, 0.5], [im, -im], 0.25im*α * [[-1], [1]])
+PlasmaPhase(μ) = RationalPhase([0.5*μ^2, -μ, 0.5], [im, -im], 0.25im*α * [[-1], [1]])
 frame_iteration(μ) = quasiSDdeformation!(fig, ax, [π,0.0], PlasmaPhase(μ), ν; 
                                                     infcontour = [true, true],
                                                     umax = 50,
@@ -71,8 +71,8 @@ for (j,α) in enumerate(αvals)
     for (m,μ) in enumerate(μvals)
         # println("Evaluating at (μ,α) = ($μ,$α)")
         acoefs = [0.5*μ^2, -μ, 0.5]
-        G = RationalPhaseFunction(acoefs, ps, pcoefs)
-        ψ = integrate([π,0],z->1.0,G,ν; infcontour = [true, true])
+        G = RationalPhase(acoefs, ps, pcoefs)
+        ψ = nsd([π,0],z->1.0,G,ν; infcontour = [true, true])
         I[m,j] = abs(ψ * sqrt(-im*ν/(2π)))^2
     end
 end

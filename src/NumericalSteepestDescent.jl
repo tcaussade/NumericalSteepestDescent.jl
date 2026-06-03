@@ -33,13 +33,15 @@ include("quadrature.jl")
 include("PlotGeneration.jl")
 include("Residues.jl")
 
+include("diagnosistools.jl")
 include("api.jl")
 
+
 export 
-PolynomialPhaseFunction,
-RationalPhaseFunction,
+PolynomialPhase,
+RationalPhase,
 LinearPhaseFunction,
-SquareRootPhaseFunction,
+SquareRootPhase,
 nsd,
 plot_quasiSDdeformation,
 quasiSDdeformation!,

@@ -9,7 +9,7 @@
     γ0 is assumed as the union of straight lines connecting given points
 """
 
-function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω; 
+function nsd(γ0::Vector, f::Function, G::AbstractPhase, ω; 
         # default parameters
         Cball = 2π,    # control maximum number of oscillations on non-oscillatory bals
         Nrays = 16,    # number of rays used to determine ball radius
@@ -59,7 +59,7 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
     if quadtype == :gaussian
         qleg = gausslegendre(N)
         qlag = gausslaguerre(N)
-        if G isa SquareRootPhaseFunction 
+        if G isa SquareRootPhase 
             qsin = gausslegendre(Int(floor(N/layersnumber(G.a))) + 1) 
         else qsin = nothing end
         quad = (qleg = qleg, qlag = qlag, qsingular = qsin)
@@ -142,13 +142,13 @@ function integrate(γ0::Vector, f::Function, G::AbstractPhaseFunction, ω;
 end
 
 
-function infinite_endpoints!(γ0, G::AbstractPhaseFunction, infcontour)
+function infinite_endpoints!(γ0, G::AbstractPhase, infcontour)
     γ0 = convert.(ComplexF64, γ0)
     γ0[1]   = infcontour[1] ? endpoint_at_valley(first(γ0), G) : first(γ0)
     γ0[end] = infcontour[2] ? endpoint_at_valley(last(γ0), G) : last(γ0)
     return γ0
 end
-function endpoint_at_valley(θ, G::AbstractPhaseFunction)
+function endpoint_at_valley(θ, G::AbstractPhase)
     # place endpoint at valley if specified as endpoint at infinity
     v = valleyangle(θ, G)
     if v isa Nothing @warn "endpoint with θ=$(θ/π)π  is not in valley region" end
@@ -162,7 +162,7 @@ end
     Show QuasiSD contour deformation 
     This method is useful for creating gif animations.
 """
-function quasiSDdeformation!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhaseFunction, ω; 
+function quasiSDdeformation!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhase, ω; 
                          infcontour = [false, false], 
                          Cball = 2π,
                          inftol = 1e6,
@@ -204,7 +204,7 @@ function quasiSDdeformation!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhase
     return plot_SDcontours!(fig, ax, G,γtot, Ω, γall; infcontour, inftol, umax, color_lim, resolution, set)
 end
 
-function showContourGraph!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhaseFunction, ω; 
+function showContourGraph!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhase, ω; 
                          infcontour = [false, false], 
                          Cball = 2π,
                          inftol = 1e6,

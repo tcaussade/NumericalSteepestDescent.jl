@@ -4,9 +4,10 @@ using CairoMakie
 framerate = 50
 
 xvals = range(-2,2, step = 1/framerate)
-G(x) = PolynomialPhaseFunction([0,-3x,0,1])
-ω = 10000
-γ0, infcontour = [π/2+π/4, π/4], [true,true]
+G(x) = PolynomialPhase([0,-3x,0,1])
+ω = 5
+# γ0, infcontour = [π/2+π/4, π/4], [true,true]
+γ0, infcontour = [5π/6, π/6], [true,true]
 γ0, infcontour = [-1, 1], [false, false]
 
 frame_iteration(x) = NumericalSteepestDescent.quasiSDdeformation!(fig, ax, γ0, G(x),ω; infcontour,
@@ -17,7 +18,7 @@ fig = Figure()
 ax  = Axis(fig[1, 1], title = "", aspect = DataAspect(),
               xlabel = "Re", ylabel = "Im", xticks = -8:2:8, yticks = -8:2:8)
 frame_iteration(first(xvals))
-# frame_iteration(1)
+frame_iteration(0.05)
 limits!(-4,4,-4,4)
 fig
 
@@ -72,8 +73,8 @@ fig
 
 
 ####
-# Gp = PolynomialPhaseFunction([3,5,6,2,9,5,1,4,1,3])
-Gp = PolynomialPhaseFunction([0,0,1])
+# Gp = PolynomialPhase([3,5,6,2,9,5,1,4,1,3])
+Gp = PolynomialPhase([0,0,1])
 ω = 100
 γ0 = [-1,1]
 

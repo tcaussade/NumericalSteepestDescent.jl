@@ -13,7 +13,7 @@ acoefs = [0,1]
 ps     = [0.0]
 pcoefs = [[1]] #
 
-RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+RatPhase = RationalPhase(acoefs, ps, pcoefs)
 
 Ω = NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
 
@@ -25,7 +25,7 @@ sd_edges = NumericalSteepestDescent.get_deformation(RatPhase, CG, a,b, CtoG, Nod
 if quadtype == :gaussian
     qleg = gausslegendre(N)
     qlag = gausslaguerre(N)
-    if G isa SquareRootPhaseFunction 
+    if G isa SquareRootPhase 
         qsin = gausslegendre(Int(floor(N/layersnumber(G.a))) + 1) 
     else qsin = nothing end
     quad = (qleg = qleg, qlag = qlag, qsingular = qsin)

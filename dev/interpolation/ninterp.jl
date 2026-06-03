@@ -18,7 +18,7 @@ function InterpolatedPhase(a,b,g; n_interp)
     xi = 0.5 * (b - a) * x .+ 0.5 * (a + b)
     P = fit(Polynomial, xi, g.(xi))
     # @show degree(P)
-    return PolynomialPhaseFunction(P.coeffs)
+    return PolynomialPhase(P.coeffs)
 end
 
 function experiment_interp(x,g, nquad, ninterp, ω; sdquad)
@@ -30,7 +30,7 @@ function experiment_interp(x,g, nquad, ninterp, ω; sdquad)
         x1,x2 = x[i], x[i+1]
         @show "doing" x1,x2
         gint = InterpolatedPhase(x1,x2,g; n_interp = ninterp)
-        gval += NumericalSteepestDescent.integrate([x1, x2], x -> 1, gint, ω; N = nquad, infquadrule = sdquad)
+        gval += NumericalSteepestDescent.nsd([x1, x2], x -> 1, gint, ω; N = nquad, infquadrule = sdquad)
     end
     return gval
 end

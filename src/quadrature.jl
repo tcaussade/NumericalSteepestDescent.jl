@@ -57,7 +57,7 @@ function trace_finite(a,b)
     u -> 0.5*((b+a) + (b-a)*u) # :: Function
 end
 
-function integrate_finite(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w)
+function integrate_finite(γ::ComplexContour, f::Function, G::AbstractPhase, ω, x, w)
     # evaluate integral along finite straight line from a to b
     g(z) = evalphase(z,G)
     a,b  = at(γ), to(γ)
@@ -74,9 +74,9 @@ end
 const σ = 0.17 # Grading parameter
 
 # in general 
-_is_singular(::AbstractPhaseFunction, ::ComplexContour) = false 
+_is_singular(::AbstractPhase, ::ComplexContour) = false 
 
-function _is_singular(G::SquareRootPhaseFunction, γ::ComplexContour)
+function _is_singular(G::SquareRootPhase, γ::ComplexContour)
     L = abs.(at(γ) - to(γ))
     if G.a > L/singular_tol(G) return false  
     else return true 
@@ -87,7 +87,7 @@ function layersnumber(ε) :: Integer
     return ceil(log(abs(ε)*(1-σ))/log(σ))
 end
 
-function integrate_finite_hp(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w)
+function integrate_finite_hp(γ::ComplexContour, f::Function, G::AbstractPhase, ω, x, w)
     # evaluate integral along finite straight line from a to b 
     # assumed it is on the real axis
     g(z) = evalphase(z,G)
@@ -114,7 +114,7 @@ end
     We use Gauss-Laguerre or truncated Gauss-Legendre for infinite SD contours
 """
 
-function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; δfine)
+function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhase, ω, x, w; δfine)
     # evaluate integral along infinite SD path at η using Gauss-Laguerre quadrature
     g(z)  = evalphase(z,G)
     dg(z) = evalphase_derivative(z,G)
@@ -124,7 +124,7 @@ function integrate_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseF
     return cis(ω*g(η))/ω * dot(w, f.(h).*dh)  
 end
 
-function integrate_truncated_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; δfine, δquad)
+function integrate_truncated_infiniteSD(γ::ComplexContour, f::Function, G::AbstractPhase, ω, x, w; δfine, δquad)
     # evaluate integral along infinite SD path at η using truncated Gauss-Legendre quadrature
     g(z)  = evalphase(z,G)
     dg(z) = evalphase_derivative(z,G)
@@ -137,12 +137,11 @@ function integrate_truncated_infiniteSD(γ::ComplexContour, f::Function, G::Abst
 end
 
 
-function points_on_SDcontour(η, G::AbstractPhaseFunction, xvec::Vector; δfine, η0 = η)
+function points_on_SDcontour(η, G::AbstractPhase, xvec::Vector; δfine, η0 = η)
     # solve X in g(X) = g(η) + i x/ω
     g(z)  = evalphase(z,G)
     dg(z) = evalphase_derivative(z,G)
     h = zeros(ComplexF64, length(xvec))
-    @show η
     # @show η0
     # f(u) = g(u)-g(η)-im*xvec[1]
     h[1] = Roots.newton(u -> g(u)-g(η)-im*xvec[1], dg, η0; rtol = δfine) # x0 = η
@@ -164,7 +163,7 @@ end
     We use (possibly truncated) Gauss-Legendre for finite SD contours
 """
 
-function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω, x, w; 
+function integrate_finiteSD(γ::ComplexContour, f::Function, G::AbstractPhase, ω, x, w; 
                             δfine, δquad)
     # evaluate integral along finite SD path at η going to Ω
     g(z)  = evalphase(z,G)
@@ -199,7 +198,7 @@ const wg_gk = [0.12948496616886981, 0.2797053914892767, 0.38183005050511887, 0.4
 # const w_gk = [0.009765441045960853, 0.027156554682104254, 0.04582937856442634, 0.06309742475037486, 0.07866457193222733, 0.09295309859690085, 0.1058720744813894, 0.11673950246104732, 0.12515879910031955, 0.13128068422980557, 0.1351935727998845, 0.13657779471111842, 0.1351935727998845, 0.13128068422980557, 0.12515879910031955, 0.11673950246104732, 0.1058720744813894, 0.09295309859690085, 0.07866457193222733, 0.06309742475037486, 0.04582937856442634, 0.027156554682104254, 0.009765441045960853]
 # const wg_gk = [0.05566856711617362, 0.12558036946490478, 0.18629021092773423, 0.23319376459199045, 0.26280454451024665, 0.2729250867779004, 0.26280454451024665, 0.23319376459199045, 0.18629021092773423, 0.12558036946490478, 0.05566856711617362]
 
-function integrate_finite_gk(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω; atol)
+function integrate_finite_gk(γ::ComplexContour, f::Function, G::AbstractPhase, ω; atol)
     # evaluate integral along finite straight line from a to b
     g(z) = evalphase(z,G)
     a,b  = at(γ), to(γ)
@@ -211,7 +210,7 @@ function integrate_finite_gk(γ::ComplexContour, f::Function, G::AbstractPhaseFu
     return 0.5*(b-a) * quadgk(ζ,-1,1, atol = atol)[1] 
 end
 
-function integrate_SD_gk(γ::ComplexContour, f::Function, G::AbstractPhaseFunction, ω; δfine, δquad, atol)
+function integrate_SD_gk(γ::ComplexContour, f::Function, G::AbstractPhase, ω; δfine, δquad, atol)
     # evaluate integral along infinite or finite SD path at η using truncated GK
     g(z)  = evalphase(z,G)
     @show η = at(γ)

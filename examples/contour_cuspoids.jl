@@ -6,7 +6,7 @@ framerate = 10
 vals = range(-8,8, step = 1/framerate)
 # x = 0
 y = -1
-G(x,y) = PolynomialPhaseFunction([0, x, y, 0, 1])
+G(x,y) = PolynomialPhase([0, x, y, 0, 1])
 
 a,b = π/1, 0.0
 frame_iteration(x) = NumericalSteepestDescent.quasiSDdeformation!(fig, ax, [a,b], G(x,y), 1;
@@ -33,7 +33,7 @@ framerate = 10
 xvals = range(-8,8, step = 1/framerate)
 y = 1
 z = 0
-G(x,y,z) = RationalPhaseFunction([0,0,(z^2+x),0,2z,0,1],[0.],[[0.0, y^2/12]])
+G(x,y,z) = RationalPhase([0,0,(z^2+x),0,2z,0,1],[0.],[[0.0, y^2/12]])
 
 frame_iteration(x) = PathFinder.quasiSDdeformation!(fig, ax, -7π/12,π/12, G(x,y,z), 1;
                                                     umax = 100, color_lim = 10,

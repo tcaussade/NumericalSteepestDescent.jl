@@ -10,7 +10,7 @@ function InterpolatedPhase(a,b,g; n_interp)
     xi = 0.5 * (b - a) * x .+ 0.5 * (a + b)
     P = fit(Polynomial, xi, g.(xi))
     @show degree(P)
-    return PolynomialPhaseFunction(P.coeffs)
+    return PolynomialPhase(P.coeffs)
 end
 
 # x,_ = gausschebyshevt(20)
@@ -69,7 +69,7 @@ limits!(-2,2,-2,2)
 fl
 
 igk = quadgk(x -> cis(ω * g(x)), a, b, rtol = 1e-14)[1]
-i1 = NumericalSteepestDescent.integrate([a, b], x -> 1, g1, ω; N = 20, infquadrule = :lag,
+i1 = NumericalSteepestDescent.nsd([a, b], x -> 1, g1, ω; N = 20, infquadrule = :lag,
     δODE = 0.01)
 @show abs(i1 - igk)/abs(igk)
 
@@ -93,7 +93,7 @@ z = 15
 ref = besselj(ν, z)
 
 g2 = InterpolatedPhase(0,π,g; n_interp = 14)
-i2= im^(-ν)/π * NumericalSteepestDescent.integrate([0,π], x -> cos(ν*x), g2, z)
+i2= im^(-ν)/π * NumericalSteepestDescent.nsd([0,π], x -> cos(ν*x), g2, z)
 @show abs(i2 - ref)/abs(ref)s
 
 f2 = plot_nsd(0,π,g2,z)

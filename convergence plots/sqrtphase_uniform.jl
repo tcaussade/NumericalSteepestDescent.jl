@@ -25,10 +25,10 @@ relErrB = zeros(length(bvals), length(quads))
         fA(z) = singular ? hankelh1(0, ω*sqrt(z^2 + a^2)) * cis(-ω * sqrt(z^2 + a^2)) : 1.0
         ζA(z) = fA(z) * cis(ω * (sqrt(z^2+a^2) + bfix*z))
         refA = quadgk(ζA, 0.0, 1.0, atol = 1e-14)[1] # brute-force
-        G = SquareRootPhaseFunction(a,bfix)
+        G = SquareRootPhase(a,bfix)
         @show (a, bfix)
         for (n,N) in enumerate(quads)
-            intA = integrate(0.0, 1.0, fA, G, ω; N)  
+            intA = nsd(0.0, 1.0, fA, G, ω; N)  
             relErrA[j,n] = abs(intA-refA) #/ abs(refA)      
         end   
     end
@@ -38,10 +38,10 @@ relErrB = zeros(length(bvals), length(quads))
         fB(z) = singular ? hankelh1(0, ω*sqrt(z^2 + afix^2)) * cis(-ω * sqrt(z^2 + afix^2)) : 1.0
         ζB(z) = fB(z) * cis(ω * (sqrt(z^2+afix^2) + b*z))
         refB = quadgk(ζB, 0.0, 1.0, atol = 1e-14)[1] # brute-force
-        G = SquareRootPhaseFunction(afix,b)
+        G = SquareRootPhase(afix,b)
         @show (afix, b)
         for (n,N) in enumerate(quads)
-            intB = integrate(0.0, 1.0, fB, G, ω; N)[1]   
+            intB = nsd(0.0, 1.0, fB, G, ω; N)[1]   
             relErrB[j,n] = abs(intB-refB)#/ abs(refB)      
         end   
     end
@@ -70,10 +70,10 @@ f(z) = 1 #/(z-1-0.1im)
 
 e = zeros(length(avalsN), length(nquads))
 for (i,a) in enumerate(avalsN)
-    Phase = SquareRootPhaseFunction(a,0)    
-    ref = PathFinder.integrate(0,1,f,Phase,ω; N = 100, Cball = 3pi) # Cball = 8π/8)
+    Phase = SquareRootPhase(a,0)    
+    ref = PathFinder.nsd(0,1,f,Phase,ω; N = 100, Cball = 3pi) # Cball = 8π/8)
     for (n,N) in enumerate(nquads)
-        val = PathFinder.integrate(0,1,f,Phase,ω; N, Cball = 3π)
+        val = PathFinder.nsd(0,1,f,Phase,ω; N, Cball = 3π)
         e[i,n] = abs(ref.-val) #/ abs(ref)
     end
 end

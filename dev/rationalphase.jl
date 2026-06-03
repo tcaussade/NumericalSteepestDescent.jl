@@ -17,17 +17,17 @@ ps     = [0.0]
 pcoefs = [[1]] #
 
 
-RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+RatPhase = RationalPhase(acoefs, ps, pcoefs)
 # Ω = PathFinder.NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
 # Pexit = PathFinder.exitpoints(RatPhase, Ω)
 # CG, CtoG, NodesDict, EdgesList = PathFinder.ContourGraph(RatPhase, a, b, Ω; δODE=0.1, δcoarse=0.01)
-val, figs = PathFinder.integrate([-2,-im,2],z->1.0,RatPhase,ω; 
+val, figs = PathFinder.nsd([-2,-im,2],z->1.0,RatPhase,ω; 
                                 infcontour = [false, false],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
-integrate([-2,-1im,2],z->1.0,RatPhase,ω)
+nsd([-2,-1im,2],z->1.0,RatPhase,ω)
 
 v= NodesDict[:valleys]
 vnodes = [CtoG[v] for v in NodesDict[:valleys]]
@@ -64,8 +64,8 @@ acoefs = [0.5*μ^2, -μ, 0.5]
 ps = [im, -im]
 pcoefs = 0.5im*α * [[-1], [1]]
 
-PlasmaLensPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
-val, figs = PathFinder.integrate([π,0],z->1.0,PlasmaLensPhase,ν; 
+PlasmaLensPhase = RationalPhase(acoefs, ps, pcoefs)
+val, figs = PathFinder.nsd([π,0],z->1.0,PlasmaLensPhase,ν; 
                                 infcontour = [true, true],
                                 plot_graph = true, plot_sd = true)
 figs[2]
@@ -98,20 +98,20 @@ x,y,z = (3.6,-1,0.0)
 acoefs = [0,0,(x+z^2),0,2z,0,1]
 ps     = [0.0]
 pcoefs = [[0.0, y^2/12]] 
-CatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+CatPhase = RationalPhase(acoefs, ps, pcoefs)
 
 a,b = (-7π/12, π/12)
-val, figs = PathFinder.integrate([a,b],z->1.0,CatPhase,1; infcontour = [true,true],
+val, figs = PathFinder.nsd([a,b],z->1.0,CatPhase,1; infcontour = [true,true],
                                 plot_graph = true, plot_sd = true)
 figs[1]
 figs[2]
 
-@profview integrate(a,b,z->1.0,CatPhase,1; infcontour = [true,true])
+@profview nsd(a,b,z->1.0,CatPhase,1; infcontour = [true,true])
 
 """ arbitrary """
 d = 0.5
-Dipole = RationalPhaseFunction([3,1,3,4,5,1,2], [d,-d], [[0.5,-0.25im],[0.5,0.5,0.5]])
-v,fig = integrate([-im,im,1],z->1.0,Dipole,10.0; plot_graph = true, plot_sd = true)
+Dipole = RationalPhase([3,1,3,4,5,1,2], [d,-d], [[0.5,-0.25im],[0.5,0.5,0.5]])
+v,fig = nsd([-im,im,1],z->1.0,Dipole,10.0; plot_graph = true, plot_sd = true)
 fig[2]
 
 """ Case when poles might lie close to each other """
@@ -119,8 +119,8 @@ fig[2]
 acoefs = [0,0,1]
 ps     = [0.0, 0.01, 0.5, 1.0,1.1]
 pcoefs = [[1], [-im], [1], [1], [1]]
-ClosePhase = RationalPhaseFunction(acoefs, ps, pcoefs)
-val, figs = PathFinder.integrate(-1,2,z->1.0,ClosePhase,10.0;
+ClosePhase = RationalPhase(acoefs, ps, pcoefs)
+val, figs = PathFinder.nsd(-1,2,z->1.0,ClosePhase,10.0;
                                 plot_graph = true, plot_sd = true)
 figs[2]
 
@@ -129,9 +129,9 @@ figs[2]
 acoefs = [3,1,4]
 ps     = [0, im]
 pcoefs = [[1,2,3], [im]]# [[1,6,1,8], [4,9], [4]]
-RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+RatPhase = RationalPhase(acoefs, ps, pcoefs)
 
-val,plt = PathFinder.integrate(-1,1,z->1.0,RatPhase,10.0; plot_sd = true)
+val,plt = PathFinder.nsd(-1,1,z->1.0,RatPhase,10.0; plot_sd = true)
 
 fig = PathFinder.Figure()
 ax  = PathFinder.Axis(fig[1, 1], title = "", aspect = PathFinder.DataAspect(),

@@ -6,7 +6,7 @@
         the non-oscillatory region, or Finite contour inside
 """
 
-function ContourGraph(G::AbstractPhaseFunction, a, b, Ω :: Vector{NonOscillatoryBall};
+function ContourGraph(G::AbstractPhase, a, b, Ω :: Vector{NonOscillatoryBall};
                         δODE, δcoarse)
     
     # Flag all nodes
@@ -64,11 +64,11 @@ end
 
 """ decide where to trace SD contours from"""
 
-function _filter_exits(::AbstractPhaseFunction, Ω, exits)
+function _filter_exits(::AbstractPhase, Ω, exits)
     return exits # do nothing
 end
 
-function _filter_exits(::SquareRootPhaseFunction, Ω, exits)
+function _filter_exits(::SquareRootPhase, Ω, exits)
     # this method is used avoid tracing SD contour at exit points inside Ω 
     # endpts = [a,b]
     if isreal.(exits) == [true,true] 

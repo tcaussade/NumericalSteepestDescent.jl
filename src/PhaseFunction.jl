@@ -17,20 +17,20 @@
         - exitpoints() in Balls.jl
 """
 
-abstract type AbstractPhaseFunction end
+abstract type AbstractPhase end
 
 """
     Struct for polynomial phase functions
 """
 
-struct PolynomialPhaseFunction{T} <: AbstractPhaseFunction # arbitrary polynomial
+struct PolynomialPhase{T} <: AbstractPhase # arbitrary polynomial
     p   :: Polynomial{T} # coefficients of the polynomial
     dp  :: Polynomial{T} # coefficients of the derivative of polynomial
     dp2 :: Polynomial{T} # coefficients of the second derivative of polynomial
     ξ   :: Vector{ComplexF64} # stationary points
     v   :: Vector{Float64} # angles of each valley
     rstar_valley :: Float64
-    function PolynomialPhaseFunction(coefs::Vector{T}) where T
+    function PolynomialPhase(coefs::Vector{T}) where T
         @assert coefs[end] != 0 "Leading coefficient must be non-zero"
         @assert coefs != [0,1]  "Use LinearPhaseFunction instead"
         p   = Polynomial(coefs)
@@ -44,13 +44,13 @@ struct PolynomialPhaseFunction{T} <: AbstractPhaseFunction # arbitrary polynomia
     end
 end
 
-degree(G::PolynomialPhaseFunction)                   = length(G.p)-1
-stationary_points(G::PolynomialPhaseFunction)        = G.ξ
-evalphase(z, G::PolynomialPhaseFunction)             = G.p(z)
-evalphase_derivative(z, G::PolynomialPhaseFunction)  = G.dp(z)
-evalphase_derivative2(z, G::PolynomialPhaseFunction) = G.dp2(z)
-rstar_valley(G::PolynomialPhaseFunction) = G.rstar_valley
-infvalleys(G::PolynomialPhaseFunction) = G.v
+degree(G::PolynomialPhase)                   = length(G.p)-1
+stationary_points(G::PolynomialPhase)        = G.ξ
+evalphase(z, G::PolynomialPhase)             = G.p(z)
+evalphase_derivative(z, G::PolynomialPhase)  = G.dp(z)
+evalphase_derivative2(z, G::PolynomialPhase) = G.dp2(z)
+rstar_valley(G::PolynomialPhase) = G.rstar_valley
+infvalleys(G::PolynomialPhase) = G.v
 
 function rStar(p::Polynomial)
     # define threshold distance for valley region
@@ -62,7 +62,7 @@ function rStar(p::Polynomial)
     return rstar + 1e-6 # PATCH FIX - rstar = 0 for monomials
 end
 
-function evaluate_noreturn_Ginf(r,θ,G::PolynomialPhaseFunction)
+function evaluate_noreturn_Ginf(r,θ,G::PolynomialPhase)
     J = degree(G)
     αj = coeffs(G.p)
     J*αj[end]*r^(J-1) * min(1/sqrt(2), cos(J*θ)) - sum([j*αj[j+1]*r^(j-1) for j=1:J-1])
@@ -72,7 +72,7 @@ end
     Struct for Linear phase function
 """
 
-struct LinearPhaseFunction <: AbstractPhaseFunction 
+struct LinearPhaseFunction <: AbstractPhase 
     ξ :: Vector{Float64} # using Vector struct for consistency
     function LinearPhaseFunction()
         new([])
@@ -88,11 +88,11 @@ evalphase_derivative2(z,::LinearPhaseFunction)  = 0.0
     Struct for g(z) = √(z^2+a^2) + b*z
 """
 
-struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
+struct SquareRootPhase{T} <: AbstractPhase
     a :: T
     b :: T
     ξ :: Vector{ComplexF64} # using Vector struct for consistency
-    function SquareRootPhaseFunction(a, b)
+    function SquareRootPhase(a, b)
         @assert a>0 "Parameter `a` should be positive"
         @assert abs(b) < 1 "Parameter `b` should be in (-1,1)"   
         # @info "Methods assume the integration contour is real" 
@@ -104,21 +104,21 @@ struct SquareRootPhaseFunction{T} <: AbstractPhaseFunction
     end
 end
 
-stationary_points(G::SquareRootPhaseFunction)        = G.ξ
-evalphase(z, G::SquareRootPhaseFunction)             = sqrt(z^2 + G.a^2) + G.b * z
-evalphase_derivative(z, G::SquareRootPhaseFunction)  = z/sqrt(z^2 + G.a^2) + G.b
-evalphase_derivative2(z, G::SquareRootPhaseFunction) = G.a^2 / (z^2 + G.a^2)^(3/2)
+stationary_points(G::SquareRootPhase)        = G.ξ
+evalphase(z, G::SquareRootPhase)             = sqrt(z^2 + G.a^2) + G.b * z
+evalphase_derivative(z, G::SquareRootPhase)  = z/sqrt(z^2 + G.a^2) + G.b
+evalphase_derivative2(z, G::SquareRootPhase) = G.a^2 / (z^2 + G.a^2)^(3/2)
 
 # we use knowledge of the phase when "a" is small
 # parameter below affects tolerance to decide whether the 
 # integral is singular, and how to choose contour deformation by hand.
-singular_tol(::SquareRootPhaseFunction) = 2. # this is an arbitrary choice
+singular_tol(::SquareRootPhase) = 2. # this is an arbitrary choice
 
 """
     Struct for rational phase function
 """
 
-struct RationalPhaseFunction <: AbstractPhaseFunction 
+struct RationalPhase <: AbstractPhase 
     rat   :: RationalFunction # phase in the form p(z)/q(z)
     drat  :: RationalFunction # first derivative of phase
     ddrat :: RationalFunction # second derivative of phase
@@ -131,7 +131,7 @@ struct RationalPhaseFunction <: AbstractPhaseFunction
 
     coefs_analytic :: Vector
     coefs_singular :: Vector
-    function RationalPhaseFunction(analytic_coefs::Vector,poles::Vector, poles_coefs::Vector)
+    function RationalPhase(analytic_coefs::Vector,poles::Vector, poles_coefs::Vector)
         
         @assert length(poles) == length(poles_coefs) "Coefficients of singular part are not well specified"
         @assert ~iszero(poles_coefs) "Phase has null singular part"
@@ -176,21 +176,21 @@ struct RationalPhaseFunction <: AbstractPhaseFunction
     end
 end
 
-stationary_points(G::RationalPhaseFunction)        = G.ξ
-poles(G::RationalPhaseFunction)                    = G.p
-evalphase(z, G::RationalPhaseFunction)             = G.rat(z)
-evalphase_derivative(z, G::RationalPhaseFunction)  = G.drat(z)
-evalphase_derivative2(z, G::RationalPhaseFunction) = G.ddrat(z)
+stationary_points(G::RationalPhase)        = G.ξ
+poles(G::RationalPhase)                    = G.p
+evalphase(z, G::RationalPhase)             = G.rat(z)
+evalphase_derivative(z, G::RationalPhase)  = G.drat(z)
+evalphase_derivative2(z, G::RationalPhase) = G.ddrat(z)
 
-degree(G::RationalPhaseFunction) = length(G.coefs_analytic)-1
+degree(G::RationalPhase) = length(G.coefs_analytic)-1
 
-rstar_valley(G::RationalPhaseFunction) = G.rstar_valley
-rstar_pole(G::RationalPhaseFunction) = G.rstar_pole
-infvalleys(G::RationalPhaseFunction) = G.vinf
-polevalleys(G::RationalPhaseFunction) = G.vpole
+rstar_valley(G::RationalPhase) = G.rstar_valley
+rstar_pole(G::RationalPhase) = G.rstar_pole
+infvalleys(G::RationalPhase) = G.vinf
+polevalleys(G::RationalPhase) = G.vpole
 
 
-Base.show(io::IO, G::RationalPhaseFunction) = begin
+Base.show(io::IO, G::RationalPhase) = begin
         analytic = Polynomial(G.coefs_analytic)
         singular = G.rat - analytic
         print(io, "RationalPhase: $analytic + $singular")
@@ -237,7 +237,7 @@ function compute_rstar_valley(αj, poles, αpk)
     # return rstar
 end
 
-function evaluate_noreturn_Ginf(r,θ,G::RationalPhaseFunction)
+function evaluate_noreturn_Ginf(r,θ,G::RationalPhase)
     αj = G.coefs_analytic
     αpk = G.coefs_singular
     J = degree(G)
@@ -287,7 +287,7 @@ function compute_rstar_pole(αj, poles, αpk)
     return rp
 end
 
-function evaluate_noreturn_Gpole(r,θ,G::RationalPhaseFunction; pole_idx)
+function evaluate_noreturn_Gpole(r,θ,G::RationalPhase; pole_idx)
     αj = G.coefs_analytic
     αpk = G.coefs_singular
 

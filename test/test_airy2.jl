@@ -19,8 +19,8 @@ function airy_test(nQuadPts, min_z, outputText=false)
             println("z=$z")
         end
         airyJulia = airyai(z)
-        G = RationalPhaseFunction([0,0,0,im/3],[0],[[0,0,im*z^3/3]])
-        integral = integrate([1e-2, 0.0], z -> 1.0, G, 1.0; N=nQuadPts, infcontour=[false,true])
+        G = RationalPhase([0,0,0,im/3],[0],[[0,0,im*z^3/3]])
+        integral = nsd([1e-2, 0.0], z -> 1.0, G, 1.0; N=nQuadPts, infcontour=[false,true])
         airyPathFinder = (sqrt(3)/(2*π)) * integral
         relErr = abs(airyJulia - airyPathFinder) / abs(airyJulia)
         if outputText
@@ -43,6 +43,6 @@ end
 
 # "To debug!"
 # z = 0.1
-# G = RationalPhaseFunction([0,0,0,im/3],[0],[[0,0,im*z^3/3]])
+# G = RationalPhase([0,0,0,im/3],[0],[[0,0,im*z^3/3]])
 # airyai(z)
 # _,fig=integrate(1e-2, 0.0, x -> 1.0, G, 1.0; infcontour=[false,true], plot_sd = true) #; infcontour=[false,true])

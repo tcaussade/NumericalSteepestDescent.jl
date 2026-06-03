@@ -32,7 +32,7 @@ to(γ::ComplexContour) = γ.destination
     Store traced contours in dictionary 
 """
 
-function tracing_contours(G::AbstractPhaseFunction, points, Ω::Vector{NonOscillatoryBall};
+function tracing_contours(G::AbstractPhase, points, Ω::Vector{NonOscillatoryBall};
                           δODE, δcoarse)
     # entrances     = Vector{ComplexF64}()
     # valley_points = Vector{ComplexF64}()
@@ -63,7 +63,7 @@ end
     Goal is determining if the contour goes to a valley or into the non-oscillatory region.
 """
 
-function tracecontour_coarse(η, G::AbstractPhaseFunction, Ω; δODE, δcoarse)
+function tracecontour_coarse(η, G::AbstractPhase, Ω; δODE, δcoarse)
     Pstat = get_Pstat(Ω)
     p1 = zero(ComplexF64)
     h1 = η # initial conditions 
@@ -134,7 +134,7 @@ end
 # Polynomial phase
 ###
 
-function isinValley(z, G::PolynomialPhaseFunction)
+function isinValley(z, G::PolynomialPhase)
     if abs(z) > rstar_valley(G)
         v = valleyangle(angle(z), G)
         if ~(v isa Nothing) # is in no-return region at infinity
@@ -147,7 +147,7 @@ function isinValley(z, G::PolynomialPhaseFunction)
 end
 
 # This one also applies for RationalPhase
-function valleyangle(θ, G::AbstractPhaseFunction) # find the angular valley of arg(z)
+function valleyangle(θ, G::AbstractPhase) # find the angular valley of arg(z)
     J = degree(G)
     valleys = infvalleys(G)
     for v in valleys
@@ -161,7 +161,7 @@ end
 # Sqrt phase
 ###
 
-function tracecontour_coarse(η, G::SquareRootPhaseFunction, ::Any; δODE, δcoarse)
+function tracecontour_coarse(η, G::SquareRootPhase, ::Any; δODE, δcoarse)
     # we don't need to trace anything...
     ξ = real(stationary_points(G)[1])
     v = π/2 * sign(real(η) - ξ) # we are assuming η is real
@@ -173,7 +173,7 @@ end
 # Rational phase
 ###
 
-function isinValley(z, G::RationalPhaseFunction)
+function isinValley(z, G::RationalPhase)
 
     # check if z is in valley at infinity
     if abs(z) > rstar_valley(G)

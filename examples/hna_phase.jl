@@ -11,7 +11,7 @@ a = 0.1
 framerate = 60
 
 bvals = range(-0.99,0.99, step = 1/framerate)
-G(a,b) = SquareRootPhaseFunction(a,b)
+G(a,b) = SquareRootPhase(a,b)
 
 frame_iteration(b) = PathFinder.quasiSDdeformation!(fig, ax, [0,1], G(a,b), 100;
                                                     umax = 20,

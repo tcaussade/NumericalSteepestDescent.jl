@@ -10,7 +10,7 @@ using CairoMakie
 framerate = 100
 
 P = 6
-G(r) = PolynomialPhaseFunction([0.0; -r^P; zeros(P-1); 1.0/(P+1)])
+G(r) = PolynomialPhase([0.0; -r^P; zeros(P-1); 1.0/(P+1)])
 rvals = range(1e-4, 1e0, step = 1/framerate)
 #10 .^ range(-4, 0, step=1/framerate)
 

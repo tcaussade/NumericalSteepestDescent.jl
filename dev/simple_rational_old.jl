@@ -10,11 +10,11 @@ acoefs = [0,1]
 ps     = [0.0]
 pcoefs = [[1]] #
 
-RatPhase = RationalPhaseFunction(acoefs, ps, pcoefs)
+RatPhase = RationalPhase(acoefs, ps, pcoefs)
 # Ω = PathFinder.NonOscillatoryRegion(RatPhase, ω; Cball = 2π, δball = 1e-3,  Nrays = 16)
 # Pexit = PathFinder.exitpoints(RatPhase, Ω)
 # CG, CtoG, NodesDict, EdgesList = PathFinder.ContourGraph(RatPhase, a, b, Ω; δODE=0.1, δcoarse=0.01)
-valnsd, figs = NumericalSteepestDescent.integrate([-2,-im,2],z->1.0,RatPhase,ω; plot_sd = true)
+valnsd, figs = NumericalSteepestDescent.nsd([-2,-im,2],z->1.0,RatPhase,ω; plot_sd = true)
 figs[1]
 
 """
