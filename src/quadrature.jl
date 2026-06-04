@@ -153,7 +153,7 @@ function points_on_SDcontour(η, G::AbstractPhase, xvec::Vector; δfine, η0 = �
     return h
 end
 
-function points_on_SDcontour(η, G::LinearPhaseFunction, xvec::Vector; δfine)
+function points_on_SDcontour(η, G::LinearPhase, xvec::Vector; δfine)
     g(z)  = evalphase(z,G)
     return η .+ im * xvec 
 end

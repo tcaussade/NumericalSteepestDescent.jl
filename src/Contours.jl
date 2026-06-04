@@ -124,9 +124,9 @@ tracing_contours() is adapted to special cases where we can exploit phase struct
 # Linear phase
 ###
 
-valleyangle(θ, ::LinearPhaseFunction) = if θ≥0 return π/2 end # check z is in the upper half-plane
+valleyangle(θ, ::LinearPhase) = if θ≥0 return π/2 end # check z is in the upper half-plane
 
-function tracecontour_coarse(::Any, ::LinearPhaseFunction, ::Any; δODE, δcoarse) 
+function tracecontour_coarse(::Any, ::LinearPhase, ::Any; δODE, δcoarse) 
     # we don't need to trace anything...
     return (cis(π/2), :infvalley)
 end

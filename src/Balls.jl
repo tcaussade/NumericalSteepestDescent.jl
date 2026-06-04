@@ -118,9 +118,9 @@ end
 # Linear phase specific
 ###
 
-# find_zeros_range(::LinearPhaseFunction) = nothing
+# find_zeros_range(::LinearPhase) = nothing
 
-exitpoints(::LinearPhaseFunction, ::Vector{NonOscillatoryBall}) = ComplexF64[]
+exitpoints(::LinearPhase, ::Vector{NonOscillatoryBall}) = ComplexF64[]
 
 ###
 # Polynomial specific functions

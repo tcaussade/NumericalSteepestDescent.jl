@@ -20,9 +20,10 @@
 abstract type AbstractPhase end
 
 """
-    Struct for polynomial phase functions
+    struct PolynomialPhase
+    
+    Assumes g(z) = ∑ αj z^j, with αJ ≠ 0 and J≥2
 """
-
 struct PolynomialPhase{T} <: AbstractPhase # arbitrary polynomial
     p   :: Polynomial{T} # coefficients of the polynomial
     dp  :: Polynomial{T} # coefficients of the derivative of polynomial
@@ -32,7 +33,7 @@ struct PolynomialPhase{T} <: AbstractPhase # arbitrary polynomial
     rstar_valley :: Float64
     function PolynomialPhase(coefs::Vector{T}) where T
         @assert coefs[end] != 0 "Leading coefficient must be non-zero"
-        @assert coefs != [0,1]  "Use LinearPhaseFunction instead"
+        @assert coefs != [0,1]  "Use LinearPhase instead"
         p   = Polynomial(coefs)
         dp  = derivative(p, 1)
         ξ   = roots(dp)
@@ -69,25 +70,27 @@ function evaluate_noreturn_Ginf(r,θ,G::PolynomialPhase)
 end
 
 """
-    Struct for Linear phase function
+    struct LinearPhase
+    
+    Assumes that g(z) = z
 """
-
-struct LinearPhaseFunction <: AbstractPhase 
+struct LinearPhase <: AbstractPhase 
     ξ :: Vector{Float64} # using Vector struct for consistency
-    function LinearPhaseFunction()
+    function LinearPhase()
         new([])
     end
 end
 
-stationary_points(G::LinearPhaseFunction)       = G.ξ
-evalphase(z, ::LinearPhaseFunction)             = z
-evalphase_derivative(z, ::LinearPhaseFunction)  = 1.0
-evalphase_derivative2(z,::LinearPhaseFunction)  = 0.0
+stationary_points(G::LinearPhase)       = G.ξ
+evalphase(z, ::LinearPhase)             = z
+evalphase_derivative(z, ::LinearPhase)  = 1.0
+evalphase_derivative2(z,::LinearPhase)  = 0.0
 
 """ 
-    Struct for g(z) = √(z^2+a^2) + b*z
+    Struct SquareRootPhase
+    
+    g(z) = √(z^2+a^2) + b*z where a>0 and b in (-1,1).
 """
-
 struct SquareRootPhase{T} <: AbstractPhase
     a :: T
     b :: T
@@ -116,8 +119,10 @@ singular_tol(::SquareRootPhase) = 2. # this is an arbitrary choice
 
 """
     Struct for rational phase function
-"""
 
+    g(z) = ∑ αj z^j + ∑∑ α_(p,k) / (z-zp)^k, where zp are poles of the function and α_(p,k) 
+    are the coefficients of the singular part associated with pole p.
+"""
 struct RationalPhase <: AbstractPhase 
     rat   :: RationalFunction # phase in the form p(z)/q(z)
     drat  :: RationalFunction # first derivative of phase

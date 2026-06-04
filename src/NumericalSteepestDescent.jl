@@ -40,7 +40,7 @@ include("api.jl")
 export 
 PolynomialPhase,
 RationalPhase,
-LinearPhaseFunction,
+LinearPhase,
 SquareRootPhase,
 nsd,
 plot_quasiSDdeformation,

@@ -44,7 +44,7 @@ end
 function test_input_check_linear()
     isPass = true
     try # Bad calling
-        nsd([-1, 1], x -> x^2, LinearPhaseFunction([1, -0.5, 0.5, 0, -1, 0]), 50; N=10)
+        nsd([-1, 1], x -> x^2, LinearPhase([1, -0.5, 0.5, 0, -1, 0]), 50; N=10)
         isPass = false
     catch end
     return isPass
@@ -64,7 +64,7 @@ end
     @testset "PolynomialPhase" begin
         @test test_input_check_polynomials()
     end
-    @testset "LinearPhaseFunction" begin 
+    @testset "LinearFunction" begin 
         @test test_input_check_linear()
     end
     @testset "SquareRootPhase" begin
