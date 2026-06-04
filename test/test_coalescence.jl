@@ -3,7 +3,7 @@ using QuadGK
 using NumericalSteepestDescent
 
 """
-    See Section 5.4 of the NumericalSteepestDescent paper for details.
+    See Section 5.4 of the PathFinder paper for details.
 """
 
 function coalescence_test(numQuadPts, showText=false)

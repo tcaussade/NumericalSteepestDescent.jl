@@ -3,7 +3,7 @@ using SpecialFunctions
 
 """
     Test the Airy function implementation against Julia's SpecialFunctions.airyai
-    See Section 5.2 of the NumericalSteepestDescent paper for details.
+    See Section 5.2 of the PathFinder paper for details.
 """
 
 function airy_test(nQuadPts, outputText=false)

@@ -7,7 +7,7 @@ using NumericalSteepestDescent
     See Integral representation in DLMF 9.5.6
 """
 
-function airy_test(nQuadPts, min_z, outputText=false)
+function airy_test2(nQuadPts, min_z, outputText=false)
     nxPts = 100
     zArray = range(min_z, 5, length=nxPts)
     if outputText
@@ -32,11 +32,11 @@ function airy_test(nQuadPts, min_z, outputText=false)
 end
 
 @testset "Airy Test" begin
-    @test airy_test(15, 1) < 1e-6
-    @test airy_test(50, 1) < 1e-12
+    @test airy_test2(15, 1) < 1e-6
+    @test airy_test2(50, 1) < 1e-12
     # For small z, stationary points are very close to pole
-    @test airy_test(15, 0.1) < 1e-2
-    @test airy_test(50, 0.1) < 1e-3
+    @test airy_test2(15, 0.1) < 1e-2
+    @test airy_test2(50, 0.1) < 1e-3
 end
 
 # airy_test(50, 0.1)

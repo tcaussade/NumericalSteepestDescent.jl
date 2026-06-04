@@ -79,7 +79,7 @@ function _filter_exits(::SquareRootPhase, Ω, exits)
         δ = 1e-12 # by construction exits are exactly at the boundary, so we push them slightly away from Ω
         exδ = ex + sign.(ex .- Ω[1].c) * δ
         # if it remains in Ω after pushing them, then they are inside Ω and one should not trace from there
-        @show !isinΩ(Ω,exδ[1]), !isinΩ(Ω,exδ[2])
+        # @show !isinΩ(Ω,exδ[1]), !isinΩ(Ω,exδ[2])
         if !isinΩ(Ω,exδ[1]) push!(tracefrom, ex[1]) end
         if !isinΩ(Ω,exδ[2]) push!(tracefrom, ex[2]) end
         return tracefrom
