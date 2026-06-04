@@ -2,14 +2,16 @@ using Documenter, NumericalSteepestDescent
 
 makedocs(;
     modules = [NumericalSteepestDescent],
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    format = Documenter.HTML(
+        prettyurls = get(ENV, "CI", nothing) == "true",
+        repolink = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
+    ),
     # format = Documenter.HTML(
     #     canonical = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
     #     repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl"
     # ),
     
     repo = "https://github.com/tcaussade/NumericalSteepestDescent.jl/blob/{commit}{path}#L{line}",
-    repolink = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
     sitename = "NumericalSteepestDescent.jl",
     authors = "Thomas Caussade",
     pages = [
