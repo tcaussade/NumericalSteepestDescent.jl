@@ -19,4 +19,4 @@ makedocs(;
     authors = "Thomas Caussade",
 )
 
-deploydocs(; repo = "github.com/tcaussade/NumericalSteepestDescent.jl")
+deploydocs(; repo = "github.com/tcaussade/NumericalSteepestDescent.jl", devbranch = "main")
