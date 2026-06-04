@@ -3,6 +3,7 @@ using Documenter, NumericalSteepestDescent
 makedocs(;
     modules = [NumericalSteepestDescent],
     format = Documenter.HTML(
+        canonical = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
         repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl"
     ),
     pages = [
