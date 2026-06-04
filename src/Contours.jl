@@ -102,6 +102,7 @@ end
 """ 
     Check if z is inside the non-oscillatory region
 """
+
 function isinΩ(Ω::Vector{NonOscillatoryBall}, z)
     for Ball in Ω
         c, r = centre_and_radius(Ball)

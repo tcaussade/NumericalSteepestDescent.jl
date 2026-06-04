@@ -8,7 +8,6 @@
 
     γ0 is assumed as the union of straight lines connecting given points
 """
-
 function nsd(γ0::Vector, f::Function, G::AbstractPhase, ω; 
         # default parameters
         Cball = 2π,    # control maximum number of oscillations on non-oscillatory bals
@@ -162,6 +161,7 @@ end
     Show QuasiSD contour deformation 
     This method is useful for creating gif animations.
 """
+
 function quasiSDdeformation!(fig::Figure,ax::Axis, γ0::Vector, G::AbstractPhase, ω; 
                          infcontour = [false, false], 
                          Cball = 2π,

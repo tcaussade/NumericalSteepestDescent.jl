@@ -286,6 +286,7 @@ end
 ###
 
 """ is radius ∞ as ω tends to zero? """
+
 function find_zeros_range(::RationalPhase, ::Number) 
     return (0.0, 10.0) 
     # @show maxradius =  minimum(abs.( G.p .- ξ ))
