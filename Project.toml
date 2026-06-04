@@ -3,6 +3,9 @@ uuid = "ea5c52bc-9edc-428a-9677-4a4d9540cecb"
 version = "0.1.0"
 authors = ["tcaussade "]
 
+[workspace]
+projects = ["docs"]
+
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"

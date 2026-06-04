@@ -1,2 +1,5 @@
-# docs
-docs/build/*
+.DS_Store
+/Manifest.toml
+/docs/build/
+/docs/site/
+/docs/Manifest.toml

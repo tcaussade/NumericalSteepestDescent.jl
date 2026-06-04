@@ -1,3 +1,0 @@
-var documenterSearchIndex = {"docs":
-[{"location":"#NumericalSteepestDescent.jl-Documentation","page":"Home","title":"NumericalSteepestDescent.jl Documentation","text":"","category":"section"},{"location":"#Functions","page":"Home","title":"Functions","text":"","category":"section"},{"location":"#NumericalSteepestDescent.nsd","page":"Home","title":"NumericalSteepestDescent.nsd","text":"Compute the oscillatory integral with\n    - finite endpoints (a,b), or infinite endpoints with angle (a,b) if specified\n    - amplitude function f\n    - phase function G\n    - frequency ω\nReturns the value and a vector of figures\n\nγ0 is assumed as the union of straight lines connecting given points\n\n\n\n\n\n","category":"function"}]
-}
