@@ -9,6 +9,7 @@ makedocs(;
     # ),
     
     repo = "https://github.com/tcaussade/NumericalSteepestDescent.jl/blob/{commit}{path}#L{line}",
+    repolink = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
     sitename = "NumericalSteepestDescent.jl",
     authors = "Thomas Caussade",
     pages = [
