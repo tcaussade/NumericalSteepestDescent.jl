@@ -14,7 +14,7 @@ makedocs(;
         # "Misc." => "misc.md",
         # "References" => "reference.md",
     ],
-    repo = "https://github.com/tcaussade/NumericalSteepestDescent.jl",
+    repo = "https://github.com/tcaussade/NumericalSteepestDescent.jl/blob/{commit}{path}#L{line}",
     sitename = "NumericalSteepestDescent.jl",
     authors = "Thomas Caussade",
 )
