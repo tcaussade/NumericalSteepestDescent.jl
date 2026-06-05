@@ -1,4 +1,7 @@
-using Documenter, NumericalSteepestDescent
+using Documenter
+using NumericalSteepestDescent
+
+# DocMeta.setdocmeta!(NumericalSteepestDescent, :DocTestSetup, :(using LinearAlgebra, SpecialFunctions))
 
 makedocs(;
     modules = [NumericalSteepestDescent],
