@@ -16,11 +16,11 @@ makedocs(;
     authors = "Thomas Caussade",
     pages = [
         "Home" => "index.md",
-        "Phase functions" => "phases.md",
+        "Usage" => "use.md",
+        "Phases" => "phases.md",
     ],
 )
 
 deploydocs(
     repo   = "github.com/tcaussade/NumericalSteepestDescent.jl.git",
-    target = "build",
 )
