@@ -21,17 +21,17 @@ using CairoMakie
 using CairoMakie.Colors
 using GraphMakie
 
-include("PhaseFunction.jl")
+include("phasefunction.jl")
 
 include("root_finding.jl")
 include("graph_traversal.jl")
 
-include("Balls.jl")
-include("Contours.jl")
-include("ContourGraph.jl")
+include("balls.jl")
+include("contours.jl")
+include("contourgraph.jl")
 include("quadrature.jl")
-include("PlotGeneration.jl")
-include("Residues.jl")
+include("plotgeneration.jl")
+include("residues.jl")
 
 include("diagnosistools.jl")
 include("api.jl")
