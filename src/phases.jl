@@ -19,10 +19,18 @@
 
 abstract type AbstractPhase end
 
-"""
-    struct PolynomialPhase
-    
-    Assumes g(z) = ∑ αj z^j, with αJ ≠ 0 and J≥2
+
+
+@doc raw"""
+    PolynomialPhase(coefs::Vector)  # polynomial coefficients
+
+Return a `PolynomialPhase` object representing the phase defined by 
+```math
+g(z) = \sum_{j=0}^J \alpha_j z^j,
+```
+where `\alpha_j` are the coefficients in `coefs` and `J` is the degree of the polynomial.
+
+It is assumed that `\alpha_J \neq 0` and `J \geq 2`. For linear phases, use `LinearPhase` instead.
 """
 struct PolynomialPhase{T} <: AbstractPhase # arbitrary polynomial
     p   :: Polynomial{T} # coefficients of the polynomial
@@ -69,10 +77,14 @@ function evaluate_noreturn_Ginf(r,θ,G::PolynomialPhase)
     J*αj[end]*r^(J-1) * min(1/sqrt(2), cos(J*θ)) - sum([j*αj[j+1]*r^(j-1) for j=1:J-1])
 end
 
-"""
-    struct LinearPhase
-    
-    Assumes that g(z) = z
+
+@doc raw"""
+    LinearPhase()  
+
+Return a `LinearPhase` object representing the phase defined by 
+```math
+g(z) = z,
+```
 """
 struct LinearPhase <: AbstractPhase 
     ξ :: Vector{Float64} # using Vector struct for consistency
@@ -86,10 +98,15 @@ evalphase(z, ::LinearPhase)             = z
 evalphase_derivative(z, ::LinearPhase)  = 1.0
 evalphase_derivative2(z,::LinearPhase)  = 0.0
 
-""" 
-    Struct SquareRootPhase
-    
-    g(z) = √(z^2+a^2) + b*z where a>0 and b in (-1,1).
+
+@doc raw"""
+    SquareRootPhase(a, b)
+
+Return a `SquareRootPhase` object representing the phase defined by 
+```math
+g(z) = \sqrt{z^2+a^2} + bz
+```
+where `a>0` and `b` is in `[-1,1]`.
 """
 struct SquareRootPhase{T} <: AbstractPhase
     a :: T
@@ -117,11 +134,18 @@ evalphase_derivative2(z, G::SquareRootPhase) = G.a^2 / (z^2 + G.a^2)^(3/2)
 # integral is singular, and how to choose contour deformation by hand.
 singular_tol(::SquareRootPhase) = 2. # this is an arbitrary choice
 
-"""
-    Struct for rational phase function
 
-    g(z) = ∑ αj z^j + ∑∑ α_(p,k) / (z-zp)^k, where zp are poles of the function and α_(p,k) 
-    are the coefficients of the singular part associated with pole p.
+@doc raw"""
+    RationalPhase(cpoly::Vector, poles::Vector, cs::Vector)
+
+Return a `RationalPhase` object representing the phase defined by 
+```math
+g(z) = \sum_{j=0}^J \alpha_j z^j + \sum_{p=1}^P \sum_{k=1}^{K_p} \frac{\alpha_{p,k}}{(z-z_p)^k},
+```
+where `\alpha_j` are the coefficients in `cpoly` and `J` is the degree of the polynomial part,
+`z_p` are the poles in `poles`, `\alpha_{p,k}` are the coefficients in `cs[p]` and `K_p` is the order of the pole `z_p`.
+
+It is assumed that the singular part is non-zero (i.e. `cs` is not a vector of zero vectors).
 """
 struct RationalPhase <: AbstractPhase 
     rat   :: RationalFunction # phase in the form p(z)/q(z)

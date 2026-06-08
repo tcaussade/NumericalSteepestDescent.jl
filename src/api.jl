@@ -8,6 +8,16 @@
 
     γ0 is assumed as the union of straight lines connecting given points
 """
+
+@doc raw"""
+    nsd(γ0::Vector, f::Function, G::AbstractPhase, ω)
+
+Compute the oscillatory integral with
+```math
+    \int_{\gamma_0} f(z)e^{i\omega g(z)} dz.
+```
+Infinite endpoints can be specified with `infcontour`. 
+"""
 function nsd(γ0::Vector, f::Function, G::AbstractPhase, ω; 
         # default parameters
         Cball = 2π,    # control maximum number of oscillations on non-oscillatory bals
