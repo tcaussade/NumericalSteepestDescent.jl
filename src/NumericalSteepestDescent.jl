@@ -21,7 +21,7 @@ using CairoMakie
 using CairoMakie.Colors
 using GraphMakie
 
-include("phasefunction.jl")
+include("phases.jl")
 
 include("root_finding.jl")
 include("graph_traversal.jl")
