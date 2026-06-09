@@ -1,13 +1,17 @@
 
-# Basic use
+# Usage
+
+## Basic use
 The basic interface is the following
 ```@docs
 nsd
 ```
 
-**Example:** determine the quasi-SD contour deformation for an integral representation of the Airy function [DLMF, eq.(9.5.4)]
+### Example
+Consider an integral representation of the Airy function, e.g. eq.(9.5.4) in DLMF. Determine the quasi-SD contour deformation and evaluate
 ```@repl
-Phase = PolynomialPhase(-im*[0,+2,0,1/3]) 
+using NumericalSteepestDescent
+Phase = PolynomialPhase(-im*[0,+2,0,1/3]) # We are evaluating Ai(-2)
 a, b = -π/3, π/3 # (∞exp(-im*π/3), ∞exp(im*π/3))
 f(z) = 1.0 
 ω = 1.0 # Frequency parameter
@@ -16,7 +20,7 @@ ai, fig = nsd([a, b], f, Phase, ω; infcontour = [true, true],
 display(fig[1])
 ```
 
-# Advanced use
+## Advanced use
 
 There is also a number of adjustable parameters
 

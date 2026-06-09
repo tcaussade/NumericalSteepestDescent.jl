@@ -1,5 +1,6 @@
 # NumericalSteepestDescent.jl
 
+## Introduction
 
 NumericalSteepestDescent.jl is a Julia package for the numerical evaluation of highly oscillatory integrals. The aim is to efficiently evaluate integrals of the form
 
@@ -27,7 +28,7 @@ nsd([a, b], f, Phase, ω)
 
 For the case of arbitrary polynomial phase, there is also a MATLAB implementation available [2]. 
 
-# References
+## References
 
 [1] A. Gibbs, D.P. Hewett, D. Huybrechs, (2024) Numerical evaluation of oscillatory integrals via automated steepest descent contour deformation. Journal of Computational Physics, Volume 501, 112787, https://doi.org/10.1016/j.jcp.2024.112787.
 
