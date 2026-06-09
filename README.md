@@ -19,4 +19,4 @@ for particular choices of the phase:
 - $g$ is a rational function (not fully tested),
 - $g(z) = \sqrt{z^2+a^2} + bz$, where $a>0$ and $b\in[-1,1]$. 
 
-In the case of polynomial phase, the same method is also implemented in MATLAB, see https://github.com/AndrewGibbs/PathFinder/.
+For MATLAB users interested in oscillatory integrals with polynomial phase, we refer to [PathFinder](https://andrewgibbs.github.io/PathFinder/)

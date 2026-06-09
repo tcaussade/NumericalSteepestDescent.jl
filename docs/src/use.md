@@ -11,9 +11,7 @@ First, the algorithm first determines a quasi-SD contour, which is the union of 
 - Finite SD contours that connect two non-oscillatory regions.
 Then, it applies suitable quadrature rules on each of these contours, e.g. Gaussian quadrature, and returns an approximated value.
 
-# Usage
-
-## Basic use
+# Basic use
 
 Consider an integral representation of the Airy function, such as (9.5.4) in DLMF, where the integration curve is an infinite curve ``(\infty e^{-i\pi/3}, \infty e^{i\pi/3})``. To specify that endpoints are infinite, use `infcontour = [true, true]`. To visualise the quasi-SD contour followed, use ``plot_sd = true``.
 
@@ -29,7 +27,7 @@ fig[1] # hide
 ```
 The colorbar shows ``-\Im[g(\eta)]``, so blue regions are valleys at infinity, and red regions are hills (integrand grows exponentially). The red lines represent finite contours, blue lines SD contours, and green lines finite SD contours (not shown). Bold lines correspond to the quasi-SD deformed contour where quadrature rules are applied.
 
-## Advanced use
+# Advanced use
 
 There is also a number of adjustable parameters
 

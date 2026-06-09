@@ -16,7 +16,7 @@ makedocs(;
     authors = "Thomas Caussade",
     pages = [
         "Home" => "index.md",
-        "Usage" => "use.md",
+        "Use" => "use.md",
         "Phases" => "phases.md",
     ],
 )
