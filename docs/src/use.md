@@ -9,7 +9,7 @@ nsd
 
 ### Example
 Consider an integral representation of the Airy function, e.g. eq.(9.5.4) in DLMF. Determine the quasi-SD contour deformation and evaluate
-```@repl
+```@example
 using NumericalSteepestDescent
 Phase = PolynomialPhase(-im*[0,+2,0,1/3]) # We are evaluating Ai(-2)
 a, b = -π/3, π/3 # (∞exp(-im*π/3), ∞exp(im*π/3))
@@ -17,7 +17,7 @@ f(z) = 1.0
 ω = 1.0 # Frequency parameter
 ai, fig = nsd([a, b], f, Phase, ω; infcontour = [true, true],
     plot_sd = true)
-display(fig[1])
+display(fig[1]) # hide
 ```
 
 ## Advanced use
@@ -25,7 +25,7 @@ display(fig[1])
 There is also a number of adjustable parameters
 
 |  Keyword |  Default | Meaning |
-|---|---|---|
+|:---|:---:|:---|
 | `N` | ``25`` | Number of quadrature points used on each contour |
 |  `Cball` | ``2\pi`` | Control maximum number of oscillations on non-oscillatory balls (and hence the ball radius)  |  
 `Nrays`|  ``16`` | Number of rays used when determining the ball radius | 

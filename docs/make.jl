@@ -8,7 +8,7 @@ makedocs(;
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
         canonical = "https://tcaussade.github.io/NumericalSteepestDescent.jl/",
-        repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl"
+        repolink = "https://github.com/tcaussade/NumericalSteepestDescent.jl",
     ),
     
     repo = "https://github.com/tcaussade/NumericalSteepestDescent.jl/blob/{commit}{path}#L{line}",
