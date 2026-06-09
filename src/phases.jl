@@ -28,9 +28,9 @@ Return a `PolynomialPhase` object representing the phase defined by
 ```math
 g(z) = \sum_{j=0}^J \alpha_j z^j,
 ```
-where `\alpha_j` are the coefficients in `coefs` and `J` is the degree of the polynomial.
+where ``\alpha_j`` are the coefficients in `coefs` and ``J`` is the degree of the polynomial.
 
-It is assumed that `\alpha_J \neq 0` and `J \geq 2`. For linear phases, use `LinearPhase` instead.
+It is assumed that ``\alpha_J \neq 0`` and ``J \geq 2``. For linear phases, use `LinearPhase` instead.
 """
 struct PolynomialPhase{T} <: AbstractPhase # arbitrary polynomial
     p   :: Polynomial{T} # coefficients of the polynomial
@@ -106,7 +106,7 @@ Return a `SquareRootPhase` object representing the phase defined by
 ```math
 g(z) = \sqrt{z^2+a^2} + bz
 ```
-where `a>0` and `b` is in `[-1,1]`.
+where ``a>0`` and ``b \in [-1,1]``.
 """
 struct SquareRootPhase{T} <: AbstractPhase
     a :: T
@@ -142,8 +142,8 @@ Return a `RationalPhase` object representing the phase defined by
 ```math
 g(z) = \sum_{j=0}^J \alpha_j z^j + \sum_{p=1}^P \sum_{k=1}^{K_p} \frac{\alpha_{p,k}}{(z-z_p)^k},
 ```
-where `\alpha_j` are the coefficients in `cpoly` and `J` is the degree of the polynomial part,
-`z_p` are the poles in `poles`, `\alpha_{p,k}` are the coefficients in `cs[p]` and `K_p` is the order of the pole `z_p`.
+where ``\alpha_j`` are the coefficients in `cpoly` and ``J`` is the degree of the polynomial part,
+`z_p` are the poles in `poles`, ``\alpha_{p,k}`` are the coefficients in `cs[p]` and ``K_p`` is the order of the pole `z_p`.
 
 It is assumed that the singular part is non-zero (i.e. `cs` is not a vector of zero vectors).
 """

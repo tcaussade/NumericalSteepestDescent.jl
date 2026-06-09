@@ -17,6 +17,7 @@ Compute the oscillatory integral with
     \int_{\gamma_0} f(z)e^{i\omega g(z)} dz.
 ```
 Infinite endpoints can be specified with `infcontour`. 
+Returns a vector of figures if `plot_graph` or `plot_sd` are specified as `true`.
 """
 function nsd(γ0::Vector, f::Function, G::AbstractPhase, ω; 
         # default parameters

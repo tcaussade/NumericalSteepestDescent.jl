@@ -7,22 +7,29 @@ NumericalSteepestDescent.jl is a Julia package for the numerical evaluation of h
 I = \int_{a}^b f(z)\exp(\mathrm{i}\omega g(z)) \mathrm{d}z
 ```
 
-where ``g`` is phase, ``f`` is amplitude, ``\omega>0`` is a frequency parameter, and the endpoints ``a`` and ``b`` may be finite or infinite. Further, it is assumed that ``I`` is a convergent integral and that ``|f(z)|`` grows sub-exponentially as ``|z|\to\infty``.
+where ``g`` is phase, ``f`` is amplitude, ``\omega>0`` is a (potentially large) frequency parameter, and the endpoints ``a`` and ``b`` may be finite or infinite. Further, it is assumed that ``I`` is a convergent integral and that both ``f`` and ``g`` are slowly-varying functions.
 
-This package is an automatic implementation of a regularised numerical steepest descent method, but it can be used without a deep understanding of the underlying mathematics. For the case of arbitrary polynomial phase, there is also a MATLAB implementation available. See [[PathFinder, '25]](https://joss.theoj.org/papers/10.21105/joss.06902). 
+This package is an automatic implementation of a *Regularised Numerical Steepest Descent method*, but it can be used without a deep understanding of the underlying mathematics. For a full explanation, the interested reader is referred to [1]. 
 
 The simplest use case is integrating with a polynomial phase function. To evaluate the integral
 ```math
-\int_{-1}^{1} e^{i\omega(3+5z+6z^2+2z^3)} dz, 
+\int_{-1}^{1} e^{i\omega z^2} dz
 ```
 try the following:
 ```@repl
 using NumericalSteepestDescent
-Phase = PolynomialPhase([3, 5, 6, 2]) # Define the phase: g(z) = 3 + 5z + 6z² + 2z³
+Phase = PolynomialPhase([0,0,1]) # Define the phase: g(z) = z²
 a, b = -1.0, 1.0 # Integration endpoints
 f(z) = 1.0  # # Amplitude function (can be any function)
 ω = 1000.0 # Frequency parameter
-nsd([a, b], f, Phase, ω) # Compute the integral
+nsd([a, b], f, Phase, ω)
 ```
 
-For a a full explanation of the underlying mathematics, the interested reader is referred to [[Gibbs, Hewett, Huybrechs, '24]](https://www.sciencedirect.com/science/article/pii/S0021999124000366?via%3Dihub).
+For the case of arbitrary polynomial phase, there is also a MATLAB implementation available [2]. 
+
+# References
+
+[1] A. Gibbs, D.P. Hewett, D. Huybrechs, (2024) Numerical evaluation of oscillatory integrals via automated steepest descent contour deformation. Journal of Computational Physics, Volume 501, 112787, https://doi.org/10.1016/j.jcp.2024.112787.
+
+[2] Gibbs, A., (2025). PathFinder: A Matlab/Octave package for oscillatory integration. Journal of Open Source Software, 10(114), 6902, https://doi.org/10.21105/joss.06902
+
