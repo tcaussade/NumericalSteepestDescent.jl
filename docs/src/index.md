@@ -10,7 +10,7 @@ I = \int_{a}^b f(z)\exp(\mathrm{i}\omega g(z)) \mathrm{d}z
 
 where ``g`` is phase, ``f`` is amplitude, ``\omega>0`` is a (potentially large) frequency parameter, and the endpoints ``a`` and ``b`` may be finite or infinite. Further, it is assumed that ``I`` is a convergent integral and that both ``f`` and ``g`` are slowly-varying functions.
 
-This package is an automatic implementation of a *Regularised Numerical Steepest Descent method*, but it can be used without a deep understanding of the underlying mathematics. For a full explanation, the interested reader is referred to [1]. 
+This package is an automatic implementation of a *Regularised Numerical Steepest Descent method* (RNSD), but it can be used without a deep understanding of the underlying mathematics. For a full explanation, the interested reader is referred to [1]. 
 
 The simplest use case is integrating with a polynomial phase function. To evaluate the integral
 ```math

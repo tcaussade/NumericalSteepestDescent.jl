@@ -1,6 +1,6 @@
 # Algorithm
 
-A Regularised Numerical Steepest Descent (RNSD) method involves a combination of contour deformations and quadrature rules to evaluate oscillatory integrals. This is automated by basic interface is the following
+A Regularised Numerical Steepest Descent (RNSD) method involves a combination of contour deformations and quadrature rules to evaluate oscillatory integrals. This is automated by the following basic interface:
 ```@docs
 nsd
 ```
@@ -13,7 +13,7 @@ Then, it applies suitable quadrature rules on each of these contours, e.g. Gauss
 
 # Basic use
 
-Consider an integral representation of the Airy function, such as (9.5.4) in DLMF, where the integration curve is an infinite curve ``(\infty e^{-i\pi/3}, \infty e^{i\pi/3})``. To specify that endpoints are infinite, use `infcontour = [true, true]`. To visualise the quasi-SD contour followed, use ``plot_sd = true``.
+Consider an integral representation of the Airy function, such as (9.5.4) in DLMF, where the integration curve is an infinite curve ``(\infty e^{-i\pi/3}, \infty e^{i\pi/3})``. To specify that endpoints are infinite, use `infcontour = [true, true]`. To visualise the quasi-SD contour followed, use `plot_sd = true`.
 
 ```@example
 using NumericalSteepestDescent
