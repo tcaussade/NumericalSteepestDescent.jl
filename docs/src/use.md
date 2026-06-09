@@ -17,7 +17,7 @@ f(z) = 1.0
 ω = 1.0 # Frequency parameter
 ai, fig = nsd([a, b], f, Phase, ω; infcontour = [true, true],
     plot_sd = true)
-display(fig[1]) # hide
+fig[1] # hide
 ```
 
 ## Advanced use
