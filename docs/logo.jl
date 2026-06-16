@@ -15,6 +15,5 @@ lines!(t,real.(f.(z2)), color = logocolors.red, linewidth = 8)
 lines!(t,real.(f.(z3)), color = logocolors.green, linewidth = 8)
 hidedecorations!(ax)
 limits!(-1,1,-1/2,0.6)
-fig
 
 save("docs/src/assets/logo.svg", fig)
